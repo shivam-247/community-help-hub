@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.pyc
+*.pdb
+
+# Virtual environments
+backend/venv/
+venv/
+.venv/
+env/
+
+# SQLite database (contains real user data — keep out of git)
+backend/community_help_hub.db
+backend/migrate_db.py
+
+# Uploads folder (user uploaded images)
+backend/uploads/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node.js / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage / testing artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Build artifacts
+*.tsbuildinfo
