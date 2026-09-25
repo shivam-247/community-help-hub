@@ -41,7 +41,7 @@ def respond_to_post(
         raise HTTPException(status_code=404, detail="Post not found.")
     if post.owner_id == user.id:
         raise HTTPException(status_code=400, detail="You cannot respond to your own post.")
-    if post.category in ("Help Requests", "Skill Offers") and user.verification_status != "Verified":
+    if post.category in ("Help Requests", "Skill Offers") and user.verification_status != "verified" and user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=403,
             detail="Responding to Help Requests and Skill Offers requires a verified account. "

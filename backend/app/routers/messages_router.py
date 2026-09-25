@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
 from ..database import get_session
-from ..models import Message, ResponseRequest, Post, User, RequestStatus
+from ..models import Message, ResponseRequest, Post, User, RequestStatus, Role
 from ..schemas import MessageIn, MessageOut
 from ..auth import get_current_user
 
@@ -12,6 +12,8 @@ router = APIRouter(prefix="/requests", tags=["messages"])
 
 def _check_participant(session: Session, rr: ResponseRequest, user: User):
     post = session.get(Post, rr.post_id)
+    if getattr(user, "role", None) in (Role.super_admin, Role.admin, "super_admin", "admin"):
+        return
     if user.id not in (rr.requester_id, post.owner_id):
         raise HTTPException(status_code=403, detail="You are not part of this conversation.")
 
