@@ -13,8 +13,6 @@ from app.models import (
 from app.auth import hash_password
 from sqlmodel import Session, select
 
-init_db()
-
 PASSWORD = "pass1234"
 
 DUMMY_USERS = [
@@ -253,113 +251,121 @@ DUMMY_REVIEWS = [
     },
 ]
 
-with Session(engine) as session:
-    # 1. Create or fetch localities & users
-    email_to_user = {}
-    for u in DUMMY_USERS:
-        existing = session.exec(select(User).where(User.email == u["email"])).first()
-        loc = session.exec(select(Locality).where(Locality.name == u["locality"])).first()
-        if not loc:
-            loc = Locality(name=u["locality"])
-            session.add(loc)
-            session.commit()
-            session.refresh(loc)
 
-        if existing:
-            # Update credentials & reputation to match rich seed
-            existing.locality_id = loc.id
-            existing.role = u["role"]
-            existing.rating_avg = u["rating_avg"]
-            existing.rating_count = u["rating_count"]
-            existing.credits = u["credits"]
-            existing.contact_phone = u.get("phone")
-            existing.contact_visible = u.get("visible", False)
-            existing.verification_status = (
-                VerificationStatus.verified if u["verified"] else VerificationStatus.unverified
-            )
-            session.add(existing)
-            email_to_user[u["email"]] = existing
-        else:
-            user = User(
-                name=u["name"],
-                email=u["email"],
-                hashed_password=hash_password(PASSWORD),
-                locality_id=loc.id,
-                role=u["role"],
-                rating_avg=u["rating_avg"],
-                rating_count=u["rating_count"],
-                credits=u["credits"],
-                contact_phone=u.get("phone"),
-                contact_visible=u.get("visible", False),
-                verification_status=(
+def run_seed():
+    """Run the full seed. Safe to call multiple times (idempotent - skips existing records)."""
+    init_db()
+    print("--- Starting Community Help Hub Seed ---")
+    with Session(engine) as session:
+        # 1. Create or fetch localities & users
+        email_to_user = {}
+        for u in DUMMY_USERS:
+            existing = session.exec(select(User).where(User.email == u["email"])).first()
+            loc = session.exec(select(Locality).where(Locality.name == u["locality"])).first()
+            if not loc:
+                loc = Locality(name=u["locality"])
+                session.add(loc)
+                session.commit()
+                session.refresh(loc)
+
+            if existing:
+                # Update credentials & reputation to match rich seed
+                existing.locality_id = loc.id
+                existing.role = u["role"]
+                existing.rating_avg = u["rating_avg"]
+                existing.rating_count = u["rating_count"]
+                existing.credits = u["credits"]
+                existing.contact_phone = u.get("phone")
+                existing.contact_visible = u.get("visible", False)
+                existing.verification_status = (
                     VerificationStatus.verified if u["verified"] else VerificationStatus.unverified
-                ),
+                )
+                # Always reset password on seed so login always works
+                existing.hashed_password = hash_password(PASSWORD)
+                session.add(existing)
+                email_to_user[u["email"]] = existing
+                print(f"Updated user: {u['name']} ({u['email']})")
+            else:
+                user = User(
+                    name=u["name"],
+                    email=u["email"],
+                    hashed_password=hash_password(PASSWORD),
+                    locality_id=loc.id,
+                    role=u["role"],
+                    rating_avg=u["rating_avg"],
+                    rating_count=u["rating_count"],
+                    credits=u["credits"],
+                    contact_phone=u.get("phone"),
+                    contact_visible=u.get("visible", False),
+                    verification_status=(
+                        VerificationStatus.verified if u["verified"] else VerificationStatus.unverified
+                    ),
+                )
+                session.add(user)
+                session.commit()
+                session.refresh(user)
+                email_to_user[u["email"]] = user
+                print(f"Created user: {u['name']} ({u['email']})")
+
+        session.commit()
+
+        # 2. Seed multi-state posts
+        post_objects = []
+        for p in DUMMY_POSTS:
+            owner = email_to_user[p["owner_email"]]
+            loc = session.exec(select(Locality).where(Locality.name == p["locality"])).first()
+            exists = session.exec(select(Post).where(Post.title == p["title"])).first()
+            if exists:
+                post_objects.append(exists)
+                continue
+            post = Post(
+                owner_id=owner.id,
+                locality_id=loc.id,
+                type=p["type"],
+                title=p["title"],
+                description=p["description"],
+                priority=p["priority"],
+                status=p["status"],
+                category=p["category"],
+                created_at=datetime.utcnow() - timedelta(days=p["days_ago"]),
             )
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-            email_to_user[u["email"]] = user
-        print(f"User ready: {u['name']} ({u['locality']})")
+            session.add(post)
+            post_objects.append(post)
+            print(f"Created post: {p['title'][:50]}")
 
-    session.commit()
+        session.commit()
 
-    # 2. Seed multi-state posts
-    post_objects = []
-    for p in DUMMY_POSTS:
-        owner = email_to_user[p["owner_email"]]
-        loc = session.exec(select(Locality).where(Locality.name == p["locality"])).first()
-        exists = session.exec(select(Post).where(Post.title == p["title"])).first()
-        if exists:
-            post_objects.append(exists)
-            continue
-        post = Post(
-            owner_id=owner.id,
-            locality_id=loc.id,
-            type=p["type"],
-            title=p["title"],
-            description=p["description"],
-            priority=p["priority"],
-            status=p["status"],
-            category=p["category"],
-            created_at=datetime.utcnow() - timedelta(days=p["days_ago"]),
-        )
-        session.add(post)
-        post_objects.append(post)
-        print(f"Created post: {post.title} in {p['locality']}")
+        # 3. Seed reviews & ratings
+        first_post = post_objects[0] if post_objects else None
+        if first_post:
+            for rev in DUMMY_REVIEWS:
+                rater = email_to_user.get(rev["rater_email"])
+                rated = email_to_user.get(rev["rated_email"])
+                if rater and rated:
+                    exists = session.exec(
+                        select(Rating).where(
+                            Rating.rater_id == rater.id,
+                            Rating.rated_user_id == rated.id,
+                        )
+                    ).first()
+                    if not exists:
+                        rating = Rating(
+                            post_id=first_post.id,
+                            rater_id=rater.id,
+                            rated_user_id=rated.id,
+                            stars=rev["stars"],
+                            tags=json.dumps(rev["tags"]),
+                            comment=rev["comment"],
+                            created_at=datetime.utcnow() - timedelta(days=1),
+                        )
+                        session.add(rating)
+                        print(f"Created review from {rater.name} -> {rated.name}")
 
-    session.commit()
+        session.commit()
+        print("\n--- Seed Complete ---")
+        print(f"Users: {len(DUMMY_USERS)} | Posts: {len(DUMMY_POSTS)} | Reviews: {len(DUMMY_REVIEWS)}")
+        print(f"All demo accounts use password: {PASSWORD}")
 
-    # 3. Seed reviews & ratings
-    first_post = post_objects[0] if post_objects else None
-    if first_post:
-        for rev in DUMMY_REVIEWS:
-            rater = email_to_user.get(rev["rater_email"])
-            rated = email_to_user.get(rev["rated_email"])
-            if rater and rated:
-                exists = session.exec(
-                    select(Rating).where(
-                        Rating.rater_id == rater.id,
-                        Rating.rated_user_id == rated.id,
-                    )
-                ).first()
-                if not exists:
-                    rating = Rating(
-                        post_id=first_post.id,
-                        rater_id=rater.id,
-                        rated_user_id=rated.id,
-                        stars=rev["stars"],
-                        tags=json.dumps(rev["tags"]),
-                        comment=rev["comment"],
-                        created_at=datetime.utcnow() - timedelta(days=1),
-                    )
-                    session.add(rating)
-                    print(f"Created review from {rater.name} -> {rated.name}")
 
-    session.commit()
-
-print("\n--- Multi-State Seed Complete ---")
-print(f"Seeded {len(DUMMY_USERS)} diverse users across 8+ Indian regions.")
-print(f"Seeded {len(DUMMY_POSTS)} community posts in all 4 categories.")
-print(f"All demo accounts password: {PASSWORD}")
-print("Admin: priya@example.com (Community Champion, Verified)")
-print("Users in: Ahmedabad, Bengaluru, Mumbai, Pune, Delhi NCR, Hyderabad, Goa, Chennai, Kolkata")
+if __name__ == "__main__":
+    run_seed()

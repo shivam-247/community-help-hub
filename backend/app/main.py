@@ -33,27 +33,17 @@ app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 def on_startup():
     init_db()
     try:
-        from sqlmodel import select, Session
-        from .models import User
-        from .database import engine
-        with Session(engine) as s:
-            shivam_user = s.exec(select(User).where(User.email == "parmarshivam247@gmail.com")).first()
-            if not shivam_user:
-                import sys
-                root_backend = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                if root_backend not in sys.path:
-                    sys.path.append(root_backend)
-                try:
-                    import importlib
-                    if "seed" in sys.modules:
-                        importlib.reload(sys.modules["seed"])
-                    else:
-                        import seed
-                    print("Seeded missing admin accounts successfully!")
-                except Exception as e:
-                    print("Seed script error:", e)
+        import sys
+        root_backend = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if root_backend not in sys.path:
+            sys.path.insert(0, root_backend)
+        from seed import run_seed
+        run_seed()
+        print("Startup seed completed successfully!")
     except Exception as e:
-        print("Startup seed check:", e)
+        print(f"Startup seed error (non-fatal): {e}")
+        import traceback
+        traceback.print_exc()
 
 
 app.include_router(auth_router.router)
@@ -70,3 +60,19 @@ app.include_router(admin_router.router)
 @app.get("/")
 def root():
     return {"status": "ok", "service": "Community Help Hub API"}
+
+
+@app.get("/admin/seed")
+def manual_seed():
+    """Emergency endpoint to manually trigger seeding. Remove after use."""
+    try:
+        import sys
+        root_backend = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        if root_backend not in sys.path:
+            sys.path.insert(0, root_backend)
+        from seed import run_seed
+        run_seed()
+        return {"status": "ok", "message": "Seed completed successfully"}
+    except Exception as e:
+        import traceback
+        return {"status": "error", "message": str(e), "trace": traceback.format_exc()}
