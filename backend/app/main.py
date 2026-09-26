@@ -37,14 +37,19 @@ def on_startup():
         from .models import User
         from .database import engine
         with Session(engine) as s:
-            user = s.exec(select(User)).first()
-            if not user:
+            shivam_user = s.exec(select(User).where(User.email == "parmarshivam247@gmail.com")).first()
+            if not shivam_user:
                 import sys
                 root_backend = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
                 if root_backend not in sys.path:
                     sys.path.append(root_backend)
                 try:
-                    import seed
+                    import importlib
+                    if "seed" in sys.modules:
+                        importlib.reload(sys.modules["seed"])
+                    else:
+                        import seed
+                    print("Seeded missing admin accounts successfully!")
                 except Exception as e:
                     print("Seed script error:", e)
     except Exception as e:

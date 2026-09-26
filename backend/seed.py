@@ -69,6 +69,11 @@ DUMMY_USERS = [
         "phone": "+91 98790 12345", "visible": False
     },
     {
+        "name": "shivam", "email": "parmarshivam247@gmail.com", "locality": "Gota, Ahmedabad",
+        "role": Role.super_admin, "verified": True, "credits": 250, "rating_avg": 5.0, "rating_count": 25,
+        "phone": "+91 99999 77777", "visible": True
+    },
+    {
         "name": "Shivam Parmar", "email": "shivam@example.com", "locality": "Bodakdev, Ahmedabad",
         "role": Role.super_admin, "verified": True, "credits": 250, "rating_avg": 5.0, "rating_count": 20,
         "phone": "+91 99999 88888", "visible": True
