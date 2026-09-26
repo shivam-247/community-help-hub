@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from enum import Enum
 from sqlmodel import SQLModel, Field, Relationship
@@ -79,7 +79,7 @@ class User(SQLModel, table=True):
     contact_visible: bool = Field(default=False)
     avatar: Optional[str] = Field(default="avatar-1")
     verification_status: VerificationStatus = Field(default=VerificationStatus.unverified)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 def badge_for_credits(credits: int) -> str:
@@ -109,7 +109,7 @@ class Post(SQLModel, table=True):
     spam_score: float = Field(default=0.0)
     spam_flag: bool = Field(default=False)
     duplicate_of: Optional[str] = Field(default=None)  # JSON string of candidates
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ResponseRequest(SQLModel, table=True):
@@ -118,7 +118,7 @@ class ResponseRequest(SQLModel, table=True):
     requester_id: int = Field(foreign_key="user.id")
     message: str
     status: RequestStatus = Field(default=RequestStatus.pending)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Message(SQLModel, table=True):
@@ -126,7 +126,7 @@ class Message(SQLModel, table=True):
     response_request_id: int = Field(foreign_key="responserequest.id")
     sender_id: int = Field(foreign_key="user.id")
     text: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Rating(SQLModel, table=True):
@@ -137,7 +137,7 @@ class Rating(SQLModel, table=True):
     stars: int
     tags: str = Field(default="[]")  # JSON list
     comment: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Report(SQLModel, table=True):
@@ -146,7 +146,7 @@ class Report(SQLModel, table=True):
     reporter_id: int = Field(foreign_key="user.id")
     reason: str
     status: ReportStatus = Field(default=ReportStatus.open)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Verification(SQLModel, table=True):
@@ -163,5 +163,5 @@ class Verification(SQLModel, table=True):
     status: VerificationStatus = Field(default=VerificationStatus.pending)
     reviewer_id: Optional[int] = Field(default=None, foreign_key="user.id")
     reviewer_comment: Optional[str] = Field(default=None)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     reviewed_at: Optional[datetime] = Field(default=None)

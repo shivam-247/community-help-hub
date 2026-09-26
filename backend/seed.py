@@ -4,7 +4,7 @@ Populates realistic community data across major Indian states & localities:
 Gujarat, Karnataka, Maharashtra, Delhi NCR, Telangana, Goa, Tamil Nadu, West Bengal.
 """
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.database import engine, init_db
 from app.models import (
     User, Locality, Post, PostType, Priority, PostStatus, Role,
@@ -327,7 +327,7 @@ def run_seed():
                 priority=p["priority"],
                 status=p["status"],
                 category=p["category"],
-                created_at=datetime.utcnow() - timedelta(days=p["days_ago"]),
+                created_at=datetime.now(timezone.utc) - timedelta(days=p["days_ago"]),
             )
             session.add(post)
             post_objects.append(post)
@@ -356,7 +356,7 @@ def run_seed():
                             stars=rev["stars"],
                             tags=json.dumps(rev["tags"]),
                             comment=rev["comment"],
-                            created_at=datetime.utcnow() - timedelta(days=1),
+                            created_at=datetime.now(timezone.utc) - timedelta(days=1),
                         )
                         session.add(rating)
                         print(f"Created review from {rater.name} -> {rated.name}")

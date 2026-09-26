@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
@@ -81,7 +81,7 @@ def review_verification(
     v.status = VerificationStatus.verified if data.approve else VerificationStatus.rejected
     v.reviewer_id = admin.id
     v.reviewer_comment = data.reviewer_comment
-    v.reviewed_at = datetime.utcnow()
+    v.reviewed_at = datetime.now(timezone.utc)
     applicant.verification_status = v.status
     if data.approve:
         applicant.credits += 15  # bonus credits for completing verification
