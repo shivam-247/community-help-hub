@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 EmailStr = str  # avoid extra email-validator dependency at runtime
-from .models import PostType, Priority, PostStatus, RequestStatus
+from .models import PostType, Priority, PostStatus, RequestStatus, ReportStatus
 
 
 class SignupIn(BaseModel):
@@ -110,6 +110,20 @@ class PostOut(BaseModel):
 
 class StatusUpdateIn(BaseModel):
     status: PostStatus
+
+
+class PostUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, min_length=1, max_length=10000)
+    priority: Optional[Priority] = None
+    deadline: Optional[datetime] = None
+    status: Optional[PostStatus] = None
+
+
+class ReportUpdateIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    status: ReportStatus
 
 
 class ResponseRequestIn(BaseModel):

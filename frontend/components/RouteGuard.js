@@ -1,0 +1,12 @@
+"use client";
+import { usePathname } from "next/navigation";
+import { useRequireAuth } from "../lib/use-require-auth";
+
+const protectedPaths = ["/create-post", "/inbox", "/messages", "/settings", "/admin"];
+export default function RouteGuard({ children }) {
+  const pathname = usePathname();
+  const required = protectedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  const adminOnly = pathname === "/admin" || pathname.startsWith("/admin/");
+  const { allowed } = useRequireAuth(required, adminOnly);
+  return allowed ? children : <div role="status" className="py-16 text-center text-sm text-slate-500">Checking your access…</div>;
+}

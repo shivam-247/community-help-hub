@@ -4,6 +4,7 @@ import Link from "next/link";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import Avatar from "../../components/Avatars";
+import { useToast } from "../../components/ToastProvider";
 import {
   ShieldCheckIcon,
   CheckIcon,
@@ -15,6 +16,9 @@ import {
 
 export default function AdminDashboardPage() {
   const auth = useAuth();
+  const notify = useToast();
+  const [reports, setReports] = useState([]);
+  const [reportBusyId, setReportBusyId] = useState(null);
   const user = auth?.user;
   const isSuperAdmin = user?.role === "super_admin";
   const isAdmin = user?.role === "admin" || isSuperAdmin;
@@ -56,6 +60,7 @@ export default function AdminDashboardPage() {
       // Load users
       const u = await api("/admin/users", { auth: true });
       setUsersList(u);
+      setReports(await api("/admin/reports", { auth: true }));
     } catch (e) {
       setError(e.message || "Failed to load admin data.");
     } finally {
@@ -95,6 +100,16 @@ export default function AdminDashboardPage() {
   }
 
   // Act on verification
+  const handleReport = async (reportId, status) => {
+    setReportBusyId(reportId);
+    try {
+      await api(`/admin/reports/${reportId}`, { method: "PATCH", auth: true, body: { status } });
+      await loadData();
+      notify(`Report marked ${status.toLowerCase()}.`);
+    } catch (e) { notify(e.message, "error"); }
+    finally { setReportBusyId(null); }
+  };
+
   const handleVerification = async (id, approve) => {
     setVerBusyId(id);
     try {
@@ -215,6 +230,16 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Navigation Tabs */}
+      <button onClick={() => setActiveTab("reports")} className={`rounded-xl px-4 py-2 text-sm font-semibold ${activeTab === "reports" ? "bg-slate-900 text-white" : "bg-white border border-slate-200"}`}>Reports ({reports.filter((report) => report.status === "Open").length} open)</button>
+      {activeTab === "reports" && <div className="space-y-3">
+        {!reports.length && <p className="rounded-2xl border bg-white p-8 text-center text-slate-500">No reported posts. Your community queue is clear.</p>}
+        {reports.map((report) => <article key={report.id} className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+          <div className="flex justify-between gap-3"><Link href={`/post/${report.post_id}`} className="font-bold text-indigo-600">{report.post_title}</Link><span className="text-sm text-slate-500">{report.status}</span></div>
+          <p className="text-sm text-slate-700 whitespace-pre-wrap">{report.reason}</p>
+          <p className="text-xs text-slate-500">Reported by {report.reporter_name} · {new Date(report.created_at).toLocaleDateString()}</p>
+          <div className="flex gap-2">{["Reviewed", "Actioned"].map((status) => <button key={status} disabled={reportBusyId === report.id || report.status === status} onClick={() => handleReport(report.id, status)} className="rounded-lg border px-3 py-2 text-xs font-semibold disabled:opacity-40">Mark {status.toLowerCase()}</button>)}</div>
+        </article>)}
+      </div>}
       <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 select-none overflow-x-auto">
         <button
           onClick={() => setActiveTab("verifications")}

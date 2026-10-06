@@ -4,6 +4,7 @@ import Link from "next/link";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { InboxItemSkeleton } from "../../components/Skeleton";
+import { useToast } from "../../components/ToastProvider";
 import {
   MessageSquareIcon,
   PhoneIcon,
@@ -15,6 +16,7 @@ import {
 
 export default function InboxPage() {
   const auth = useAuth();
+  const notify = useToast();
   const [tab, setTab] = useState("incoming");
   const [incoming, setIncoming] = useState([]);
   const [sent, setSent] = useState([]);
@@ -71,8 +73,10 @@ export default function InboxPage() {
     try {
       await api(`/requests/${requestId}`, { method: "PATCH", auth: true, body: { action } });
       await load();
+      notify(action === "accept" ? "Request accepted. You can now message your neighbor." : "Request rejected.");
+      window.dispatchEvent(new Event("chh-inbox-updated"));
     } catch (e) {
-      setError(e.message);
+      notify(e.message, "error");
     } finally {
       setBusyId(null);
     }

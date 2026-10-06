@@ -19,7 +19,8 @@ export default function LoginPage() {
     setBusy(true);
     try {
       await auth.login(email, password);
-      router.push("/");
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/");
     } catch (err) {
       setError(err.message);
     } finally {

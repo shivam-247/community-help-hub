@@ -19,15 +19,19 @@ export function AuthProvider({ children }) {
       const me = await api("/auth/me", { auth: true });
       setUser(me);
     } catch (e) {
-      clearToken();
+      if (e.status === 401) clearToken();
       setUser(null);
+      throw e;
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    refresh();
+    refresh().catch(() => {});
+    const expired = () => setUser(null);
+    window.addEventListener("chh-auth-expired", expired);
+    return () => window.removeEventListener("chh-auth-expired", expired);
   }, [refresh]);
 
   const login = async (email, password) => {

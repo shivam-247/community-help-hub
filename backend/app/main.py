@@ -1,5 +1,7 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from .auth import require_super_admin
+from .models import User
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -63,7 +65,7 @@ def root():
 
 
 @app.get("/admin/seed")
-def manual_seed():
+def manual_seed(super_admin: User = Depends(require_super_admin)):
     """Emergency endpoint to manually trigger seeding. Remove after use."""
     try:
         import sys

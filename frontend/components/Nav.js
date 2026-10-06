@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "../lib/auth-context";
 import Avatar from "./Avatars";
+import { api } from "../lib/api";
 import {
   CHHLogoIcon,
   PlusIcon,
@@ -19,6 +20,8 @@ export default function Nav() {
   const user = auth?.user;
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const menuRef = useRef(null);
 
   const isActive = (path) => pathname === path;
@@ -37,7 +40,31 @@ export default function Nav() {
   // Close dropdown on route change
   useEffect(() => {
     setMenuOpen(false);
+    setMobileOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    let active = true;
+    setPendingCount(0);
+    if (!user) return;
+    const poll = async () => {
+      if (document.hidden) return;
+      try {
+        const requests = await api("/inbox/incoming", { auth: true });
+        if (active) setPendingCount(requests.filter((request) => request.status === "Pending").length);
+      } catch {}
+    };
+    poll();
+    window.addEventListener("chh-inbox-updated", poll);
+    const interval = setInterval(poll, 30000);
+    return () => { active = false; clearInterval(interval); window.removeEventListener("chh-inbox-updated", poll); };
+  }, [user?.id, pathname]);
+
+  useEffect(() => {
+    const close = (event) => { if (event.key === "Escape") { setMobileOpen(false); setMenuOpen(false); } };
+    document.addEventListener("keydown", close);
+    return () => document.removeEventListener("keydown", close);
+  }, []);
 
   const isSuperAdmin = user?.role === "super_admin";
   const isAdmin = user?.role === "admin" || isSuperAdmin;
@@ -62,7 +89,8 @@ export default function Nav() {
         </Link>
 
         {/* Navigation Links */}
-        <nav className="flex items-center gap-1 sm:gap-1.5 text-sm font-medium">
+        <nav className="hidden md:flex items-center gap-1 sm:gap-1.5 text-sm font-medium">
+          <Link href="/pricing" className="px-3 py-1.5 rounded-xl hover:bg-slate-100">Plans</Link>
           <Link
             href="/"
             className={`px-3.5 py-1.5 rounded-xl transition-all ${
@@ -84,6 +112,7 @@ export default function Nav() {
               }`}
             >
               Inbox
+              {pendingCount > 0 && <span aria-label={`${pendingCount} pending requests`} className="ml-1 inline-block w-2 h-2 rounded-full bg-rose-500" />}
             </Link>
           )}
 
@@ -116,6 +145,7 @@ export default function Nav() {
 
         {/* User Profile / Interactive Popover */}
         <div className="flex items-center gap-2.5">
+          <button type="button" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden rounded-xl border border-slate-200 px-3 py-2 text-sm">{mobileOpen ? "×" : "☰"}</button>
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3 relative" ref={menuRef}>
               <Link
@@ -231,7 +261,7 @@ export default function Nav() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               <Link
                 href="/login"
                 className="px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 rounded-xl hover:bg-white/60 transition-colors select-none"
@@ -249,6 +279,18 @@ export default function Nav() {
         </div>
 
       </div>
+      {mobileOpen && <nav id="mobile-navigation" aria-label="Mobile navigation" className="md:hidden bg-white border-t border-slate-200 p-4 grid grid-cols-2 gap-2 text-sm">
+        <Link href="/" className="p-3 rounded-xl hover:bg-slate-50">Feed</Link>
+        <Link href="/about" className="p-3 rounded-xl hover:bg-slate-50">About</Link>
+        <Link href="/pricing" className="p-3 rounded-xl hover:bg-slate-50">Plans</Link>
+        {user ? <>
+          <Link href="/inbox" className="p-3 rounded-xl hover:bg-slate-50">Inbox {pendingCount > 0 && <span className="text-rose-600">({pendingCount} pending)</span>}</Link>
+          <Link href="/create-post" className="p-3 rounded-xl text-indigo-600 hover:bg-slate-50">Create a post</Link>
+          <Link href="/settings" className="p-3 rounded-xl hover:bg-slate-50">Settings</Link>
+          {isAdmin && <Link href="/admin" className="p-3 rounded-xl hover:bg-slate-50">Admin</Link>}
+          <button onClick={() => auth.logout()} className="text-left p-3 text-rose-600">Log out</button>
+        </> : <><Link href="/login" className="p-3 rounded-xl hover:bg-slate-50">Log in</Link><Link href="/signup" className="p-3 rounded-xl bg-indigo-600 text-white">Sign up</Link></>}
+      </nav>}
     </header>
   );
 }

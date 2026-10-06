@@ -4,7 +4,8 @@ from sqlmodel import Session, select
 
 from ..database import get_session
 from ..models import User, Post, Verification, VerificationStatus, Report, ReportStatus, Role, badge_for_credits, Locality
-from ..schemas import UserRoleUpdateIn
+from ..schemas import UserRoleUpdateIn, ReportUpdateIn
+from ..post_operations import delete_post_records
 from ..auth import require_admin, require_super_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -112,6 +113,28 @@ def admin_delete_post(
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
-    session.delete(post)
+    delete_post_records(session, post)
     session.commit()
     return {"ok": True, "deleted_post_id": post_id}
+
+
+@router.get("/reports")
+def list_reports(admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    rows = session.exec(select(Report, Post, User).join(Post, Report.post_id == Post.id)
+        .join(User, Report.reporter_id == User.id).order_by(Report.created_at.desc())).all()
+    return [{"id": report.id, "post_id": post.id, "post_title": post.title,
+        "reporter_id": reporter.id, "reporter_name": reporter.name,
+        "reason": report.reason, "status": report.status, "created_at": report.created_at}
+        for report, post, reporter in rows]
+
+
+@router.patch("/reports/{report_id}")
+def update_report(report_id: int, data: ReportUpdateIn,
+    admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    report = session.get(Report, report_id)
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found.")
+    report.status = data.status
+    session.add(report)
+    session.commit()
+    return {"ok": True, "id": report.id, "status": report.status}

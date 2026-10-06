@@ -1,13 +1,15 @@
 import json
 import os
 import uuid
+from datetime import timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlmodel import Session, select
 
 from ..database import get_session
 from ..models import Post, User, Locality, PostStatus, Role, badge_for_credits
-from ..schemas import PostCreateIn, PostOut, StatusUpdateIn
+from ..schemas import PostCreateIn, PostOut, StatusUpdateIn, PostUpdateIn
+from ..post_operations import delete_post_records
 from ..auth import get_current_user, get_current_user_optional, is_admin_or_super
 from ..ml import ml_engine
 from .auth_router import get_or_create_locality
@@ -148,6 +150,47 @@ def update_status(
     return _to_out(session, post)
 
 
+@router.patch("/{post_id}", response_model=PostOut)
+def edit_post(
+    post_id: int, data: PostUpdateIn,
+    user: User = Depends(get_current_user), session: Session = Depends(get_session),
+):
+    post = session.get(Post, post_id)
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found.")
+    changes = data.model_dump(exclude_unset=True)
+    if post.owner_id != user.id:
+        if not is_admin_or_super(user) or set(changes) - {"status"}:
+            raise HTTPException(status_code=403, detail="Only the owner can edit post content; admins can update status.")
+    for field, value in changes.items():
+        if value is None and field != "deadline":
+            raise HTTPException(status_code=422, detail=f"{field} cannot be null.")
+    if "title" in changes or "description" in changes:
+        title = changes.get("title", post.title).strip()
+        description = changes.get("description", post.description).strip()
+        valid, detail = ml_engine.validate_post_quality(title, description)
+        if not valid:
+            raise HTTPException(status_code=422, detail=detail)
+        changes.update(title=title, description=description)
+        full_text = f"{title} {description}"
+        post.category = ml_engine.predict_category(full_text)
+        post.spam_score, post.spam_flag = ml_engine.spam_check(full_text)
+        candidates = session.exec(select(Post).where(
+            Post.locality_id == post.locality_id, Post.status == PostStatus.open, Post.id != post.id
+        )).all()
+        duplicates = ml_engine.find_duplicates(full_text, [(p.id, f"{p.title} {p.description}") for p in candidates])
+        post.duplicate_of = json.dumps(duplicates) if duplicates else None
+    if changes.get("deadline"):
+        deadline = changes["deadline"]
+        changes["deadline"] = deadline.replace(tzinfo=timezone.utc) if deadline.tzinfo is None else deadline.astimezone(timezone.utc)
+    for field, value in changes.items():
+        setattr(post, field, value)
+    session.add(post)
+    session.commit()
+    session.refresh(post)
+    return _to_out(session, post)
+
+
 @router.delete("/{post_id}")
 def delete_post(
     post_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session),
@@ -157,9 +200,9 @@ def delete_post(
         raise HTTPException(status_code=404, detail="Post not found.")
     if post.owner_id != user.id and not is_admin_or_super(user):
         raise HTTPException(status_code=403, detail="Not authorized to delete this post.")
-    session.delete(post)
+    delete_post_records(session, post)
     session.commit()
-    return {"ok": True}
+    return {"ok": True, "deleted_post_id": post_id}
 
 
 @router.get("/meta/categories")
