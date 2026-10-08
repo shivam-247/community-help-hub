@@ -1,4 +1,3 @@
-import "@santi020k/lumen-react/styles.css";
 import "./globals.css";
 import { AuthProvider } from "../lib/auth-context";
 import Nav from "../components/Nav";

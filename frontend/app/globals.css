@@ -1,3 +1,5 @@
+@layer theme, base, lumen.tokens, lumen.base, lumen.components, lumen.glass, components, utilities;
+@import "@santi020k/lumen-react/styles.css";
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
@@ -54,7 +56,7 @@ html[data-theme="dark"] {
 .app-link { display: inline-flex; align-items: center; gap: .5rem; padding: .65rem .8rem; border-radius: .5rem; color: hsl(var(--ink-muted)); font-size: .875rem; font-weight: 500; }
 .app-link:hover, .app-link[aria-current="page"] { background: hsl(var(--surface-muted)); color: hsl(var(--ink)); }
 .nav-panel { background: hsl(var(--surface)); border: 1px solid hsl(var(--line)); border-radius: .75rem; box-shadow: 0 8px 30px hsl(var(--ink) / .1); }
-.product-button { min-height: 44px; }
+.product-button { min-height: 44px; box-shadow: none; }
 .post-card { background: hsl(var(--surface)); border: 1px solid hsl(var(--line)); border-radius: .75rem; padding: 1.25rem; height: 100%; transition: border-color .15s; }
 .post-card:hover { border-color: hsl(var(--brand)); }
 .filter-control { width: 100%; border: 1px solid hsl(var(--line)); border-radius: .5rem; padding: .6rem .75rem; }
