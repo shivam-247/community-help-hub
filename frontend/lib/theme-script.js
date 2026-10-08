@@ -1,0 +1,1 @@
+export const themeScript = `(function(){try{var p=localStorage.getItem('chh-theme')||'system';if(!['light','dark','system'].includes(p))p='system';document.documentElement.dataset.theme=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;}catch(e){document.documentElement.dataset.theme='light';}})();`;

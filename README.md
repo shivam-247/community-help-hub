@@ -118,8 +118,8 @@ The CLI prompts for a strong password without logging it. Enable authenticator M
 | Auth | JWT (PyJWT), HttpOnly browser sessions, optional TOTP MFA |
 | ML Engine | scikit-learn / custom heuristics |
 | Frontend | Next.js 16 (App Router) |
-| Styling | Tailwind CSS |
-| Icons | Custom SVG (zero dependencies) |
+| Styling | Lumen React 4, Tailwind CSS, light/dark semantic themes |
+| Icons | Lumen Lucide icons and existing avatar illustrations |
 | Image Upload | FastAPI static files |
 
 ---

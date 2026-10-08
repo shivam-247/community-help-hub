@@ -29,7 +29,7 @@ export function ToastProvider({ children }) {
   return <ToastContext.Provider value={notify}>
     {children}
     <div aria-live="polite" aria-atomic="false" className="fixed bottom-5 right-5 left-5 sm:left-auto sm:w-96 z-50 space-y-2">
-      {toasts.map((toast) => <div key={toast.id} role={toast.kind === "error" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 shadow-lg bg-white text-sm ${toast.kind === "error" ? "border-rose-300 text-rose-800" : "border-emerald-300 text-emerald-800"}`}>
+      {toasts.map((toast) => <div key={toast.id} role={toast.kind === "error" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 shadow-lg bg-surface text-sm ${toast.kind === "error" ? "border-danger-soft text-danger" : "border-success-soft text-success"}`}>
         <p className="flex-1">{toast.message}</p>
         <button aria-label="Dismiss notification" onClick={() => setToasts((items) => items.filter((item) => item.id !== toast.id))}>×</button>
       </div>)}
@@ -37,3 +37,4 @@ export function ToastProvider({ children }) {
   </ToastContext.Provider>;
 }
 export function useToast() { return useContext(ToastContext); }
+

@@ -96,6 +96,11 @@ class RevokedToken(SQLModel, table=True):
     expires_at: int = Field(index=True)
 
 
+class UserAuthVersion(SQLModel, table=True):
+    user_id: int = Field(primary_key=True, foreign_key="user.id")
+    version: str
+
+
 class RateLimitBucket(SQLModel, table=True):
     key: str = Field(primary_key=True)
     count: int = 0

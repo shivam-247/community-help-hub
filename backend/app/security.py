@@ -86,7 +86,7 @@ class SecurityMiddleware:
                 identity = hashlib.sha256(authorization).hexdigest() if authorization else ip
                 if not await run_in_threadpool(consume_bucket, f"writes:{identity}", 60):
                     return await reject(429, "Too many changes. Try again in a minute.")
-            if scope["path"] in ("/auth/login", "/auth/signup", "/auth/mfa/setup", "/auth/mfa/confirm"):
+            if scope["path"] in ("/auth/login", "/auth/signup", "/auth/password", "/auth/mfa/setup", "/auth/mfa/confirm"):
                 if not await run_in_threadpool(consume_bucket, f"auth-ip:{ip}", 20):
                     return await reject(429, "Too many authentication attempts.")
                 try:

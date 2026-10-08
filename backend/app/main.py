@@ -5,7 +5,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from . import database
 from .database import init_db
+from .bootstrap import provision_admin
 from .security import SecurityMiddleware
 from .mfa import router as mfa_router
 from .routers import (auth_router, posts_router, responses_router, messages_router,
@@ -15,6 +17,7 @@ from .routers import (auth_router, posts_router, responses_router, messages_rout
 @asynccontextmanager
 async def lifespan(app):
     init_db()
+    provision_admin(database.engine)
     yield
 
 

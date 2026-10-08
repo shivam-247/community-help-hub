@@ -28,17 +28,17 @@ export default function CreatePostPage() {
   if (!auth?.loading && !auth?.user) {
     return (
       <div className="max-w-md mx-auto py-16 text-center">
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-8 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto text-xl mb-3">
+        <div className="bg-surface border border-line/90 rounded-xl p-8 shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3">
             🔐
           </div>
-          <h2 className="font-bold text-slate-900 text-lg mb-1">Sign in to post</h2>
-          <p className="text-xs text-slate-500 mb-5">
+          <h2 className="font-bold text-ink text-lg mb-1">Sign in to post</h2>
+          <p className="text-xs text-ink-muted mb-5">
             You must be logged in to create a noticeboard post for your neighborhood.
           </p>
           <Link
             href="/login"
-            className="inline-flex items-center justify-center py-2.5 px-5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors"
+            className="inline-flex items-center justify-center py-2.5 px-5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand shadow-xs transition-colors"
           >
             Go to Login
           </Link>
@@ -135,20 +135,20 @@ export default function CreatePostPage() {
   return (
     <div className="max-w-xl mx-auto space-y-6">
       <div>
-        <Link href="/" className="text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+        <Link href="/" className="text-xs font-semibold text-ink-muted hover:text-ink transition-colors">
           &larr; Back to Feed
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 mt-2">Publish a Notice</h1>
-        <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+        <h1 className="text-2xl font-bold tracking-tight text-ink mt-2">Publish a Notice</h1>
+        <p className="text-xs sm:text-sm text-ink-muted mt-0.5">
           Reach neighbors nearby. Our AI engine will auto-categorize and tag your post automatically.
         </p>
       </div>
 
-      <form onSubmit={submit} className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-7 shadow-xs space-y-5">
+      <form onSubmit={submit} className="bg-surface border border-line/90 rounded-xl p-6 sm:p-7 shadow-xs space-y-5">
         
         {/* Type selector */}
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-1.5">I want to...</label>
+          <label className="text-xs font-semibold text-ink-soft block mb-1.5">I want to...</label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {TYPES.map((t) => (
               <button
@@ -157,8 +157,8 @@ export default function CreatePostPage() {
                 onClick={() => setType(t)}
                 className={`py-2 px-2 text-xs font-semibold rounded-xl border text-center transition-all ${
                   type === t
-                    ? "bg-slate-900 text-white border-slate-900 shadow-xs"
-                    : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                    ? "bg-surface-strong text-on-brand border-line shadow-xs"
+                    : "bg-surface-muted text-ink-soft border-line hover:bg-surface-muted"
                 }`}
               >
                 {t}
@@ -169,21 +169,21 @@ export default function CreatePostPage() {
 
         {/* Title */}
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-1.5">Post Title</label>
+          <label className="text-xs font-semibold text-ink-soft block mb-1.5">Post Title</label>
           <input
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="e.g. Need ladder for 2 hours / Giving away study table"
-            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
           />
         </div>
 
         {/* Description with ML Auto-tag indicator */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-semibold text-slate-600">Detailed Description</label>
-            <span className="inline-flex items-center gap-1 text-[10px] text-indigo-600 font-semibold bg-indigo-50 px-2 py-0.5 rounded-full">
+            <label className="text-xs font-semibold text-ink-soft">Detailed Description</label>
+            <span className="inline-flex items-center gap-1 text-[10px] text-brand font-semibold bg-brand-soft px-2 py-0.5 rounded-full">
               <SparklesIcon className="w-3 h-3" />
               Auto ML Categorization
             </span>
@@ -194,14 +194,14 @@ export default function CreatePostPage() {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Explain clearly what help you need or what you are offering, any specific timing, or tools involved..."
-            className="w-full p-3.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            className="w-full p-3.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
           />
         </div>
 
         {/* State & Locality dropdowns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">
               <span className="inline-flex items-center gap-1">
                 <MapPinIcon className="w-3 h-3" /> State *
               </span>
@@ -210,7 +210,7 @@ export default function CreatePostPage() {
               required
               value={state}
               onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             >
               <option value="">Select State...</option>
               {STATES_LIST.map((s) => (
@@ -220,13 +220,13 @@ export default function CreatePostPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Locality / Area *</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Locality / Area *</label>
             <select
               required
               value={locality}
               onChange={(e) => setLocality(e.target.value)}
               disabled={!state}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <option value="">Select Locality...</option>
               {stateLocalities.map((loc) => (
@@ -239,11 +239,11 @@ export default function CreatePostPage() {
         {/* Priority & Deadline Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Priority Level</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Priority Level</label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>{p}</option>
@@ -252,20 +252,20 @@ export default function CreatePostPage() {
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Target Date / Deadline (optional)</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Target Date / Deadline (optional)</label>
             <input
               type="date"
               value={deadline}
               onChange={(e) => setDeadline(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
           </div>
         </div>
 
         {/* Photo Upload with Preview */}
         <div>
-          <label className="text-xs font-semibold text-slate-600 block mb-1.5">Attach Photo (optional)</label>
-          <div className="border-2 border-dashed border-slate-200 hover:border-indigo-400 rounded-2xl p-4 text-center transition-colors bg-slate-50/50">
+          <label className="text-xs font-semibold text-ink-soft block mb-1.5">Attach Photo (optional)</label>
+          <div className="border-2 border-dashed border-line hover:border-line rounded-xl p-4 text-center transition-colors bg-surface-muted/50">
             <input
               type="file"
               accept="image/*"
@@ -278,15 +278,15 @@ export default function CreatePostPage() {
               }}
             />
             <label htmlFor="file-upload" className="cursor-pointer block">
-              <div className="text-slate-500 text-xs font-medium">
+              <div className="text-ink-muted text-xs font-medium">
                 {imageFile ? "Change uploaded photo" : "Click here to upload an image from your device"}
               </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, WEBP up to 5MB</p>
+              <p className="text-[10px] text-ink-muted mt-0.5">PNG, JPG, WEBP up to 5MB</p>
             </label>
           </div>
 
           {imagePreview && (
-            <div className="relative mt-3 rounded-xl overflow-hidden max-h-48 border border-slate-200">
+            <div className="relative mt-3 rounded-xl overflow-hidden max-h-48 border border-line">
               <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
               <button
                 type="button"
@@ -294,7 +294,7 @@ export default function CreatePostPage() {
                   setImageFile(null);
                   setImagePreview(null);
                 }}
-                className="absolute top-2 right-2 bg-slate-900/80 text-white text-xs px-2 py-1 rounded-lg hover:bg-slate-900 transition-colors"
+                className="absolute top-2 right-2 bg-surface-strong/80 text-on-brand text-xs px-2 py-1 rounded-lg hover:bg-surface-strong transition-colors"
               >
                 Remove
               </button>
@@ -303,8 +303,8 @@ export default function CreatePostPage() {
         </div>
 
         {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 flex items-center gap-2 text-xs text-rose-800">
-            <AlertTriangleIcon className="w-4 h-4 text-rose-600 shrink-0" />
+          <div className="bg-danger-soft border border-danger-soft rounded-xl p-3 flex items-center gap-2 text-xs text-danger">
+            <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0" />
             <p>{error}</p>
           </div>
         )}
@@ -312,7 +312,7 @@ export default function CreatePostPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-60"
+          className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-all shadow-xs disabled:opacity-60"
         >
           {busy ? (
             <span>Publishing to Board...</span>

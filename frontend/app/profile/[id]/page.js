@@ -50,15 +50,15 @@ export default function ProfilePage({ params }) {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 sm:p-8 space-y-4 shadow-xs">
+        <div className="bg-surface border border-line/80 rounded-xl p-6 sm:p-8 space-y-4 shadow-xs">
           <div className="flex items-center gap-4">
-            <div className="w-20 h-20 bg-slate-200 rounded-2xl"></div>
+            <div className="w-20 h-20 bg-surface-muted rounded-xl"></div>
             <div className="space-y-2 flex-1">
-              <div className="w-48 h-6 bg-slate-200 rounded-lg"></div>
-              <div className="w-32 h-4 bg-slate-100 rounded"></div>
+              <div className="w-48 h-6 bg-surface-muted rounded-lg"></div>
+              <div className="w-32 h-4 bg-surface-muted rounded"></div>
             </div>
           </div>
-          <div className="w-full h-12 bg-slate-100 rounded-xl"></div>
+          <div className="w-full h-12 bg-surface-muted rounded-xl"></div>
         </div>
       </div>
     );
@@ -67,12 +67,12 @@ export default function ProfilePage({ params }) {
   if (error || !profile) {
     return (
       <div className="max-w-md mx-auto py-16 text-center space-y-4">
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-rose-800">
-          <AlertTriangleIcon className="w-8 h-8 text-rose-600 mx-auto mb-2" />
+        <div className="bg-danger-soft border border-danger-soft rounded-xl p-6 text-danger">
+          <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
           <h3 className="font-bold text-sm">User Not Found</h3>
-          <p className="text-xs text-rose-600 mt-1">{error || "This profile could not be loaded."}</p>
+          <p className="text-xs text-danger mt-1">{error || "This profile could not be loaded."}</p>
         </div>
-        <Link href="/" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+        <Link href="/" className="text-xs font-semibold text-brand hover:text-brand">
           &larr; Return to Community Noticeboard
         </Link>
       </div>
@@ -94,42 +94,42 @@ export default function ProfilePage({ params }) {
       {/* Back button */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+        className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
       >
         &larr; Back to all posts
       </Link>
 
       {/* Hero Profile Card */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-xs space-y-6">
+      <div className="bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           
           <div className="flex items-center gap-4 sm:gap-5">
-            <Avatar id={profile.avatar || "avatar-1"} name={profile.name} size="w-20 h-20" className="shadow-lg ring-4 ring-indigo-50 shrink-0" />
+            <Avatar id={profile.avatar || "avatar-1"} name={profile.name} size="w-20 h-20" className="shadow-lg ring-4 ring-brand shrink-0" />
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold text-slate-900 leading-tight">{profile.name}</h1>
+                <h1 className="text-2xl font-bold text-ink leading-tight">{profile.name}</h1>
                 {isSuperAdmin && (
-                  <span className="inline-flex items-center gap-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs">
+                  <span className="inline-flex items-center gap-1 bg-brand-solid text-on-brand px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs">
                     Super Admin
                   </span>
                 )}
                 {profile.verification_status === "Verified" && !isSuperAdmin && (
-                  <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
-                    <ShieldCheckIcon className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 bg-success-soft text-success border border-success-soft px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
+                    <ShieldCheckIcon className="w-3.5 h-3.5 text-success" />
                     Verified Neighbor
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1.5">
+              <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted mt-1.5">
                 <span className="inline-flex items-center gap-1">
-                  <MapPinIcon className="w-3.5 h-3.5 text-slate-400" />
+                  <MapPinIcon className="w-3.5 h-3.5 text-ink-muted" />
                   {profile.locality}
                 </span>
                 <span>·</span>
                 <span className="inline-flex items-center gap-1">
-                  <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                  <CalendarIcon className="w-3.5 h-3.5 text-ink-muted" />
                   Joined {new Date(profile.created_at).toLocaleDateString()}
                 </span>
               </div>
@@ -140,7 +140,7 @@ export default function ProfilePage({ params }) {
           {isMe && (
             <Link
               href="/settings"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl shadow-xs transition-all select-none"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-surface-strong hover:bg-surface-strong text-on-brand rounded-xl shadow-xs transition-all select-none"
             >
               <SettingsIcon className="w-4 h-4" />
               <span>Settings &amp; Privacy</span>
@@ -149,52 +149,52 @@ export default function ProfilePage({ params }) {
         </div>
 
         {/* Reputation & Trust Stats Bar — Clean and star-free */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-slate-100 select-none">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-line select-none">
           
-          <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-            <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">Badge Rank</span>
-            <span className="font-bold text-indigo-700 text-sm mt-0.5 block">
+          <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Badge Rank</span>
+            <span className="font-bold text-brand text-sm mt-0.5 block">
               {isSuperAdmin ? "👑 Super Admin" : `🏅 ${profile.badge}`}
             </span>
           </div>
 
-          <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-            <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">Exchanges Rated</span>
-            <span className="font-bold text-slate-900 text-sm mt-0.5 block">
+          <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Exchanges Rated</span>
+            <span className="font-bold text-ink text-sm mt-0.5 block">
               {profile.rating_count} Completed
             </span>
           </div>
 
-          <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-            <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">Community Credits</span>
-            <span className="font-bold text-slate-900 text-sm mt-0.5 block">{profile.credits} pts</span>
+          <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Community Credits</span>
+            <span className="font-bold text-ink text-sm mt-0.5 block">{profile.credits} pts</span>
           </div>
 
-          <div className="bg-slate-50 rounded-xl p-3 text-center border border-slate-100">
-            <span className="text-[11px] font-medium text-slate-400 block uppercase tracking-wider">Posts Published</span>
-            <span className="font-bold text-slate-900 text-sm mt-0.5 block">{profile.active_posts.length}</span>
+          <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Posts Published</span>
+            <span className="font-bold text-ink text-sm mt-0.5 block">{profile.active_posts.length}</span>
           </div>
 
         </div>
 
         {/* Badge Progression Meter */}
-        <div className="bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 space-y-2 select-none">
+        <div className="bg-brand-soft/50 border border-line rounded-xl p-4 space-y-2 select-none">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-indigo-900">
-              Reputation Level: <strong className="text-indigo-700">{profile.badge}</strong>
+            <span className="font-semibold text-brand">
+              Reputation Level: <strong className="text-brand">{profile.badge}</strong>
             </span>
             {nextTier ? (
-              <span className="text-indigo-600 font-medium">
+              <span className="text-brand font-medium">
                 {profile.credits} / {nextTier.min} credits to reach <strong>{nextTier.name}</strong>
               </span>
             ) : (
-              <span className="text-emerald-700 font-bold">Top Tier Achieved 🏆</span>
+              <span className="text-success font-bold">Top Tier Achieved 🏆</span>
             )}
           </div>
 
-          <div className="w-full h-2 bg-indigo-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-brand-soft rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full transition-all duration-500"
+              className="h-full bg-brand-solid rounded-full transition-all duration-500"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -203,18 +203,18 @@ export default function ProfilePage({ params }) {
       </div>
 
       {/* Tabs: Active Posts vs Neighbor Reviews */}
-      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 select-none">
+      <div className="flex items-center gap-2 border-b border-line/80 pb-3 select-none">
         <button
           onClick={() => setActiveTab("posts")}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             activeTab === "posts"
-              ? "bg-slate-900 text-white shadow-xs"
-              : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900"
+              ? "bg-surface-strong text-on-brand shadow-xs"
+              : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
           <span>Community Notices</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            activeTab === "posts" ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-600"
+            activeTab === "posts" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
           }`}>
             {profile.active_posts.length}
           </span>
@@ -224,13 +224,13 @@ export default function ProfilePage({ params }) {
           onClick={() => setActiveTab("reviews")}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             activeTab === "reviews"
-              ? "bg-slate-900 text-white shadow-xs"
-              : "bg-white border border-slate-200 text-slate-600 hover:text-slate-900"
+              ? "bg-surface-strong text-on-brand shadow-xs"
+              : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
           <span>Neighbor Testimonials</span>
           <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            activeTab === "reviews" ? "bg-slate-700 text-slate-200" : "bg-slate-100 text-slate-600"
+            activeTab === "reviews" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
           }`}>
             {profile.reviews.length}
           </span>
@@ -240,8 +240,8 @@ export default function ProfilePage({ params }) {
       {/* Tab 1: Posts by this User */}
       {activeTab === "posts" && (
         profile.active_posts.length === 0 ? (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-10 text-center shadow-xs">
-            <p className="text-xs text-slate-500">No community notices posted yet by this neighbor.</p>
+          <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
+            <p className="text-xs text-ink-muted">No community notices posted yet by this neighbor.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -249,27 +249,27 @@ export default function ProfilePage({ params }) {
               <Link
                 key={post.id}
                 href={`/post/${post.id}`}
-                className="block bg-white border border-slate-200/90 hover:border-indigo-300 rounded-2xl p-4 shadow-xs transition-all hover:-translate-y-0.5"
+                className="block bg-surface border border-line/90 hover:border-line rounded-xl p-4 shadow-xs transition-all hover:-translate-y-0.5"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-semibold bg-surface-muted text-ink-soft px-2 py-0.5 rounded-full">
                         {post.type}
                       </span>
-                      <span className="text-[11px] font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                      <span className="text-[11px] font-semibold bg-brand-soft text-brand px-2 py-0.5 rounded-full">
                         {post.category}
                       </span>
                     </div>
-                    <h4 className="font-semibold text-slate-900 text-sm leading-snug">{post.title}</h4>
+                    <h4 className="font-semibold text-ink text-sm leading-snug">{post.title}</h4>
                   </div>
 
                   <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
                     post.status === "Open"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      ? "bg-success-soft text-success border-success-soft"
                       : post.status === "In Progress"
-                      ? "bg-amber-50 text-amber-700 border-amber-200"
-                      : "bg-slate-100 text-slate-600 border-slate-200"
+                      ? "bg-warning-soft text-warning border-warning-soft"
+                      : "bg-surface-muted text-ink-soft border-line"
                   }`}>
                     {post.status}
                   </span>
@@ -283,12 +283,12 @@ export default function ProfilePage({ params }) {
       {/* Tab 2: Reviews Received */}
       {activeTab === "reviews" && (
         profile.reviews.length === 0 ? (
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-10 text-center shadow-xs">
-            <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mx-auto text-xl mb-3">
+          <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
+            <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
               🤝
             </div>
-            <h3 className="font-bold text-slate-900 text-sm mb-1">No testimonials yet</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <h3 className="font-bold text-ink text-sm mb-1">No testimonials yet</h3>
+            <p className="text-xs text-ink-muted max-w-sm mx-auto">
               Testimonials are submitted after completing a mutual aid exchange or item giveaway.
             </p>
           </div>
@@ -297,22 +297,22 @@ export default function ProfilePage({ params }) {
             {profile.reviews.map((rev) => (
               <div
                 key={rev.id}
-                className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-3"
+                className="bg-surface border border-line/90 rounded-xl p-5 shadow-xs space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 text-xs">{rev.rater_name}</span>
-                    <span className="text-slate-400 text-[10px]">· {rev.rater_badge}</span>
+                    <span className="font-bold text-ink text-xs">{rev.rater_name}</span>
+                    <span className="text-ink-muted text-[10px]">· {rev.rater_badge}</span>
                   </div>
 
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full border border-emerald-200/80">
-                    <CheckIcon className="w-3 h-3 text-emerald-600" />
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success px-2.5 py-0.5 rounded-full border border-success-soft/80">
+                    <CheckIcon className="w-3 h-3 text-success" />
                     Verified Exchange
                   </span>
                 </div>
 
                 {rev.comment && (
-                  <p className="text-xs text-slate-700 leading-relaxed italic bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <p className="text-xs text-ink-soft leading-relaxed italic bg-surface-muted p-3 rounded-xl border border-line">
                     &ldquo;{rev.comment}&rdquo;
                   </p>
                 )}
@@ -322,7 +322,7 @@ export default function ProfilePage({ params }) {
                     {rev.tags.map((tag, i) => (
                       <span
                         key={i}
-                        className="bg-indigo-50 text-indigo-700 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-indigo-100 select-none"
+                        className="bg-brand-soft text-brand text-[10px] font-semibold px-2 py-0.5 rounded-full border border-line select-none"
                       >
                         ✓ {tag}
                       </span>

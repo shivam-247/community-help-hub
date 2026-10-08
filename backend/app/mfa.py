@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import update
 from sqlmodel import Session
 from .database import get_session
-from .models import User, UserMFA
+from .models import User, UserMFA, UserAuthVersion
 from .schemas import MFASetupIn, MFAConfirmIn, TokenOut
 from .settings import MFA_ENCRYPTION_KEY
 from .auth import get_current_user, verify_password, create_access_token
@@ -74,4 +74,6 @@ def confirm(data: MFAConfirmIn, user: User = Depends(get_current_user), session:
     session.commit()
     if result.rowcount != 1:
         raise HTTPException(status_code=409, detail="Authenticator setup changed; start again.")
-    return TokenOut(access_token=create_access_token({"sub": str(user.id), "mfa_version": record.version}))
+    version = session.get(UserAuthVersion, user.id)
+    return TokenOut(access_token=create_access_token({"sub": str(user.id), "mfa_version": record.version,
+        "auth_version": version.version if version else None}))

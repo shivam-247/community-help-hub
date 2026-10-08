@@ -2,104 +2,29 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button, Input, Label, Icon } from "@santi020k/lumen-react";
 import { useAuth } from "../../lib/auth-context";
-import { HandshakeIcon, AlertTriangleIcon } from "../../components/Icons";
-
 export default function LoginPage() {
-  const auth = useAuth();
-  const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [totpCode, setTotpCode] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setBusy(true);
-    try {
-      await auth.login(email, password, totpCode);
-      const next = new URLSearchParams(window.location.search).get("next");
-      router.replace(next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="max-w-md mx-auto mt-6 sm:mt-12">
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-8 shadow-sm space-y-6">
-        
-        {/* Brand header */}
-        <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center mx-auto shadow-md shadow-indigo-100">
-            <HandshakeIcon className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Welcome Back</h1>
-          <p className="text-xs text-slate-500">
-            Sign in to respond to help posts and message neighbors.
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-rose-800">
-            <AlertTriangleIcon className="w-4 h-4 text-rose-600 shrink-0" />
-            <p>{error}</p>
-          </div>
-        )}
-
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Email address</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Password</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Authenticator code (if enabled)</label>
-            <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6}
-              value={totpCode} onChange={(e) => setTotpCode(e.target.value)}
-              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl" />
-          </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-60"
-          >
-            {busy ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-
-        <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
-          <span>New to Community Help Hub? </span>
-          <Link href="/signup" className="text-indigo-600 font-semibold hover:text-indigo-800">
-            Create an account
-          </Link>
-        </div>
-
-      </div>
-    </div>
-  );
+  const auth = useAuth(); const router = useRouter();
+  const [email, setEmail] = useState(""); const [password, setPassword] = useState("");
+  const [code, setCode] = useState(""); const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false); const [show, setShow] = useState(false);
+  async function submit(e) {
+    e.preventDefault(); setError(""); setBusy(true);
+    try { await auth.login(email, password, code); const next = new URLSearchParams(window.location.search).get("next"); router.replace(next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/"); }
+    catch (e) { setError(e.message); } finally { setBusy(false); }
+  }
+  return <div className="max-w-4xl mx-auto py-4 sm:py-10 grid md:grid-cols-2 gap-10 md:gap-16 items-center">
+    <section className="hidden md:block"><p className="text-xs font-semibold tracking-widest uppercase text-brand mb-5">Your neighborhood, connected</p><h2 className="text-4xl font-semibold tracking-tight leading-tight">A familiar place.<br />A helping hand.</h2><p className="text-ink-muted text-sm leading-relaxed mt-5 max-w-sm">Pick up where you left off. Follow your requests, message neighbors, and share what you can.</p><div className="border-t border-line mt-8 pt-5 flex items-center gap-3 text-sm text-ink-soft"><Icon name="shield-check" decorative className="text-brand" />Your contact details stay private.</div></section>
+    <section className="bg-surface border border-line rounded-xl p-6 sm:p-8 space-y-6"><div><h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1><p className="text-sm text-ink-muted mt-2">Sign in to your Community Help Hub account.</p></div>
+      {error && <p role="alert" className="rounded-lg border border-danger/30 bg-danger-soft text-danger p-3 text-sm">{error}</p>}
+      <form onSubmit={submit} className="space-y-5">
+        <div className="space-y-2"><Label htmlFor="login-email">Email address</Label><Input id="login-email" type="email" autoComplete="username" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="w-full" /></div>
+        <div className="space-y-2"><Label htmlFor="login-password">Password</Label><div className="relative"><Input id="login-password" type={show ? "text" : "password"} autoComplete="current-password" required maxLength={128} value={password} onChange={e => setPassword(e.target.value)} className="w-full pr-12" /><Button variant="ghost" size="icon" type="button" aria-label={show ? "Hide password" : "Show password"} aria-pressed={show} onClick={() => setShow(!show)} className="absolute top-0 right-0 h-full"><Icon name={show ? "eye-off" : "eye"} decorative /></Button></div></div>
+        <details className="text-sm"><summary className="text-ink-muted cursor-pointer min-h-8">I use an authenticator</summary><div className="pt-3 space-y-2"><Label htmlFor="login-code">6-digit code</Label><Input id="login-code" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} className="w-full" placeholder="000000" /></div></details>
+        <Button type="submit" loading={busy} disabled={busy} className="w-full product-button">{busy ? "Signing in…" : "Sign in"}</Button>
+      </form>
+      <p className="border-t border-line pt-5 text-sm text-ink-muted">New here? <Link href="/signup" className="font-medium text-brand">Create an account</Link></p>
+    </section>
+  </div>;
 }
-

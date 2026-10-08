@@ -1,16 +1,14 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Button, Icon, Input } from "@santi020k/lumen-react";
 import { api } from "../lib/api";
 import { LOCATIONS_DATA, STATES_LIST } from "../lib/locations";
 import PostCard from "../components/PostCard";
 import { PostCardSkeleton } from "../components/Skeleton";
-import { SearchIcon, MapPinIcon, PlusIcon, AlertTriangleIcon } from "../components/Icons";
-
 const TYPES = ["All", "Need help", "Offer help", "Request item", "Offer service"];
-const PRIORITIES = ["All", "High", "Medium", "Low"];
 const CATEGORIES = ["All", "Help Requests", "Donations & Giveaways", "Skill Offers", "Community Alerts"];
-
+const CATEGORY_ICONS = ["layout-grid", "hand-heart", "gift", "wrench", "megaphone"];
 export default function FeedPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,253 +19,56 @@ export default function FeedPage() {
   const [priority, setPriority] = useState("All");
   const [category, setCategory] = useState("All");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("deadline");
-
-  // Localities available for the selected state
-  const stateLocalities = state ? (LOCATIONS_DATA[state] || []) : [];
-
-  // When state changes, reset locality
-  const handleStateChange = (newState) => {
-    setState(newState);
-    setLocality("");
-  };
-
-  // The filter sent to the API: if a specific locality is chosen use it,
-  // else if a state is chosen send the state name for substring matching
-  const localityFilter = locality || state;
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const params = new URLSearchParams();
-      if (localityFilter) params.set("locality", localityFilter);
-      if (type !== "All") params.set("type", type);
-      if (priority !== "All") params.set("priority", priority);
-      if (category !== "All") params.set("category", category);
-      if (q) params.set("q", q);
-      params.set("sort", sort);
-      const data = await api(`/posts?${params.toString()}`);
-      setPosts(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [localityFilter, type, priority, category, q, sort]);
-
+  const [sort, setSort] = useState("newest");
+  const [retry, setRetry] = useState(0);
   useEffect(() => {
-    load();
-  }, [load]);
-
-  const clearFilters = () => {
-    setState("");
-    setLocality("");
-    setType("All");
-    setPriority("All");
-    setCategory("All");
-    setQ("");
-    setSort("deadline");
-  };
-
-  const hasActiveFilters = state || locality || type !== "All" || priority !== "All" || category !== "All" || q;
-
-  return (
-    <div className="space-y-8">
-      {/* Hero Welcome Banner */}
-      <div className="text-center max-w-2xl mx-auto pt-2 pb-4">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100 mb-3">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
-          Live Neighborhood Noticeboard
-        </span>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
-          Real help, tracked properly.
-        </h1>
-        <p className="mt-2 text-sm sm:text-base text-slate-500">
-          Connect with trusted neighbors for emergency tasks, borrowing tools, donating items, or sharing skills.
-        </p>
-      </div>
-
-      {/* Category Pills Strip */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-medium">
-        {CATEGORIES.map((cat) => {
-          const selected = category === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                selected
-                  ? "bg-slate-900 text-white shadow-xs font-semibold"
-                  : "bg-white border border-slate-200/80 text-slate-600 hover:text-slate-900 hover:border-slate-300"
-              }`}
-            >
-              {cat === "Help Requests" && <span className="w-2 h-2 rounded-full bg-rose-500" />}
-              {cat === "Donations & Giveaways" && <span className="w-2 h-2 rounded-full bg-amber-500" />}
-              {cat === "Skill Offers" && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-              {cat === "Community Alerts" && <span className="w-2 h-2 rounded-full bg-sky-500" />}
-              <span>{cat}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Modern Search & Filters Bar */}
-      <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-xs">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
-          
-          {/* Keyword Search */}
-          <div className="lg:col-span-2">
-            <label className="text-xs font-semibold text-slate-500 block mb-1.5">Search keyword</label>
-            <div className="relative">
-              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <SearchIcon className="w-4 h-4" />
-              </span>
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Plumber, tutor, ladder, medicine..."
-                className="w-full pl-9 pr-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              />
-            </div>
+    let active = true;
+    setLoading(true); setError("");
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ sort });
+        if (locality || state) params.set("locality", locality || state);
+        if (type !== "All") params.set("type", type);
+        if (priority !== "All") params.set("priority", priority);
+        if (category !== "All") params.set("category", category);
+        if (q.trim()) params.set("q", q.trim());
+        const data = await api(`/posts?${params}`);
+        if (active) setPosts(data);
+      } catch (e) { if (active) setError(e.message); }
+      finally { if (active) setLoading(false); }
+    }, 250);
+    return () => { active = false; clearTimeout(timer); };
+  }, [state, locality, type, priority, category, q, sort, retry]);
+  const clear = () => { setState(""); setLocality(""); setType("All"); setPriority("All"); setCategory("All"); setQ(""); };
+  const filtered = state || locality || type !== "All" || priority !== "All" || category !== "All" || q;
+  return <div className="space-y-8">
+    <section className="border-b border-line pb-8 flex flex-col sm:flex-row gap-6 sm:items-end sm:justify-between">
+      <div className="max-w-xl"><p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">The neighborhood noticeboard</p><h1 className="text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">Good neighbors.<br />A little help goes a long way.</h1><p className="text-sm sm:text-base text-ink-muted mt-4 max-w-lg leading-relaxed">Ask for a hand, share something useful, or offer a skill. Find the everyday help that’s closer than you think.</p></div>
+      <Button asChild className="self-start sm:self-auto product-button shrink-0"><Link href="/create-post"><Icon name="plus" decorative />Create a post</Link></Button>
+    </section>
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-8">
+      <section className="min-w-0 space-y-5" aria-label="Neighborhood posts">
+        <div className="flex items-center justify-between gap-3"><h2 className="font-semibold text-lg">Noticeboard</h2><p aria-live="polite" className="text-xs text-ink-muted">{loading ? "Loading posts…" : error ? "Unable to load posts" : `${posts.length} ${posts.length === 1 ? "post" : "posts"}`}</p></div>
+        <div className="flex gap-1.5 overflow-x-auto pb-2" aria-label="Post categories">{CATEGORIES.map((cat, i) => <Button key={cat} variant={category === cat ? "secondary" : "ghost"} size="sm" className="category-button" aria-pressed={category === cat} onClick={() => setCategory(cat)}><Icon name={CATEGORY_ICONS[i]} size="sm" decorative />{cat === "All" ? "All posts" : cat === "Donations & Giveaways" ? "Giveaways" : cat === "Help Requests" ? "Help requests" : cat === "Skill Offers" ? "Skills" : "Alerts"}</Button>)}</div>
+        <div className="border border-line rounded-xl bg-surface p-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] gap-4">
+            <div><label className="filter-label" htmlFor="post-search">Find something</label><div className="relative"><Icon name="search" decorative className="absolute left-3 top-3 text-ink-muted" /><Input id="post-search" type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search for help, items or skills" className="pl-10 w-full" /></div></div>
+            <div><label className="filter-label" htmlFor="post-state">State</label><select id="post-state" value={state} onChange={e => { setState(e.target.value); setLocality(""); }} className="filter-control"><option value="">All states</option>{STATES_LIST.map(s => <option key={s}>{s}</option>)}</select></div>
           </div>
-
-          {/* State Dropdown */}
-          <div>
-            <label className="text-xs font-semibold text-slate-500 block mb-1.5">
-              <span className="inline-flex items-center gap-1">
-                <MapPinIcon className="w-3 h-3" /> State
-              </span>
-            </label>
-            <select
-              value={state}
-              onChange={(e) => handleStateChange(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            >
-              <option value="">All States</option>
-              {STATES_LIST.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Locality Dropdown (cascading from state) */}
-          <div>
-            <label className="text-xs font-semibold text-slate-500 block mb-1.5">Locality / Area</label>
-            <select
-              value={locality}
-              onChange={(e) => setLocality(e.target.value)}
-              disabled={!state}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <option value="">All in {state || "State"}</option>
-              {stateLocalities.map((loc) => (
-                <option key={loc} value={loc}>{loc}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Post Type */}
-          <div>
-            <label className="text-xs font-semibold text-slate-500 block mb-1.5">Type</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            >
-              {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-          </div>
-
-          {/* Priority */}
-          <div>
-            <label className="text-xs font-semibold text-slate-500 block mb-1.5">Priority</label>
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-              className="w-full px-3 py-2 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-            >
-              {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
-          </div>
-
+          <details><summary className="cursor-pointer text-xs font-medium text-ink-soft min-h-8 flex items-center gap-2"><Icon name="sliders-horizontal" decorative size="sm" />More filters</summary><div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3">
+            <div><label className="filter-label" htmlFor="post-locality">Locality</label><select id="post-locality" value={locality} disabled={!state} onChange={e => setLocality(e.target.value)} className="filter-control disabled:opacity-50"><option value="">{state ? "All localities" : "Choose a state first"}</option>{(LOCATIONS_DATA[state] || []).map(l => <option key={l}>{l}</option>)}</select></div>
+            <div><label className="filter-label" htmlFor="post-type">Post type</label><select id="post-type" value={type} onChange={e => setType(e.target.value)} className="filter-control">{TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+            <div><label className="filter-label" htmlFor="post-priority">Priority</label><select id="post-priority" value={priority} onChange={e => setPriority(e.target.value)} className="filter-control">{["All", "High", "Medium", "Low"].map(p => <option key={p}>{p}</option>)}</select></div>
+          </div></details>
+          <div className="border-t border-line pt-3 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><label htmlFor="post-sort" className="text-xs text-ink-muted">Sort</label><select id="post-sort" value={sort} onChange={e => setSort(e.target.value)} className="border border-line rounded-lg px-2 text-sm!"><option value="newest">Newest first</option><option value="deadline">By deadline</option></select></div>{filtered && <Button variant="ghost" size="sm" onClick={clear}>Clear filters</Button>}</div>
         </div>
-
-        {/* Sort + active filters row */}
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-slate-500 font-medium shrink-0">Sort by:</label>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="px-2 py-1 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-400 transition-all"
-            >
-              <option value="deadline">By deadline</option>
-              <option value="newest">Newest first</option>
-            </select>
-          </div>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="text-indigo-600 hover:text-indigo-800 font-semibold transition-colors"
-            >
-              Reset all filters
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Error alert */}
-      {error && (
-        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-center gap-3 text-rose-800 text-sm">
-          <AlertTriangleIcon className="w-5 h-5 text-rose-600 shrink-0" />
-          <p>{error}</p>
-        </div>
-      )}
-
-      {/* Feed Content */}
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[...Array(6)].map((_, i) => (
-            <PostCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : posts.length === 0 ? (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-12 text-center max-w-md mx-auto shadow-xs">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-2xl mb-4">
-            📌
-          </div>
-          <h3 className="font-bold text-slate-900 text-base mb-1">No posts found</h3>
-          <p className="text-xs text-slate-500 leading-relaxed mb-5">
-            {hasActiveFilters
-              ? "Try adjusting your search criteria or clearing filters to see more results."
-              : "Be the first neighbor to post a request or offer in your area."}
-          </p>
-          <div className="flex items-center justify-center gap-2">
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
-            <Link
-              href="/create-post"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition-colors"
-            >
-              <PlusIcon className="w-3.5 h-3.5" />
-              <span>Post a Request</span>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {posts.map((p) => (
-            <PostCard key={p.id} post={p} />
-          ))}
-        </div>
-      )}
+        {error ? <div role="alert" className="border border-danger/30 bg-danger-soft rounded-xl p-6 space-y-3"><h3 className="font-semibold">We couldn’t load the noticeboard.</h3><p className="text-sm text-ink-soft">{error}</p><Button variant="outline" onClick={() => setRetry(x => x + 1)}>Try again</Button></div> : loading ? <div aria-label="Loading posts" className="grid sm:grid-cols-2 gap-4">{[0, 1, 2, 3].map(i => <PostCardSkeleton key={i} />)}</div> : posts.length ? <div className="grid sm:grid-cols-2 gap-4">{posts.map(p => <PostCard key={p.id} post={p} />)}</div> : <div className="border border-dashed border-line rounded-xl bg-surface p-8 sm:p-12 text-center"><Icon name="messages-square" size="xl" decorative className="text-ink-muted mb-4" /><h3 className="font-semibold text-lg">{filtered ? "No matching posts yet" : "Your neighborhood starts here"}</h3><p className="text-sm text-ink-muted mt-2 mb-6 max-w-sm mx-auto leading-relaxed">{filtered ? "Try another area or clear your filters to see more posts." : "Need a tool, have something to give away, or know a skill? Start the first conversation."}</p><Button asChild={!filtered} variant={filtered ? "outline" : "default"} onClick={filtered ? clear : undefined}>{filtered ? "Clear filters" : <Link href="/create-post"><Icon name="plus" decorative />Create the first post</Link>}</Button></div>}
+      </section>
+      <aside className="lg:pt-1 space-y-6">
+        <div className="bg-brand-soft rounded-xl p-5"><Icon name="hand-heart" decorative className="text-brand mb-3" /><h2 className="font-semibold text-sm">A hub built on trust</h2><p className="text-sm text-ink-soft leading-relaxed mt-2">Real people helping nearby. Keep requests clear, agree on the details, and look out for each other.</p><Link href="/about" className="inline-flex items-center gap-2 text-xs font-semibold text-brand mt-4 min-h-8">How the hub works <Icon name="arrow-right" decorative size="sm" /></Link></div>
+        <div className="px-1"><h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-4">Before you post</h2><ol className="space-y-4">{[["Be specific", "Say what you need and when."], ["Keep it local", "Choose the area where you can meet."], ["Close the loop", "Mark the post resolved after the exchange."]].map(([title, description], i) => <li key={title} className="flex gap-3"><span className="text-xs text-ink-muted pt-0.5 tabular-nums">0{i + 1}</span><div><p className="text-sm font-medium">{title}</p><p className="text-xs text-ink-muted leading-relaxed mt-1">{description}</p></div></li>)}</ol></div>
+        <div className="border-t border-line pt-5 px-1"><p className="text-xs text-ink-muted leading-relaxed">For emergencies, contact your local emergency services. Posts here are for community support.</p></div>
+      </aside>
     </div>
-  );
+  </div>;
 }

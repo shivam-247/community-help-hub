@@ -85,3 +85,24 @@ Dependency advisory references used in selecting upgrades:
 - https://nextjs.org/blog
 - https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
 - https://github.com/advisories/GHSA-rj75-hqrm-r3gf
+
+## Administrator provisioning on restricted hosting
+
+An operator can configure `ADMIN_BOOTSTRAP_EMAIL`, `ADMIN_BOOTSTRAP_NAME`, and
+`ADMIN_BOOTSTRAP_PASSWORD_HASH` in the backend secret manager. The hash must be strong
+Argon2id. Startup creates a super administrator only when that email is absent; it never
+promotes or resets an existing account and exposes no public provisioning endpoint.
+Remove the provisioning variables after setup on a persistent database. Keep the initial
+password private and replace it through Settings; password changes invalidate all older
+sessions, require the current password and an authenticator code when MFA is enabled.
+
+Render free services with the default SQLite configuration have ephemeral storage. Service
+restarts/redeploys can erase accounts, posts, MFA enrollments and uploads. Provisioning
+variables can recreate the operator account but are not a substitute for a persistent database
+and upload volume. A storage upgrade requires an operator decision before production use.
+
+## Interface
+
+The frontend uses Lumen React 4.0 and semantic theme tokens, with responsive navigation and
+Light, Dark and System modes. Only the appearance preference is saved in local storage;
+authentication remains in HttpOnly cookies. Node 22.12+ is required (hosting uses Node 24).

@@ -31,63 +31,63 @@ export default function SignupPage() {
 
   return (
     <div className="max-w-md mx-auto mt-6 sm:mt-10">
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-7 sm:p-8 shadow-sm space-y-6">
+      <div className="bg-surface border border-line/90 rounded-xl p-7 sm:p-8 shadow-sm space-y-6">
         
         {/* Brand header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-violet-600 text-white flex items-center justify-center mx-auto shadow-md shadow-indigo-100">
+          <div className="w-12 h-12 rounded-xl bg-brand-solid text-on-brand flex items-center justify-center mx-auto shadow-md shadow-line">
             <HandshakeIcon className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Join Your Neighborhood</h1>
-          <p className="text-xs text-slate-500">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Join Your Neighborhood</h1>
+          <p className="text-xs text-ink-muted">
             Connect, lend tools, share skills, and get verified help nearby.
           </p>
         </div>
 
         {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-rose-800">
-            <AlertTriangleIcon className="w-4 h-4 text-rose-600 shrink-0" />
+          <div className="bg-danger-soft border border-danger-soft rounded-xl p-3.5 flex items-center gap-2.5 text-xs text-danger">
+            <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0" />
             <p>{error}</p>
           </div>
         )}
 
         <form onSubmit={submit} className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Full Name</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Full Name</label>
             <input
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. John Doe"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Email Address</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Email Address</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Locality / Area</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Locality / Area</label>
             <input
               required
               value={locality}
               onChange={(e) => setLocality(e.target.value)}
               placeholder="e.g. Gota, SG Highway, Thaltej"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
           </div>
 
           <div>
-            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Password (min 6 characters)</label>
+            <label className="text-xs font-semibold text-ink-soft block mb-1.5">Password (min 6 characters)</label>
             <input
               type="password"
               required
@@ -95,22 +95,22 @@ export default function SignupPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={busy}
-            className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all shadow-xs disabled:opacity-60"
+            className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-all shadow-xs disabled:opacity-60"
           >
             {busy ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-100 text-center text-xs text-slate-500">
+        <div className="pt-4 border-t border-line text-center text-xs text-ink-muted">
           <span>Already have an account? </span>
-          <Link href="/login" className="text-indigo-600 font-semibold hover:text-indigo-800">
+          <Link href="/login" className="text-brand font-semibold hover:text-brand">
             Sign in
           </Link>
         </div>

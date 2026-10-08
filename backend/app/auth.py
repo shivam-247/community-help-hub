@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import Session
 
 from .database import get_session
-from .models import User, Role, UserMFA, RevokedToken
+from .models import User, Role, UserMFA, RevokedToken, UserAuthVersion
 from .settings import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES
 
 ALGORITHM = "HS256"
@@ -56,6 +56,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
         if user_id <= 0 or session.get(RevokedToken, payload["jti"]):
             raise error
         user = session.get(User, user_id)
+        auth_version = session.get(UserAuthVersion, user_id)
+        if auth_version and payload.get("auth_version") != auth_version.version:
+            raise error
         mfa = session.get(UserMFA, user_id)
         if user is None or (mfa and mfa.enabled and payload.get("mfa_version") != mfa.version):
             raise error

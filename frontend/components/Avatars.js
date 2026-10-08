@@ -122,7 +122,7 @@ export default function Avatar({ id = "avatar-1", name = "", size = "w-10 h-10",
 
   return (
     <div
-      className={`${size} rounded-2xl bg-gradient-to-tr ${colorConfig.bg} flex items-center justify-center shadow-sm shrink-0 overflow-hidden ${className}`}
+      className={`${size} rounded-xl bg-gradient-to-tr ${colorConfig.bg} flex items-center justify-center shadow-sm shrink-0 overflow-hidden ${className}`}
     >
       <div className="w-full h-full">
         {svgFace}
@@ -135,3 +135,4 @@ export default function Avatar({ id = "avatar-1", name = "", size = "w-10 h-10",
 export function AvatarSmall({ id = "avatar-1", name = "", size = "w-7 h-7", className = "" }) {
   return <Avatar id={id} name={name} size={size} className={`rounded-xl ${className}`} />;
 }
+

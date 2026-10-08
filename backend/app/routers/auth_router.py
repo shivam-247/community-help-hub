@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from sqlalchemy import func
-from ..models import UserMFA, RevokedToken
+from ..models import UserMFA, RevokedToken, UserAuthVersion
+import secrets
 from ..auth import decode_token, oauth2_scheme, password_hasher
 from ..mfa import verify_totp
 
 from ..database import get_session
 from ..models import User, Locality, Role, badge_for_credits
-from ..schemas import SignupIn, LoginIn, TokenOut, UserOut, ContactUpdateIn, AvatarUpdateIn
+from ..schemas import SignupIn, LoginIn, TokenOut, UserOut, ContactUpdateIn, AvatarUpdateIn, PasswordChangeIn
 from ..auth import hash_password, verify_password, create_access_token, get_current_user
 
 DUMMY_HASH = hash_password("timing-placeholder-not-a-login-credential")
@@ -58,8 +59,30 @@ def login(data: LoginIn, session: Session = Depends(get_session)):
         user.hashed_password = hash_password(data.password)
         session.add(user)
         session.commit()
-    token = create_access_token({"sub": str(user.id), "mfa_version": mfa.version if mfa and mfa.enabled else None})
+    version = session.get(UserAuthVersion, user.id)
+    token = create_access_token({"sub": str(user.id), "mfa_version": mfa.version if mfa and mfa.enabled else None,
+                                 "auth_version": version.version if version else None})
     return TokenOut(access_token=token)
+
+
+@router.post("/password", response_model=TokenOut)
+def change_password(data: PasswordChangeIn, user: User = Depends(get_current_user),
+                    session: Session = Depends(get_session)):
+    if not verify_password(data.current_password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Incorrect current password.")
+    mfa = session.get(UserMFA, user.id)
+    if mfa and mfa.enabled and not verify_totp(session, mfa, data.totp_code):
+        raise HTTPException(status_code=401, detail="Incorrect authenticator code.")
+    if data.current_password == data.new_password:
+        raise HTTPException(status_code=400, detail="Choose a different password.")
+    user.hashed_password = hash_password(data.new_password)
+    version = UserAuthVersion(user_id=user.id, version=secrets.token_urlsafe(24))
+    session.add(user)
+    session.merge(version)
+    session.commit()
+    # A fresh cookie keeps this browser signed in; all older sessions are invalidated.
+    return TokenOut(access_token=create_access_token({"sub": str(user.id), "auth_version": version.version,
+        "mfa_version": mfa.version if mfa and mfa.enabled else None}))
 
 
 @router.post("/logout")

@@ -29,6 +29,12 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
 
 
+class PasswordChangeIn(InputModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
+    totp_code: Optional[str] = Field(default=None, pattern=r"^\d{6}$")
+
+
 class UserOut(BaseModel):
     id: int
     name: str

@@ -1,33 +1,72 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@theme inline {
+  --color-canvas: hsl(var(--canvas));
+  --color-surface: hsl(var(--surface));
+  --color-surface-muted: hsl(var(--surface-muted));
+  --color-surface-strong: hsl(var(--surface-strong));
+  --color-line: hsl(var(--line));
+  --color-ink: hsl(var(--ink));
+  --color-ink-soft: hsl(var(--ink-soft));
+  --color-ink-muted: hsl(var(--ink-muted));
+  --color-brand: hsl(var(--brand));
+  --color-brand-solid: hsl(var(--brand-solid));
+  --color-brand-soft: hsl(var(--brand-soft));
+  --color-on-brand: hsl(var(--on-brand));
+  --color-success: hsl(var(--success));
+  --color-success-soft: hsl(var(--success-soft));
+  --color-warning: hsl(var(--warning));
+  --color-warning-soft: hsl(var(--warning-soft));
+  --color-danger: hsl(var(--danger));
+  --color-danger-soft: hsl(var(--danger-soft));
+}
+
+:root, html[data-theme="light"] {
+  color-scheme: light;
+  --canvas: 40 20% 98%; --surface: 0 0% 100%; --surface-muted: 40 10% 95%;
+  --surface-strong: 160 24% 17%; --line: 40 8% 86%;
+  --ink: 160 12% 12%; --ink-soft: 160 7% 31%; --ink-muted: 160 4% 43%;
+  --brand: 160 48% 28%; --brand-solid: 160 48% 28%; --brand-soft: 155 28% 93%; --on-brand: 0 0% 100%;
+  --accent: 160 48% 28%; --success: 155 55% 27%; --success-soft: 155 35% 93%;
+  --warning: 32 85% 30%; --warning-soft: 38 65% 93%; --danger: 0 60% 40%; --danger-soft: 0 50% 96%;
+  --ui-radius: .5rem; --ui-radius-lg: .75rem;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: 160 8% 8%; --surface: 160 7% 11%; --surface-muted: 160 6% 15%;
+  --surface-strong: 160 22% 22%; --line: 160 5% 24%;
+  --ink: 40 10% 95%; --ink-soft: 40 5% 79%; --ink-muted: 40 4% 62%;
+  --brand: 155 35% 70%; --brand-solid: 160 35% 34%; --brand-soft: 160 20% 18%; --on-brand: 0 0% 100%;
+  --accent: 155 35% 70%; --success: 155 42% 68%; --success-soft: 155 25% 16%;
+  --warning: 38 75% 70%; --warning-soft: 38 30% 16%; --danger: 0 65% 74%; --danger-soft: 0 25% 16%;
+}
 @layer base {
-  body {
-    @apply bg-slate-50 text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900;
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
+  body { background: hsl(var(--canvas)); color: hsl(var(--ink)); font-family: Arial, Helvetica, sans-serif; }
+  button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled), select { cursor: pointer; }
+  :focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 3px; }
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea { color: hsl(var(--ink)); background-color: hsl(var(--surface)); font-size: 1rem; min-height: 44px; }
+  ::selection { background: hsl(var(--brand-soft)); color: hsl(var(--ink)); }
+  h1, h2, h3 { text-wrap: balance; }
 }
-
-/* Custom scrollbar for modern feel */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+.app-header { background: hsl(var(--surface)); border-bottom: 1px solid hsl(var(--line)); }
+.app-link { display: inline-flex; align-items: center; gap: .5rem; padding: .65rem .8rem; border-radius: .5rem; color: hsl(var(--ink-muted)); font-size: .875rem; font-weight: 500; }
+.app-link:hover, .app-link[aria-current="page"] { background: hsl(var(--surface-muted)); color: hsl(var(--ink)); }
+.nav-panel { background: hsl(var(--surface)); border: 1px solid hsl(var(--line)); border-radius: .75rem; box-shadow: 0 8px 30px hsl(var(--ink) / .1); }
+.product-button { min-height: 44px; }
+.post-card { background: hsl(var(--surface)); border: 1px solid hsl(var(--line)); border-radius: .75rem; padding: 1.25rem; height: 100%; transition: border-color .15s; }
+.post-card:hover { border-color: hsl(var(--brand)); }
+.filter-control { width: 100%; border: 1px solid hsl(var(--line)); border-radius: .5rem; padding: .6rem .75rem; }
+.filter-label { display: block; font-size: .75rem; font-weight: 600; color: hsl(var(--ink-soft)); margin-bottom: .5rem; }
+.category-button { min-height: 44px; white-space: nowrap; }
+.skip-link { position: absolute; top: .5rem; left: .5rem; transform: translateY(-150%); z-index: 100; background: hsl(var(--surface)); padding: .75rem; border: 1px solid hsl(var(--brand)); }
+.skip-link:focus { transform: none; }
+/* Tables retain their own scrolling area on small screens. */
+table { min-width: 560px; }
+.overflow-x-auto { overscroll-behavior-x: contain; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: hsl(var(--line)); border-radius: 8px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-

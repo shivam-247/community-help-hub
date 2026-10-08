@@ -263,3 +263,43 @@ def test_non_participant_cannot_rate_or_accept(setup):
 def test_no_duplicate_admin_routes():
     routes = [(route.path, method) for route in app.routes if hasattr(route, "methods") for method in route.methods]
     assert len(routes) == len(set(routes))
+
+
+def test_password_change_invalidates_all_old_sessions(setup):
+    client, engine, ids, *_ = setup
+    old = auth(ids[0])
+    denied = client.post('/auth/password', headers=old, json={
+        'current_password': 'wrong-password', 'new_password': 'new-strong-password-123'})
+    assert denied.status_code == 401
+    assert client.get('/auth/me', headers=old).status_code == 200
+    result = client.post('/auth/password', headers=old, json={
+        'current_password': 'secure-password-123', 'new_password': 'new-strong-password-123'})
+    assert result.status_code == 200
+    assert client.get('/auth/me', headers=old).status_code == 401
+    new = {'Authorization': 'Bearer ' + result.json()['access_token']}
+    assert client.get('/auth/me', headers=new).status_code == 200
+    assert client.post('/auth/login', json={'email': 'user@example.com', 'password': 'secure-password-123'}).status_code == 401
+    login = client.post('/auth/login', json={'email': 'user@example.com', 'password': 'new-strong-password-123'})
+    assert login.status_code == 200
+    assert client.get('/auth/me', headers={'Authorization': 'Bearer ' + login.json()['access_token']}).status_code == 200
+
+
+def test_admin_provisioning_is_private_idempotent_and_preserves_existing_accounts(setup, monkeypatch):
+    from app.bootstrap import provision_admin
+    client, engine, ids, *_ = setup
+    monkeypatch.setenv('ADMIN_BOOTSTRAP_EMAIL', 'operator@example.com')
+    monkeypatch.setenv('ADMIN_BOOTSTRAP_PASSWORD_HASH', hash_password('operator-secret-password'))
+    provision_admin(engine)
+    provision_admin(engine)
+    from sqlmodel import select
+    with Session(engine) as session:
+        accounts = session.exec(select(User).where(User.email == 'operator@example.com')).all()
+        assert len(accounts) == 1 and accounts[0].role == Role.super_admin
+    monkeypatch.setenv('ADMIN_BOOTSTRAP_EMAIL', 'user@example.com')
+    provision_admin(engine)
+    with Session(engine) as session:
+        user = session.get(User, ids[0])
+        assert user.role == Role.user and verify_password('secure-password-123', user.hashed_password)
+    monkeypatch.setenv('ADMIN_BOOTSTRAP_PASSWORD_HASH', bcrypt.hashpw(b'secret', bcrypt.gensalt()).decode())
+    with pytest.raises(Exception):
+        provision_admin(engine)
