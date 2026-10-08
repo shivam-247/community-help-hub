@@ -144,6 +144,9 @@ def create_post(
     open_posts = session.exec(
         select(Post).where(Post.locality_id == loc.id, Post.status == PostStatus.open)
     ).all()
+    # Similarity hints must never reveal private society notices on a public post.
+    private_links = {link.post_id: link.community_id for link in session.exec(select(CommunityPost)).all()}
+    open_posts = [p for p in open_posts if private_links.get(p.id) == data.community_id]
     existing = [(p.id, f"{p.title} {p.description}") for p in open_posts]
     duplicates = ml_engine.find_duplicates(full_text, existing)
 
@@ -230,6 +233,10 @@ def edit_post(
         candidates = session.exec(select(Post).where(
             Post.locality_id == post.locality_id, Post.status == PostStatus.open, Post.id != post.id
         )).all()
+        board = session.get(CommunityPost, post.id)
+        own_board = board.community_id if board else None
+        private_links = {link.post_id: link.community_id for link in session.exec(select(CommunityPost)).all()}
+        candidates = [p for p in candidates if private_links.get(p.id) == own_board]
         duplicates = ml_engine.find_duplicates(full_text, [(p.id, f"{p.title} {p.description}") for p in candidates])
         post.duplicate_of = json.dumps(duplicates) if duplicates else None
     if changes.get("deadline"):

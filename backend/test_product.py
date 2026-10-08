@@ -74,6 +74,8 @@ def test_society_scope_and_analytics(setup):
         assert client.get(f"/communities/{board['id']}/posts",headers=auth(ids[1])).status_code==200
         assert client.get(f"/communities/{board['id']}/analytics",headers=auth(ids[1])).status_code==403
         assert client.get(f"/communities/{board['id']}/analytics",headers=auth(ids[0])).json()['members']==2
+        public = client.post("/posts", headers=auth(ids[1]), json=valid_post()).json()
+        assert post["id"] not in [hint["post_id"] for hint in public["duplicates"]]
 
 @pytest.mark.parametrize('title,description',[
     ('ગુજરાતી વાંચવામાં મદદ','શનિવારે સાંજે બાળકોને ગુજરાતી વાંચવામાં મદદ કરી શકું છું.'),
@@ -138,3 +140,12 @@ def test_spam_queue_is_admin_only_and_hidden_from_public(setup):
     assert client.patch(f'/admin/posts/{post_id}/spam',headers=auth(ids[0])).status_code==403
     assert client.patch(f'/admin/posts/{post_id}/spam',headers=auth(ids[1])).status_code==200
     assert post_id in [p['id'] for p in client.get('/posts').json()]
+
+
+def test_legacy_phone_updates_invalidate_phone_verification(setup):
+    client,engine,ids,*_=setup
+    with Session(engine) as session:
+        user=session.get(User,ids[0]);user.contact_phone="9876543210";session.add(user)
+        session.add(TrustRecord(user_id=ids[0],phone_verified=True));session.commit()
+    assert client.patch('/auth/contact',headers=auth(ids[0]),json={'contact_phone':'9876543211'}).status_code==200
+    assert client.get('/account/trust',headers=auth(ids[0])).json()['phone'] is False

@@ -112,6 +112,11 @@ def me(user: User = Depends(get_current_user), session: Session = Depends(get_se
 def update_contact(
     data: ContactUpdateIn, user: User = Depends(get_current_user), session: Session = Depends(get_session),
 ):
+    from ..product_models import TrustRecord
+    trust = session.get(TrustRecord, user.id)
+    if trust and user.contact_phone != data.contact_phone:
+        trust.phone_verified = False
+        session.add(trust)
     user.contact_phone = data.contact_phone
     user.contact_visible = data.contact_visible
     session.add(user)
