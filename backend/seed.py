@@ -4,6 +4,7 @@ Populates realistic community data across major Indian states & localities:
 Gujarat, Karnataka, Maharashtra, Delhi NCR, Telangana, Goa, Tamil Nadu, West Bengal.
 """
 import json
+import os
 from datetime import datetime, timedelta, timezone
 from app.database import engine, init_db
 from app.models import (
@@ -13,7 +14,7 @@ from app.models import (
 from app.auth import hash_password
 from sqlmodel import Session, select
 
-PASSWORD = "pass1234"
+PASSWORD = os.environ.get("DEMO_SEED_PASSWORD", "")
 
 DUMMY_USERS = [
     {
@@ -254,6 +255,10 @@ DUMMY_REVIEWS = [
 
 def run_seed():
     """Run the full seed. Safe to call multiple times (idempotent - skips existing records)."""
+    if os.environ.get("APP_ENV") == "production" or os.environ.get("ALLOW_DEMO_SEED") != "true":
+        raise RuntimeError("Demo seeding is disabled. Use ALLOW_DEMO_SEED=true only in an isolated development database.")
+    if len(PASSWORD) < 12:
+        raise RuntimeError("Set a unique DEMO_SEED_PASSWORD of at least 12 characters.")
     init_db()
     print("--- Starting Community Help Hub Seed ---")
     with Session(engine) as session:
@@ -269,22 +274,7 @@ def run_seed():
                 session.refresh(loc)
 
             if existing:
-                # Update credentials & reputation to match rich seed
-                existing.locality_id = loc.id
-                existing.role = u["role"]
-                existing.rating_avg = u["rating_avg"]
-                existing.rating_count = u["rating_count"]
-                existing.credits = u["credits"]
-                existing.contact_phone = u.get("phone")
-                existing.contact_visible = u.get("visible", False)
-                existing.verification_status = (
-                    VerificationStatus.verified if u["verified"] else VerificationStatus.unverified
-                )
-                # Always reset password on seed so login always works
-                existing.hashed_password = hash_password(PASSWORD)
-                session.add(existing)
                 email_to_user[u["email"]] = existing
-                print(f"Updated user: {u['name']} ({u['email']})")
             else:
                 user = User(
                     name=u["name"],
@@ -305,7 +295,7 @@ def run_seed():
                 session.commit()
                 session.refresh(user)
                 email_to_user[u["email"]] = user
-                print(f"Created user: {u['name']} ({u['email']})")
+
 
         session.commit()
 
@@ -359,13 +349,14 @@ def run_seed():
                             created_at=datetime.now(timezone.utc) - timedelta(days=1),
                         )
                         session.add(rating)
-                        print(f"Created review from {rater.name} -> {rated.name}")
+
 
         session.commit()
         print("\n--- Seed Complete ---")
         print(f"Users: {len(DUMMY_USERS)} | Posts: {len(DUMMY_POSTS)} | Reviews: {len(DUMMY_REVIEWS)}")
-        print(f"All demo accounts use password: {PASSWORD}")
+
 
 
 if __name__ == "__main__":
     run_seed()
+

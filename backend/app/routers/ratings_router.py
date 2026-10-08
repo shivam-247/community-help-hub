@@ -1,9 +1,11 @@
 import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from sqlalchemy import update, func
+from sqlalchemy.exc import IntegrityError
 
 from ..database import get_session
-from ..models import Rating, Post, User, PostStatus, ResponseRequest, RequestStatus
+from ..models import Rating, RatingClaim, Post, User, PostStatus, ResponseRequest, RequestStatus
 from ..schemas import RatingIn
 from ..auth import get_current_user
 
@@ -45,18 +47,29 @@ def rate_post(
     if not (1 <= data.stars <= 5):
         raise HTTPException(status_code=400, detail="Stars must be between 1 and 5.")
 
+    existing = session.exec(select(Rating).where(Rating.post_id == post_id, Rating.rater_id == user.id)).first()
+    if existing:
+        raise HTTPException(status_code=409, detail="You already rated this exchange.")
+
+    session.add(RatingClaim(post_id=post_id, rater_id=user.id))
+    try:
+        session.flush()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(status_code=409, detail="You already rated this exchange.")
+
     rating = Rating(
         post_id=post_id, rater_id=user.id, rated_user_id=rated_user_id,
         stars=data.stars, tags=json.dumps(data.tags), comment=data.comment,
     )
     session.add(rating)
 
-    rated_user = session.get(User, rated_user_id)
-    total = rated_user.rating_avg * rated_user.rating_count + data.stars
-    rated_user.rating_count += 1
-    rated_user.rating_avg = round(total / rated_user.rating_count, 2)
-    rated_user.credits += 10  # credits earned for a completed, rated help exchange
-    session.add(rated_user)
+    session.exec(update(User).where(User.id == rated_user_id).values(
+        rating_count=User.rating_count + 1,
+        rating_avg=func.round((User.rating_avg * User.rating_count + data.stars) / (User.rating_count + 1), 2),
+        credits=User.credits + 10,
+    ))
 
     session.commit()
     return {"ok": True}
+

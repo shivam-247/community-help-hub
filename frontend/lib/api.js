@@ -1,24 +1,13 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+const API_BASE = "/api/backend";
 
-function getToken() {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("chh_token");
-}
-
-export function setToken(token) {
-  if (typeof window !== "undefined") localStorage.setItem("chh_token", token);
-}
-
+// Remove credentials left by previous versions; never store new bearer tokens.
 export function clearToken() {
   if (typeof window !== "undefined") localStorage.removeItem("chh_token");
 }
 
 export async function api(path, { method = "GET", body, auth = false } = {}) {
   const headers = { "Content-Type": "application/json" };
-  if (auth) {
-    const token = getToken();
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-  }
+  if (!["GET", "HEAD"].includes(method)) headers["X-CHH-CSRF"] = "1";
   const controller = new AbortController();
   const slowTimer = typeof window !== "undefined" ? setTimeout(() => window.dispatchEvent(new Event("chh-api-slow")), 10000) : null;
   const timeout = setTimeout(() => controller.abort(), 90000);
@@ -26,6 +15,7 @@ export async function api(path, { method = "GET", body, auth = false } = {}) {
   try {
     res = await fetch(`${API_BASE}${path}`, {
     method,
+    credentials: "same-origin",
     headers,
     body: body ? JSON.stringify(body) : undefined,
     signal: controller.signal,
@@ -54,4 +44,5 @@ export async function api(path, { method = "GET", body, auth = false } = {}) {
   return res.json();
 }
 
-export { API_BASE, getToken };
+export { API_BASE };
+

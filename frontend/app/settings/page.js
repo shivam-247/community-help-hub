@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
+import MFASettings from "../../components/MFASettings";
 import Avatar, { AVATAR_LABELS } from "../../components/Avatars";
 import {
   ShieldCheckIcon,
@@ -198,6 +199,7 @@ export default function SettingsPage() {
         {/* Right 2 Cols: Avatar + Privacy & Verification */}
         <div className="md:col-span-2 space-y-6">
           
+          <MFASettings />
           {/* Avatar Selection Card */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
             <div>
@@ -425,3 +427,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

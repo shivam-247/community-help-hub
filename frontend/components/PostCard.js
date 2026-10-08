@@ -43,7 +43,7 @@ export default function PostCard({ post }) {
           {post.image_url && (
             <div className="relative w-full h-36 mb-3 rounded-xl overflow-hidden bg-slate-100 border border-slate-200/60">
               <img
-                src={`${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"}${post.image_url}`}
+                src={`/api/backend${post.image_url}`}
                 alt=""
                 className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
               />
@@ -101,3 +101,4 @@ export default function PostCard({ post }) {
     </Link>
   );
 }
+

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { api, API_BASE, getToken } from "../../lib/api";
+import { api, API_BASE } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { LOCATIONS_DATA, STATES_LIST } from "../../lib/locations";
 import { PlusIcon, SparklesIcon, AlertTriangleIcon, MapPinIcon } from "../../components/Icons";
@@ -103,7 +103,8 @@ export default function CreatePostPage() {
         form.append("file", imageFile);
         const res = await fetch(`${API_BASE}/posts/upload-image`, {
           method: "POST",
-          headers: { Authorization: `Bearer ${getToken()}` },
+          headers: { "X-CHH-CSRF": "1" },
+          credentials: "same-origin",
           body: form,
         });
         if (!res.ok) throw new Error("Photo upload failed. You can still post without it.");
@@ -327,3 +328,4 @@ export default function CreatePostPage() {
     </div>
   );
 }
+

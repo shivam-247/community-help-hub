@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "../../../components/ToastProvider";
@@ -22,7 +22,7 @@ const STATUSES = ["Open", "In Progress", "Resolved"];
 const RATING_TAGS = ["Fast Response", "Generous", "Reliable Neighbor", "Skillful", "Safe & Polite"];
 
 export default function PostDetailPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const auth = useAuth();
   const router = useRouter();
   const notify = useToast();
@@ -218,7 +218,7 @@ export default function PostDetailPage({ params }) {
           {post.image_url && (
             <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/80 max-h-96">
               <img
-                src={`${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"}${post.image_url}`}
+                src={`/api/backend${post.image_url}`}
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -563,3 +563,4 @@ export default function PostDetailPage({ params }) {
     </div>
   );
 }
+

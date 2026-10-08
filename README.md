@@ -77,7 +77,8 @@ python -m venv venv
 venv\Scripts\activate          # Windows
 # source venv/bin/activate     # Mac/Linux
 pip install -r requirements.txt
-python seed.py                 # Seed multi-state demo data
+# Configure JWT_SECRET_KEY in your shell or hosting environment first.
+# Demo seeding is optional and disabled by default; see SECURITY.md.
 uvicorn app.main:app --reload --port 8000
 ```
 API runs at: `http://localhost:8000`  
@@ -94,17 +95,19 @@ App runs at: `http://localhost:3000`
 
 ---
 
-## 👤 Demo Accounts
+## Security and account setup
 
-| Account | Email | Password | Role |
-|---------|-------|----------|------|
-| Shivam Parmar (You) | `shivam@example.com` | `pass1234` | Super Admin |
-| Priya Shah | `priya@example.com` | `pass1234` | Admin |
-| All others | `{name}@example.com` | `pass1234` | Verified User |
+Read [SECURITY.md](SECURITY.md) before deploying. Configure backend `JWT_SECRET_KEY` and
+`MFA_ENCRYPTION_KEY`, frontend `API_BASE_URL` and `APP_ORIGIN`, and HTTPS hosting.
+Browser authentication uses an HttpOnly session cookie through the Next.js server.
+Production no longer seeds accounts or accepts the old demo password.
 
-> **Note**: Create your own account at `/signup` or use your real email via the signup form.
-
----
+Bootstrap an administrator locally against the intended database:
+```bash
+cd backend
+python manage_user.py your-email@example.com --role super_admin
+```
+The CLI prompts for a strong password without logging it. Enable authenticator MFA in Settings.
 
 ## 🛠️ Tech Stack
 
@@ -112,9 +115,9 @@ App runs at: `http://localhost:3000`
 |-------|-----------|
 | Backend API | FastAPI + SQLModel |
 | Database | SQLite (file-based, zero-config) |
-| Auth | JWT (python-jose) |
+| Auth | JWT (PyJWT), HttpOnly browser sessions, optional TOTP MFA |
 | ML Engine | scikit-learn / custom heuristics |
-| Frontend | Next.js 14 (App Router) |
+| Frontend | Next.js 16 (App Router) |
 | Styling | Tailwind CSS |
 | Icons | Custom SVG (zero dependencies) |
 | Image Upload | FastAPI static files |
@@ -128,3 +131,4 @@ Posts can be created and filtered across: **Gujarat, Maharashtra, Karnataka, Del
 ---
 
 Built with ❤️ for Indian neighborhoods by Shivam Parmar
+

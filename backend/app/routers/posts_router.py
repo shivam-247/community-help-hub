@@ -1,6 +1,10 @@
 import json
 import os
 import uuid
+import io
+import warnings
+from PIL import Image, UnidentifiedImageError
+from ..settings import MAX_IMAGE_BYTES
 from datetime import timezone
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
@@ -41,13 +45,26 @@ def _to_out(session: Session, post: Post) -> PostOut:
 def upload_image(
     file: UploadFile = File(...), user: User = Depends(get_current_user),
 ):
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in (".png", ".jpg", ".jpeg", ".gif", ".webp"):
-        raise HTTPException(status_code=400, detail="Only image files are allowed.")
-    filename = f"{uuid.uuid4().hex}{ext}"
-    path = os.path.join(UPLOAD_DIR, filename)
-    with open(path, "wb") as f:
-        f.write(file.file.read())
+    content = file.file.read(MAX_IMAGE_BYTES + 1)
+    if len(content) > MAX_IMAGE_BYTES:
+        raise HTTPException(status_code=413, detail="Images must be at most 5 MB.")
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(io.BytesIO(content)) as image:
+                if image.format not in {"PNG", "JPEG", "GIF", "WEBP"}:
+                    raise ValueError("Unsupported image format")
+                if image.width * image.height > 16_000_000:
+                    raise ValueError("Image dimensions too large")
+                image.load()
+                # Re-encode pixels: discard scripts, metadata, and extra frames.
+                clean = image.convert("RGBA")
+                filename = f"u{user.id}_{uuid.uuid4().hex}.png"
+                clean.save(os.path.join(UPLOAD_DIR, filename), format="PNG")
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombWarning, Image.DecompressionBombError):
+        raise HTTPException(status_code=400, detail="Upload a valid PNG, JPEG, GIF or WebP image up to 16 megapixels.")
+    finally:
+        file.file.close()
     return {"image_url": f"/uploads/{filename}"}
 
 
@@ -95,6 +112,8 @@ def create_post(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    if data.image_url and (not data.image_url.startswith(f"/uploads/u{user.id}_") or not os.path.isfile(os.path.join(UPLOAD_DIR, os.path.basename(data.image_url)))):
+        raise HTTPException(status_code=403, detail="Use an image uploaded by your own account.")
     # Quality & Anti-Gibberish validation for new posts
     is_valid, err_msg = ml_engine.validate_post_quality(data.title, data.description)
     if not is_valid:
@@ -209,3 +228,4 @@ def delete_post(
 def categories():
     from ..models import CATEGORIES
     return CATEGORIES
+

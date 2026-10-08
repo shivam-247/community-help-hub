@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
@@ -22,7 +22,7 @@ const BADGE_TIERS = [
 ];
 
 export default function ProfilePage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const auth = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -338,3 +338,4 @@ export default function ProfilePage({ params }) {
     </div>
   );
 }
+

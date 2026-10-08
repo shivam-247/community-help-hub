@@ -74,6 +74,8 @@ def review_verification(
     v = session.get(Verification, verification_id)
     if not v:
         raise HTTPException(status_code=404, detail="Verification request not found.")
+    if v.user_id == admin.id:
+        raise HTTPException(status_code=403, detail="You cannot review your own verification.")
     if v.status != VerificationStatus.pending:
         raise HTTPException(status_code=400, detail="This request was already reviewed.")
 
@@ -90,3 +92,4 @@ def review_verification(
     session.commit()
     session.refresh(v)
     return _to_out(session, v)
+

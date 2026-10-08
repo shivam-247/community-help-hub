@@ -1,10 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
+from sqlalchemy import func
+from ..models import UserMFA, RevokedToken
+from ..auth import decode_token, oauth2_scheme, password_hasher
+from ..mfa import verify_totp
 
 from ..database import get_session
 from ..models import User, Locality, Role, badge_for_credits
 from ..schemas import SignupIn, LoginIn, TokenOut, UserOut, ContactUpdateIn, AvatarUpdateIn
 from ..auth import hash_password, verify_password, create_access_token, get_current_user
+
+DUMMY_HASH = hash_password("timing-placeholder-not-a-login-credential")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -21,13 +27,13 @@ def get_or_create_locality(session: Session, name: str) -> Locality:
 
 @router.post("/signup", response_model=TokenOut)
 def signup(data: SignupIn, session: Session = Depends(get_session)):
-    existing = session.exec(select(User).where(User.email == data.email)).first()
+    existing = session.exec(select(User).where(func.lower(User.email) == str(data.email).lower())).first()
     if existing:
         raise HTTPException(status_code=400, detail="An account with this email already exists.")
     loc = get_or_create_locality(session, data.locality)
     user = User(
         name=data.name,
-        email=data.email,
+        email=str(data.email).lower(),
         hashed_password=hash_password(data.password),
         locality_id=loc.id,
         role=Role.user,
@@ -41,11 +47,28 @@ def signup(data: SignupIn, session: Session = Depends(get_session)):
 
 @router.post("/login", response_model=TokenOut)
 def login(data: LoginIn, session: Session = Depends(get_session)):
-    user = session.exec(select(User).where(User.email == data.email)).first()
-    if not user or not verify_password(data.password, user.hashed_password):
+    user = session.exec(select(User).where(func.lower(User.email) == str(data.email).lower())).first()
+    valid_password = verify_password(data.password, user.hashed_password if user else DUMMY_HASH)
+    if not user or not valid_password or data.password == "pass1234":
         raise HTTPException(status_code=401, detail="Incorrect email or password.")
-    token = create_access_token({"sub": str(user.id)})
+    mfa = session.get(UserMFA, user.id)
+    if mfa and mfa.enabled and not verify_totp(session, mfa, data.totp_code):
+        raise HTTPException(status_code=401, detail="Incorrect credentials or authenticator code.")
+    if user.hashed_password.startswith("$2") or password_hasher.check_needs_rehash(user.hashed_password):
+        user.hashed_password = hash_password(data.password)
+        session.add(user)
+        session.commit()
+    token = create_access_token({"sub": str(user.id), "mfa_version": mfa.version if mfa and mfa.enabled else None})
     return TokenOut(access_token=token)
+
+
+@router.post("/logout")
+def logout(user: User = Depends(get_current_user), token: str = Depends(oauth2_scheme),
+           session: Session = Depends(get_session)):
+    payload = decode_token(token)
+    session.merge(RevokedToken(jti=payload["jti"], expires_at=payload["exp"]))
+    session.commit()
+    return {"ok": True}
 
 
 @router.get("/me", response_model=UserOut)
@@ -106,4 +129,5 @@ def update_avatar(
         avatar=user.avatar,
         verification_status=user.verification_status,
     )
+
 

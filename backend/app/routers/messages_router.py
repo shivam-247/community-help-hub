@@ -12,8 +12,8 @@ router = APIRouter(prefix="/requests", tags=["messages"])
 
 def _check_participant(session: Session, rr: ResponseRequest, user: User):
     post = session.get(Post, rr.post_id)
-    if getattr(user, "role", None) in (Role.super_admin, Role.admin, "super_admin", "admin"):
-        return
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found.")
     if user.id not in (rr.requester_id, post.owner_id):
         raise HTTPException(status_code=403, detail="You are not part of this conversation.")
 
@@ -59,3 +59,4 @@ def send_message(
         id=msg.id, response_request_id=msg.response_request_id, sender_id=msg.sender_id,
         sender_name=user.name, text=msg.text, created_at=msg.created_at,
     )
+

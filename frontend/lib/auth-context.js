@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { api, setToken, clearToken, getToken } from "./api";
+import { api, clearToken } from "./api";
 
 const AuthContext = createContext(null);
 
@@ -9,12 +9,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
     try {
       const me = await api("/auth/me", { auth: true });
       setUser(me);
@@ -28,28 +22,28 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    clearToken();
     refresh().catch(() => {});
     const expired = () => setUser(null);
     window.addEventListener("chh-auth-expired", expired);
     return () => window.removeEventListener("chh-auth-expired", expired);
   }, [refresh]);
 
-  const login = async (email, password) => {
-    const data = await api("/auth/login", { method: "POST", body: { email, password } });
-    setToken(data.access_token);
+  const login = async (email, password, totp_code) => {
+    await api("/auth/login", { method: "POST", body: { email, password, totp_code: totp_code || null } });
     await refresh();
   };
 
   const signup = async (name, email, password, locality) => {
-    const data = await api("/auth/signup", {
+    await api("/auth/signup", {
       method: "POST",
       body: { name, email, password, locality },
     });
-    setToken(data.access_token);
     await refresh();
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await api("/auth/logout", { method: "POST", auth: true });
     clearToken();
     setUser(null);
   };
@@ -64,3 +58,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

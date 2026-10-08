@@ -1,21 +1,27 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from typing import Annotated, Literal
 
-EmailStr = str  # avoid extra email-validator dependency at runtime
+class InputModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_max_length=10000)
+
+
+ShortText = Annotated[str, Field(min_length=1, max_length=200)]
 from .models import PostType, Priority, PostStatus, RequestStatus, ReportStatus
 
 
-class SignupIn(BaseModel):
-    name: str
+class SignupIn(InputModel):
+    name: ShortText
     email: EmailStr
-    password: str
-    locality: str
+    password: str = Field(min_length=12, max_length=128)
+    locality: ShortText
 
 
-class LoginIn(BaseModel):
+class LoginIn(InputModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=128)
+    totp_code: Optional[str] = Field(default=None, pattern=r"^\d{6}$")
 
 
 class TokenOut(BaseModel):
@@ -39,18 +45,18 @@ class UserOut(BaseModel):
     verification_status: str = "Unverified"
 
 
-class AvatarUpdateIn(BaseModel):
+class AvatarUpdateIn(InputModel):
     avatar: str
 
 
-class UserRoleUpdateIn(BaseModel):
+class UserRoleUpdateIn(InputModel):
     role: str
 
 
-class VerificationSubmitIn(BaseModel):
-    proof_type: str
-    proof_value: str
-    note: Optional[str] = None
+class VerificationSubmitIn(InputModel):
+    proof_type: Literal["Government ID", "Certificate", "Reference"]
+    proof_value: str = Field(min_length=1, max_length=1000)
+    note: Optional[str] = Field(default=None, max_length=2000)
 
 
 class VerificationOut(BaseModel):
@@ -66,24 +72,24 @@ class VerificationOut(BaseModel):
     reviewed_at: Optional[datetime] = None
 
 
-class VerificationReviewIn(BaseModel):
+class VerificationReviewIn(InputModel):
     approve: bool
     reviewer_comment: Optional[str] = None
 
 
-class ContactUpdateIn(BaseModel):
-    contact_phone: Optional[str] = None
+class ContactUpdateIn(InputModel):
+    contact_phone: Optional[str] = Field(default=None, max_length=32)
     contact_visible: bool = False
 
 
-class PostCreateIn(BaseModel):
+class PostCreateIn(InputModel):
     type: PostType
-    title: str
-    description: str
-    locality: str
+    title: ShortText
+    description: str = Field(min_length=1, max_length=10000)
+    locality: ShortText
     priority: Priority = Priority.medium
     deadline: Optional[datetime] = None
-    image_url: Optional[str] = None
+    image_url: Optional[str] = Field(default=None, pattern=r"^/uploads/u[1-9][0-9]*_[0-9a-f]{32}\.png$")
 
 
 class PostOut(BaseModel):
@@ -108,11 +114,11 @@ class PostOut(BaseModel):
     created_at: datetime
 
 
-class StatusUpdateIn(BaseModel):
+class StatusUpdateIn(InputModel):
     status: PostStatus
 
 
-class PostUpdateIn(BaseModel):
+class PostUpdateIn(InputModel):
     model_config = ConfigDict(extra="forbid")
     title: Optional[str] = Field(default=None, min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, min_length=1, max_length=10000)
@@ -121,13 +127,13 @@ class PostUpdateIn(BaseModel):
     status: Optional[PostStatus] = None
 
 
-class ReportUpdateIn(BaseModel):
+class ReportUpdateIn(InputModel):
     model_config = ConfigDict(extra="forbid")
     status: ReportStatus
 
 
-class ResponseRequestIn(BaseModel):
-    message: str
+class ResponseRequestIn(InputModel):
+    message: str = Field(min_length=1, max_length=2000)
 
 
 class ResponseRequestOut(BaseModel):
@@ -148,12 +154,12 @@ class ResponseRequestOut(BaseModel):
     requester_contact: Optional[str] = None
 
 
-class RequestActionIn(BaseModel):
-    action: str  # "accept" | "reject"
+class RequestActionIn(InputModel):
+    action: Literal["accept", "reject"]
 
 
-class MessageIn(BaseModel):
-    text: str
+class MessageIn(InputModel):
+    text: str = Field(min_length=1, max_length=4000)
 
 
 class MessageOut(BaseModel):
@@ -165,11 +171,20 @@ class MessageOut(BaseModel):
     created_at: datetime
 
 
-class RatingIn(BaseModel):
-    stars: int
-    tags: List[str] = []
-    comment: Optional[str] = None
+class RatingIn(InputModel):
+    stars: int = Field(ge=1, le=5)
+    tags: List[Annotated[str, Field(max_length=50)]] = Field(default_factory=list, max_length=10)
+    comment: Optional[str] = Field(default=None, max_length=2000)
 
 
-class ReportIn(BaseModel):
-    reason: str
+class ReportIn(InputModel):
+    reason: str = Field(min_length=1, max_length=2000)
+
+
+
+class MFASetupIn(InputModel):
+    password: str = Field(min_length=1, max_length=128)
+
+
+class MFAConfirmIn(InputModel):
+    code: str = Field(pattern=r"^\d{6}$")

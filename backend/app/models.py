@@ -82,6 +82,26 @@ class User(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
+class UserMFA(SQLModel, table=True):
+    user_id: int = Field(primary_key=True, foreign_key="user.id")
+    encrypted_secret: str
+    enabled: bool = False
+    last_step: int = -1
+    version: str
+    setup_expires_at: int = 0
+
+
+class RevokedToken(SQLModel, table=True):
+    jti: str = Field(primary_key=True)
+    expires_at: int = Field(index=True)
+
+
+class RateLimitBucket(SQLModel, table=True):
+    key: str = Field(primary_key=True)
+    count: int = 0
+    expires_at: int = Field(index=True)
+
+
 def badge_for_credits(credits: int) -> str:
     if credits >= 100:
         return "Community Champion"
@@ -138,6 +158,11 @@ class Rating(SQLModel, table=True):
     tags: str = Field(default="[]")  # JSON list
     comment: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class RatingClaim(SQLModel, table=True):
+    post_id: int = Field(primary_key=True, foreign_key="post.id")
+    rater_id: int = Field(primary_key=True, foreign_key="user.id")
 
 
 class Report(SQLModel, table=True):

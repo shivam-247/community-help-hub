@@ -1,7 +1,7 @@
 """Delete a post and its dependent records in one transaction, without schema changes."""
 from sqlalchemy import delete, func
 from sqlmodel import select
-from .models import Post, ResponseRequest, Message, Rating, Report, User
+from .models import Post, ResponseRequest, Message, Rating, RatingClaim, Report, User
 
 
 def delete_post_records(session, post):
@@ -10,6 +10,7 @@ def delete_post_records(session, post):
     session.exec(delete(Message).where(Message.response_request_id.in_(request_ids)))
     session.exec(delete(ResponseRequest).where(ResponseRequest.post_id == post.id))
     session.exec(delete(Rating).where(Rating.post_id == post.id))
+    session.exec(delete(RatingClaim).where(RatingClaim.post_id == post.id))
     session.exec(delete(Report).where(Report.post_id == post.id))
     session.delete(post)
     session.flush()
@@ -20,3 +21,4 @@ def delete_post_records(session, post):
             user.rating_count = count
             user.rating_avg = round(average or 0, 2)
             session.add(user)
+

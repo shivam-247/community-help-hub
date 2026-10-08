@@ -10,6 +10,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setError("");
     setBusy(true);
     try {
-      await auth.login(email, password);
+      await auth.login(email, password, totpCode);
       const next = new URLSearchParams(window.location.search).get("next");
       router.replace(next && next.startsWith("/") && !next.startsWith("//") && !next.includes("\\") ? next : "/");
     } catch (err) {
@@ -75,6 +76,12 @@ export default function LoginPage() {
             />
           </div>
 
+          <div>
+            <label className="text-xs font-semibold text-slate-600 block mb-1.5">Authenticator code (if enabled)</label>
+            <input inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6}
+              value={totpCode} onChange={(e) => setTotpCode(e.target.value)}
+              className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl" />
+          </div>
           <button
             type="submit"
             disabled={busy}
@@ -95,3 +102,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { use, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
@@ -7,7 +7,7 @@ import { MessageSkeleton } from "../../../components/Skeleton";
 import { SendIcon, AlertTriangleIcon } from "../../../components/Icons";
 
 export default function MessagesPage({ params }) {
-  const { id } = params;
+  const { id } = use(params);
   const auth = useAuth();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -154,3 +154,4 @@ export default function MessagesPage({ params }) {
     </div>
   );
 }
+
