@@ -13,7 +13,6 @@ import {
   SheetClose,
 } from "../../components/ui";
 import { api } from "../../lib/api";
-import { LOCATIONS_DATA, STATES_LIST } from "../../lib/locations";
 import PostCard from "../../components/PostCard";
 import { PostCardSkeleton } from "../../components/Skeleton";
 const TYPES = [
@@ -46,7 +45,6 @@ export default function FeedPage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [state, setState] = useState("");
   const [locality, setLocality] = useState("");
   const [type, setType] = useState("All");
   const [verified, setVerified] = useState(false);
@@ -63,13 +61,13 @@ export default function FeedPage() {
       try {
         const params = new URLSearchParams({ sort });
         if (verified) params.set("verified_only", "true");
-        if (locality || state) params.set("locality", locality || state);
+        if (locality.trim()) params.set("locality", locality.trim());
         if (type !== "All") params.set("type", type);
         if (priority !== "All") params.set("priority", priority);
         if (category !== "All") params.set("category", category);
         if (q.trim()) params.set("q", q.trim());
         let data = await api(
-          community ? `/communities/${community}/posts` : `/posts?${params}`,
+          community ? `/communities/${community}/posts?verified_only=${verified}` : `/posts?${params}`,
           { auth: true },
         );
         if (community)
@@ -79,10 +77,12 @@ export default function FeedPage() {
                 (p.title + p.description)
                   .toLowerCase()
                   .includes(q.toLowerCase())) &&
+              (!locality || p.locality.toLowerCase().includes(locality.toLowerCase())) &&
               (category === "All" || p.category === category) &&
               (type === "All" || p.type === type) &&
               (priority === "All" || p.priority === priority),
           );
+        if (community && sort === "deadline") data.sort((a,b) => (a.deadline == null) - (b.deadline == null) || new Date(a.deadline || 0) - new Date(b.deadline || 0));
         if (active) setPosts(data);
       } catch (e) {
         if (active) setError(e.message);
@@ -95,7 +95,6 @@ export default function FeedPage() {
       clearTimeout(timer);
     };
   }, [
-    state,
     locality,
     type,
     priority,
@@ -107,7 +106,6 @@ export default function FeedPage() {
     verified,
   ]);
   const clear = () => {
-    setState("");
     setLocality("");
     setType("All");
     setPriority("All");
@@ -116,7 +114,6 @@ export default function FeedPage() {
     setVerified(false);
   };
   const filtered =
-    state ||
     locality ||
     type !== "All" ||
     priority !== "All" ||
@@ -225,23 +222,7 @@ export default function FeedPage() {
                 </div>
               </div>
               <div>
-                <label className="filter-label" htmlFor="post-state">
-                  State
-                </label>
-                <select
-                  id="post-state"
-                  value={state}
-                  onChange={(e) => {
-                    setState(e.target.value);
-                    setLocality("");
-                  }}
-                  className="filter-control"
-                >
-                  <option value="">All states</option>
-                  {STATES_LIST.map((s) => (
-                    <option key={s}>{s}</option>
-                  ))}
-                </select>
+                <label className="filter-label" htmlFor="post-area">Area / PIN code</label><Input id="post-area" type="search" value={locality} onChange={e=>setLocality(e.target.value)} placeholder="Gota or 382481"/>
               </div>
             </div>
             <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -257,25 +238,7 @@ export default function FeedPage() {
                   Choose an area and the kind of help you’re looking for.
                 </SheetDescription>
                 <div className="grid grid-cols-1 gap-4 pt-6">
-                  <div>
-                    <label className="filter-label" htmlFor="post-locality">
-                      Locality
-                    </label>
-                    <select
-                      id="post-locality"
-                      value={locality}
-                      disabled={!state}
-                      onChange={(e) => setLocality(e.target.value)}
-                      className="filter-control disabled:opacity-50"
-                    >
-                      <option value="">
-                        {state ? "All localities" : "Choose a state first"}
-                      </option>
-                      {(LOCATIONS_DATA[state] || []).map((l) => (
-                        <option key={l}>{l}</option>
-                      ))}
-                    </select>
-                  </div>
+                  
                   <div>
                     <label className="filter-label" htmlFor="post-type">
                       Post type

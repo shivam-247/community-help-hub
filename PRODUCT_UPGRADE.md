@@ -2,7 +2,7 @@
 
 ## Audit and design
 
-The old account screen mixed security, privacy, avatars and identity review into a long list. Purple avatar artwork and emoji badges distracted from the green brand. Mobile category controls lacked a fade and filter panel. Billing had no entitlements, messages polled, notifications were not stored, and the post validator rejected Indian scripts.
+The old account screen mixed security, privacy, avatars and identity review into a long list. Purple avatar artwork and emoji badges distracted from the green brand. Mobile category controls lacked a fade and filter panel. State names were incorrectly searched as area names; the new area/PIN-code search matches the text stored on posts. Billing had no entitlements, messages polled, notifications were not stored, and the post validator rejected Indian scripts.
 
 The upgrade keeps the existing app, authentication and noticeboard. Radix-backed shadcn-style Card, Tabs, Badge, Progress and Sheet components use semantic CSS variables. Deep green, warm neutral surfaces, Noto Serif headings and Noto Sans body text replace decorative gradients. Hindi and Gujarati use bundled font fallbacks. Light/dark/system mode, keyboard focus, reduced motion and 44px controls are retained.
 
@@ -94,3 +94,7 @@ Manual release checks:
 - Create a society, join with another account, publish a private notice and confirm an outsider cannot see it on any public route.
 - Configure a test SMTP provider, confirm an email code and deliver an opt-in email alert. Do not mark provider delivery as tested merely because a message was queued.
 - Inspect browser console and network errors across all routes. Mobile viewport and assistive technology checks must be completed before declaring the release fully accessibility-verified.
+
+## Release verification
+
+The production landing page and six labelled sample notices were observed in the cloud browser. Desktop pages had no horizontal overflow. The filter Sheet closed with Escape and returned focus to its trigger. Pricing and theme toggles are checked against the deployed UI. Application errors are distinguished from unrelated browser-extension messages. Exact mobile viewport, screen-reader and full WCAG audits remain on the release checklist; they are not claimed as completed.

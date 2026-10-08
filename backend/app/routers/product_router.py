@@ -337,11 +337,15 @@ def review_trust(user_id: int, data: TrustReviewIn, user: User = Depends(get_cur
     return {"ok": True}
 
 @router.get("/communities/{community_id}/posts")
-def community_posts(community_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+def community_posts(community_id: int, verified_only: bool = False, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     board = session.get(Community, community_id)
     if not board or not session.get(CommunityMember, (community_id, user.id)):
         raise HTTPException(404, "Board not found.")
     from .posts_router import _to_out
     links = session.exec(select(CommunityPost).where(CommunityPost.community_id == community_id)).all()
     posts = [session.get(Post, row.post_id) for row in links]
+    if verified_only:
+        if active_plan(session, user.id) == "free":
+            raise HTTPException(403, "Verified-member filters are included with Plus and Society plans.")
+        posts = [p for p in posts if p and session.get(User, p.owner_id).verification_status == "verified"]
     return [_to_out(session, p) for p in sorted((p for p in posts if p and not p.spam_flag), key=lambda p: p.created_at, reverse=True)]

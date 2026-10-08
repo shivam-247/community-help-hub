@@ -54,8 +54,8 @@ export default function PostCard({ post }) {
           {age < 1
             ? "Just posted"
             : age < 24
-              ? `${age} hours ago`
-              : `${Math.floor(age / 24)} days ago`}
+              ? `${age} ${age === 1 ? "hour" : "hours"} ago`
+              : `${Math.floor(age / 24)} ${Math.floor(age / 24) === 1 ? "day" : "days"} ago`}
         </p>
       </div>
       <div className="flex items-center gap-2 border-t border-line pt-4">

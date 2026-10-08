@@ -72,6 +72,7 @@ def test_society_scope_and_analytics(setup):
         assert client.get(f"/communities/{board['id']}/posts",headers=auth(ids[2])).status_code==404
         assert client.post('/communities/join',headers=auth(ids[1]),json={'invite_code':board['invite_code']}).status_code==200
         assert client.get(f"/communities/{board['id']}/posts",headers=auth(ids[1])).status_code==200
+        assert client.get(f"/communities/{board['id']}/posts?verified_only=true",headers=auth(ids[1])).status_code==403
         assert client.get(f"/communities/{board['id']}/analytics",headers=auth(ids[1])).status_code==403
         assert client.get(f"/communities/{board['id']}/analytics",headers=auth(ids[0])).json()['members']==2
         public = client.post("/posts", headers=auth(ids[1]), json=valid_post()).json()
