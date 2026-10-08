@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import BadgeTier from "../../components/BadgeTier";
 import Link from "next/link";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
@@ -51,7 +52,7 @@ export default function InboxPage() {
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-surface border border-line/90 rounded-xl p-8 shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3">
-            📥
+            
           </div>
           <h2 className="font-bold text-ink text-lg mb-1">Log in to view your inbox</h2>
           <p className="text-xs text-ink-muted mb-5">
@@ -153,7 +154,7 @@ export default function InboxPage() {
         incoming.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-              📬
+              
             </div>
             <h3 className="font-bold text-ink text-sm mb-1">No incoming responses yet</h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">
@@ -206,7 +207,7 @@ export default function InboxPage() {
                     </span>
                     <span>·</span>
                     <span className="bg-surface-muted text-ink-soft px-2 py-0.5 rounded-md font-medium text-[10px]">
-                      {r.requester_badge || "Neighbor"}
+                      <BadgeTier tier={r.requester_badge}/>
                     </span>
                   </div>
 
@@ -264,7 +265,7 @@ export default function InboxPage() {
       ) : sent.length === 0 ? (
         <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-            📤
+            
           </div>
           <h3 className="font-bold text-ink text-sm mb-1">No offers sent</h3>
           <p className="text-xs text-ink-muted max-w-sm mx-auto mb-4">

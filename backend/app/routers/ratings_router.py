@@ -67,7 +67,7 @@ def rate_post(
     session.exec(update(User).where(User.id == rated_user_id).values(
         rating_count=User.rating_count + 1,
         rating_avg=func.round((User.rating_avg * User.rating_count + data.stars) / (User.rating_count + 1), 2),
-        credits=User.credits + 10,
+        
     ))
 
     session.commit()

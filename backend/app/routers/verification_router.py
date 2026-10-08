@@ -85,10 +85,10 @@ def review_verification(
     v.reviewer_comment = data.reviewer_comment
     v.reviewed_at = datetime.now(timezone.utc)
     applicant.verification_status = v.status
-    if data.approve:
-        applicant.credits += 15  # bonus credits for completing verification
     session.add(v)
     session.add(applicant)
+    from ..product import notify
+    notify(session, applicant.id, "Community review updated", "Your evidence was " + ("approved." if data.approve else "not approved. Review the feedback in your Trust Center."), "/settings?tab=trust")
     session.commit()
     session.refresh(v)
     return _to_out(session, v)

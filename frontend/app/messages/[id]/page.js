@@ -28,14 +28,21 @@ export default function MessagesPage({ params }) {
     }
   };
 
+  const [connection, setConnection] = useState("Connecting…");
+  const [completion, setCompletion] = useState("");
   useEffect(() => {
-    if (auth?.user) load(true);
-    const interval = setInterval(() => {
-      if (auth?.user) load(false);
-    }, 4000);
-    return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth?.user, id]);
+    if (!auth?.user) return;
+    let cancelled=false, source, last=0;
+    async function connect(){
+      try {const data=await api(`/requests/${id}/messages`,{auth:true}); if(cancelled)return;setMessages(data);setLoading(false);last=data.at(-1)?.id||0;
+        source=new EventSource(`/api/backend/requests/${id}/events?after=${last}`);
+        source.onopen=()=>setConnection("Live");
+        source.onmessage=e=>{try{const m=JSON.parse(e.data);last=m.id;setMessages(rows=>rows.some(x=>x.id===m.id)?rows:[...rows,m]);}catch{setError("A message could not be loaded. Refresh the conversation.")}};
+        source.onerror=()=>setConnection("Reconnecting…");
+      }catch(e){if(!cancelled){setError(e.message);setLoading(false)}}
+    }
+    connect();return()=>{cancelled=true;source?.close()};
+  }, [auth?.user?.id, id]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,12 +86,12 @@ export default function MessagesPage({ params }) {
           </Link>
           <div>
             <h2 className="font-bold text-ink text-sm">Direct Exchange Chat</h2>
-            <p className="text-[11px] text-ink-muted">Encrypted 1-on-1 neighborhood channel</p>
+            <p className="text-[11px] text-ink-muted">Private conversation between exchange participants</p>
           </div>
         </div>
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success-soft px-2.5 py-0.5 rounded-full">
           <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-          Active
+          {connection}
         </span>
       </div>
 
@@ -101,7 +108,7 @@ export default function MessagesPage({ params }) {
           <MessageSkeleton />
         ) : messages.length === 0 ? (
           <div className="m-auto text-center p-6 text-ink-muted">
-            <div className="text-3xl mb-2">👋</div>
+            
             <p className="font-medium text-ink-soft text-sm">Start the conversation</p>
             <p className="text-xs text-ink-muted mt-0.5">Introduce yourself and coordinate details.</p>
           </div>
@@ -122,7 +129,7 @@ export default function MessagesPage({ params }) {
                       : "bg-surface-muted text-ink rounded-tl-xs"
                   }`}
                 >
-                  <p>{m.text}</p>
+                  <p className="break-anywhere">{m.text}</p>
                 </div>
                 <span className="text-[10px] text-ink-muted mt-1 px-1">
                   {isMe ? "You" : m.sender_name}
@@ -134,9 +141,12 @@ export default function MessagesPage({ params }) {
         <div ref={bottomRef} />
       </div>
 
+      <div className="rounded-lg border border-line bg-surface p-4 space-y-3"><p className="text-sm text-ink-muted">Finished helping? Both participants must confirm to close the exchange and earn 10 credits each.</p><button className="min-h-11 rounded-lg border border-line px-4 text-sm hover:bg-brand-soft" onClick={async()=>{try{const result=await api(`/requests/${id}/complete`,{method:"POST",auth:true,body:{}});setCompletion(result.completed?"Exchange completed. Credits awarded once to both participants.":"Your confirmation is saved. Waiting for your neighbour.");await auth.refresh()}catch(e){setError(e.message)}}}>Confirm exchange completed</button>{completion&&<p role="status" className="text-sm text-success">{completion}</p>}</div>
       {/* Input row */}
       <form onSubmit={send} className="flex gap-2">
         <input
+          aria-label="Message to your neighbour"
+          maxLength={4000}
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type a message to your neighbor..."

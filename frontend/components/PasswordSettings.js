@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button, Input, Label } from "@santi020k/lumen-react";
+import { Button, Input, Label } from "./ui";
 import { api } from "../lib/api";
 export default function PasswordSettings() {
   const [current, setCurrent] = useState(""); const [password, setPassword] = useState(""); const [confirm, setConfirm] = useState(""); const [code, setCode] = useState("");

@@ -73,3 +73,15 @@ test("bounds streaming request bodies", async () => {
     () => { throw Error("Should not forward"); });
   assert.equal(response.status, 413);
 });
+
+test("streams private chat events without buffering and forwards resume position", async () => {
+  const req = request({cookie:"session-cookie"});
+  req.headers.set("Last-Event-ID", "42");
+  let options;
+  const stream = new ReadableStream({start(controller){controller.enqueue(new TextEncoder().encode('id: 43\ndata: {"id":43}\n\n'));controller.close();}});
+  const response=await proxyRequest(req,["requests","1","events"],MockResponse,async(_,opts)=>{options=opts;return new Response(stream,{headers:{"Content-Type":"text/event-stream"}})});
+  assert.equal(options.headers.get("Authorization"),"Bearer session-cookie");
+  assert.equal(options.headers.get("Last-Event-ID"),"42");
+  assert.match(await response.text(),/id: 43/);
+  assert.equal(response.headers.get("Content-Type"),"text/event-stream");
+});

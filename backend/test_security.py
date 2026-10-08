@@ -235,7 +235,7 @@ def test_no_repeated_rating_credits(setup):
     assert client.post(f"/posts/{post_id}/rate", headers=auth(ids[1]), json={"stars": 5}).status_code == 200
     assert client.post(f"/posts/{post_id}/rate", headers=auth(ids[1]), json={"stars": 5}).status_code == 409
     with Session(engine) as session:
-        assert session.get(User, ids[0]).credits == 10
+        assert session.get(User, ids[0]).credits == 0  # Ratings cannot mint exchange credits.
 
 
 def test_demo_seed_disabled(setup):

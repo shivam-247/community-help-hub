@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { proxyRequest } from "../../../../lib/proxy.mjs";
 
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 async function handle(request, context) {
   const { path } = await context.params;

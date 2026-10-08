@@ -1,4 +1,10 @@
 import os
+import asyncio
+from contextlib import suppress
+from . import product_models
+from .product import email_worker
+from .routers.product_router import router as product_router
+from .demo import seed_demo
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -18,7 +24,14 @@ from .routers import (auth_router, posts_router, responses_router, messages_rout
 async def lifespan(app):
     init_db()
     provision_admin(database.engine)
-    yield
+    seed_demo(database.engine)
+    worker = asyncio.create_task(email_worker(database.engine))
+    try:
+        yield
+    finally:
+        worker.cancel()
+        with suppress(asyncio.CancelledError):
+            await worker
 
 
 app = FastAPI(title="Community Help Hub API", version="0.2.0", lifespan=lifespan)
@@ -38,6 +51,7 @@ for router in (auth_router.router, posts_router.router, responses_router.router,
     app.include_router(router)
 # Only the unique reporting endpoint is registered; duplicate admin handlers removed.
 app.include_router(reports_router.router)
+app.include_router(product_router)
 
 
 @app.get("/")

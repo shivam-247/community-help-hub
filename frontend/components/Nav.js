@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Button, Icon } from "@santi020k/lumen-react";
+import { Button, Icon } from "./ui";
 import { useAuth } from "../lib/auth-context";
 import { api } from "../lib/api";
 import ThemeControl from "./ThemeControl";
@@ -35,7 +35,9 @@ export default function Nav() {
     return () => { active = false; clearInterval(timer); window.removeEventListener("chh-inbox-updated", poll); };
   }, [user?.id]);
   const logout = async () => { try { await auth.logout(); setOpen(false); setLogoutError(""); } catch { setLogoutError("Could not sign out. Please try again."); } };
-  const links = [{ href: "/", name: "Noticeboard" }, ...(user ? [{ href: "/inbox", name: `Inbox${pendingCount ? ` (${pendingCount})` : ""}` }] : []), { href: "/about", name: "About" }, ...(isAdmin ? [{ href: "/admin", name: "Admin" }] : [])];
+  const [unread, setUnread] = useState(0);
+  useEffect(() => { if (!user) {setUnread(0); return;} let active=true; const load=async()=>{try{const rows=await api("/notifications",{auth:true});if(active)setUnread(rows.filter(n=>!n.read).length)}catch{}};load();const timer=setInterval(load,30000);return()=>{active=false;clearInterval(timer)}},[user?.id]);
+  const links = [{ href: "/noticeboard", name: "Noticeboard" }, { href: "/pricing", name: "Plans" }, ...(user ? [{ href: "/notifications", name: `Updates${unread ? ` (${unread})` : ""}` }, { href: "/inbox", name: `Inbox${pendingCount ? ` (${pendingCount})` : ""}` }] : []),  ...(isAdmin ? [{ href: "/admin", name: "Admin" }] : [])];
   const navLinks = links.map(x => <Link key={x.href} href={x.href} aria-current={(x.href === "/" ? path === "/" : path.startsWith(x.href)) ? "page" : undefined} className="app-link">{x.name}</Link>);
   return <header ref={headerRef} className="app-header sticky top-0 z-40">
     <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-18 flex items-center justify-between gap-2">

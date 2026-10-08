@@ -6,8 +6,10 @@ import { useToast } from "../../../components/ToastProvider";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
 import { PostDetailSkeleton } from "../../../components/Skeleton";
+import BadgeTier from "../../../components/BadgeTier";
 import Avatar from "../../../components/Avatars";
 import {
+  InfoIcon,
   MapPinIcon,
   ClockIcon,
   StarIcon,
@@ -63,7 +65,7 @@ export default function PostDetailPage({ params }) {
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
           <p className="text-sm font-semibold text-danger">{error}</p>
         </div>
-        <Link href="/" className="text-xs font-semibold text-brand hover:text-brand">
+        <Link href="/noticeboard" className="text-xs font-semibold text-brand hover:text-brand">
           &larr; Back to Feed
         </Link>
       </div>
@@ -165,7 +167,7 @@ export default function PostDetailPage({ params }) {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Back button */}
       <Link
-        href="/"
+        href="/noticeboard"
         className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
       >
         &larr; Back to all posts
@@ -261,7 +263,7 @@ export default function PostDetailPage({ params }) {
               )}
               {post.duplicates?.length > 0 && (
                 <div className="bg-warning-soft border border-warning-soft/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-warning">
-                  <span className="text-sm shrink-0">🔁</span>
+                  <InfoIcon className="size-4 shrink-0"/>
                   <div>
                     <span className="font-semibold">Similar post detected:</span>
                     <span className="ml-1">This request matches {post.duplicates.length} other open post(s) nearby.</span>
@@ -398,7 +400,7 @@ export default function PostDetailPage({ params }) {
                   <h4 className="font-bold text-ink group-hover:text-brand transition-colors truncate text-sm">
                     {post.owner_name}
                   </h4>
-                  {(post.owner_badge === "Trusted Helper" || post.owner_badge === "Community Champion") && (
+                  {(post.owner_badge === "Trusted" || post.owner_badge === "Champion") && (
                     <span title="Verified Helper" className="text-success">
                       <ShieldCheckIcon className="w-4 h-4" />
                     </span>
@@ -406,7 +408,7 @@ export default function PostDetailPage({ params }) {
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-0.5">
                   <span className="bg-brand-soft text-brand px-2 py-0.5 rounded-md font-semibold text-[10px]">
-                    {post.owner_badge || "Neighbor"}
+                    <BadgeTier tier={post.owner_badge}/>
                   </span>
                 </div>
               </div>
@@ -491,7 +493,8 @@ export default function PostDetailPage({ params }) {
             ) : (
               <form onSubmit={respond} className="space-y-3">
                 <div>
-                  <h4 className="font-bold text-ink text-sm mb-1">Offer Help / Respond</h4>
+                  <h4 className="font-bold text-ink text-sm mb-1">{post.is_demo ? "Sample notice" : "Offer help / respond"}</h4>
+                  {post.is_demo && <p className="text-sm text-warning mb-3">This sample shows how a notice looks. Create your own post to arrange a real exchange.</p>}
                   <p className="text-xs text-ink-muted mb-2">Send a brief note introducing yourself.</p>
                   <textarea
                     required
@@ -516,7 +519,7 @@ export default function PostDetailPage({ params }) {
 
                 <button
                   type="submit"
-                  disabled={busy}
+                  disabled={busy || post.is_demo}
                   className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-all shadow-xs hover:shadow-line disabled:opacity-60"
                 >
                   <SendIcon className="w-4 h-4" />

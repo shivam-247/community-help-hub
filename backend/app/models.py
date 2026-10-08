@@ -109,11 +109,9 @@ class RateLimitBucket(SQLModel, table=True):
 
 def badge_for_credits(credits: int) -> str:
     if credits >= 100:
-        return "Community Champion"
+        return "Champion"
     if credits >= 50:
-        return "Trusted Helper"
-    if credits >= 20:
-        return "Active Helper"
+        return "Trusted"
     if credits >= 5:
         return "Helper"
     return "Newcomer"

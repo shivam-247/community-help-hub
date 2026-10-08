@@ -3,6 +3,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
+import BadgeTier from "../../../components/BadgeTier";
 import Avatar from "../../../components/Avatars";
 import {
   ShieldCheckIcon,
@@ -16,9 +17,8 @@ import {
 const BADGE_TIERS = [
   { name: "Newcomer", min: 0 },
   { name: "Helper", min: 5 },
-  { name: "Active Helper", min: 20 },
-  { name: "Trusted Helper", min: 50 },
-  { name: "Community Champion", min: 100 },
+  { name: "Trusted", min: 50 },
+  { name: "Champion", min: 100 },
 ];
 
 export default function ProfilePage({ params }) {
@@ -72,7 +72,7 @@ export default function ProfilePage({ params }) {
           <h3 className="font-bold text-sm">User Not Found</h3>
           <p className="text-xs text-danger mt-1">{error || "This profile could not be loaded."}</p>
         </div>
-        <Link href="/" className="text-xs font-semibold text-brand hover:text-brand">
+        <Link href="/noticeboard" className="text-xs font-semibold text-brand hover:text-brand">
           &larr; Return to Community Noticeboard
         </Link>
       </div>
@@ -93,7 +93,7 @@ export default function ProfilePage({ params }) {
       
       {/* Back button */}
       <Link
-        href="/"
+        href="/noticeboard"
         className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
       >
         &larr; Back to all posts
@@ -114,7 +114,7 @@ export default function ProfilePage({ params }) {
                     Super Admin
                   </span>
                 )}
-                {profile.verification_status === "Verified" && !isSuperAdmin && (
+                {profile.verification_status === "verified" && !isSuperAdmin && (
                   <span className="inline-flex items-center gap-1 bg-success-soft text-success border border-success-soft px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
                     <ShieldCheckIcon className="w-3.5 h-3.5 text-success" />
                     Verified Neighbor
@@ -154,7 +154,7 @@ export default function ProfilePage({ params }) {
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
             <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Badge Rank</span>
             <span className="font-bold text-brand text-sm mt-0.5 block">
-              {isSuperAdmin ? "👑 Super Admin" : `🏅 ${profile.badge}`}
+              {isSuperAdmin ? "Super Admin" : <BadgeTier tier={profile.badge}/>}
             </span>
           </div>
 
@@ -188,7 +188,7 @@ export default function ProfilePage({ params }) {
                 {profile.credits} / {nextTier.min} credits to reach <strong>{nextTier.name}</strong>
               </span>
             ) : (
-              <span className="text-success font-bold">Top Tier Achieved 🏆</span>
+              <span className="text-success font-bold">Champion tier achieved</span>
             )}
           </div>
 
@@ -285,7 +285,7 @@ export default function ProfilePage({ params }) {
         profile.reviews.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-              🤝
+              
             </div>
             <h3 className="font-bold text-ink text-sm mb-1">No testimonials yet</h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">

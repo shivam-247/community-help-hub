@@ -84,7 +84,7 @@ class MLEngine:
             return False, "Description is too brief. Please provide at least 4 words (minimum 20 characters) explaining your request."
 
         # 2. Rejects purely numeric or symbol-heavy titles (e.g. '111', '123456')
-        alpha_title = re.sub(r"[^a-zA-Z]", "", clean_title)
+        alpha_title = "".join(c for c in clean_title if c.isalpha())
         if len(alpha_title) < 3:
             return False, "Title must contain meaningful words, not just numbers or symbols."
 
@@ -151,3 +151,4 @@ class MLEngine:
 
 
 ml_engine = MLEngine()
+

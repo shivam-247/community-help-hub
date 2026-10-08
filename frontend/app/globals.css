@@ -1,5 +1,3 @@
-@layer theme, base, lumen.tokens, lumen.base, lumen.components, lumen.glass, components, utilities;
-@import "@santi020k/lumen-react/styles.css";
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
@@ -44,7 +42,7 @@ html[data-theme="dark"] {
   --warning: 38 75% 70%; --warning-soft: 38 30% 16%; --danger: 0 65% 74%; --danger-soft: 0 25% 16%;
 }
 @layer base {
-  body { background: hsl(var(--canvas)); color: hsl(var(--ink)); font-family: Arial, Helvetica, sans-serif; }
+  body { background: hsl(var(--canvas)); color: hsl(var(--ink)); font-family: "Noto Sans", "Noto Sans Devanagari", "Noto Sans Gujarati", Arial, sans-serif; }
   button, a, input, textarea, select { -webkit-tap-highlight-color: transparent; }
   button:not(:disabled), select { cursor: pointer; }
   :focus-visible { outline: 2px solid hsl(var(--brand)); outline-offset: 3px; }
@@ -72,3 +70,13 @@ table { min-width: 560px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* shadcn semantic tokens resolve through the existing green brand palette. */
+:root { --background: var(--canvas); --foreground: var(--ink); --card: var(--surface); --card-foreground: var(--ink); --primary: var(--brand-solid); --primary-foreground: var(--on-brand); --secondary: var(--brand-soft); --secondary-foreground: var(--brand); --muted: var(--surface-muted); --muted-foreground: var(--ink-muted); --border: var(--line); --input: var(--line); --ring: var(--brand); --radius: .5rem; }
+h1,h2,h3 { font-family: "Noto Serif", "Noto Sans Devanagari", "Noto Sans Gujarati", Arial, sans-serif; letter-spacing: -.025em; }
+html, body { max-width:100%; }
+main, section, article { min-width:0; }
+button, summary, .app-link { min-height:44px; }
+button:disabled { cursor:not-allowed; }
+.chip-row { mask-image:linear-gradient(to right,#000 0%,#000 92%,transparent 100%); scrollbar-width:thin; }
+.break-anywhere { overflow-wrap:anywhere; }

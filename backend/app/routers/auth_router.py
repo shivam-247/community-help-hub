@@ -135,7 +135,9 @@ def update_avatar(
 ):
     """Update the logged-in user's avatar selection."""
     valid_avatars = {f"avatar-{i}" for i in range(1, 9)}
-    if data.avatar not in valid_avatars:
+    import os, re
+    owned_photo = bool(re.fullmatch(rf"/uploads/u{user.id}_[0-9a-f]{{32}}\.png", data.avatar) and os.path.isfile(os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", os.path.basename(data.avatar))))
+    if data.avatar not in valid_avatars and data.avatar != "initials" and not owned_photo:
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=f"Invalid avatar. Choose from avatar-1 to avatar-8.")
     user.avatar = data.avatar

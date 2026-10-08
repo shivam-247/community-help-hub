@@ -89,6 +89,8 @@ class ContactUpdateIn(InputModel):
 
 
 class PostCreateIn(InputModel):
+    category: Optional[Literal["Help Requests", "Donations & Giveaways", "Skill Offers", "Community Alerts"]] = None
+    community_id: Optional[int] = Field(default=None, ge=1)
     type: PostType
     title: ShortText
     description: str = Field(min_length=1, max_length=10000)
@@ -99,6 +101,9 @@ class PostCreateIn(InputModel):
 
 
 class PostOut(BaseModel):
+    priority_listing: bool = False
+    is_demo: bool = False
+    community_id: Optional[int] = None
     id: int
     owner_id: int
     owner_name: str

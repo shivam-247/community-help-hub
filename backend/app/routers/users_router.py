@@ -52,6 +52,9 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
         .order_by(Post.created_at.desc())
     ).all()
 
+    from ..product_models import CommunityPost
+    private_ids = set(session.exec(select(CommunityPost.post_id)).all())
+    posts = [p for p in posts if p.id not in private_ids and not p.spam_flag]
     active_posts_data = [
         {
             "id": p.id,
@@ -74,6 +77,8 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
 
     reviews_data = []
     for r in ratings:
+        if r.post_id in private_ids:
+            continue
         rater = session.get(User, r.rater_id)
         rater_name = rater.name if rater else "Neighbor"
         rater_badge = badge_for_credits(rater.credits) if rater else "Newcomer"
@@ -108,3 +113,4 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
         active_posts=active_posts_data,
         reviews=reviews_data,
     )
+

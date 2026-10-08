@@ -7,6 +7,8 @@ from ..models import Message, ResponseRequest, Post, User, RequestStatus, Role
 from ..schemas import MessageIn, MessageOut
 from ..auth import get_current_user
 
+from ..product import notify
+
 router = APIRouter(prefix="/requests", tags=["messages"])
 
 
@@ -53,6 +55,9 @@ def send_message(
         raise HTTPException(status_code=400, detail="Messaging opens only after the request is accepted.")
     msg = Message(response_request_id=request_id, sender_id=user.id, text=data.text)
     session.add(msg)
+    post = session.get(Post, rr.post_id)
+    recipient = rr.requester_id if user.id == post.owner_id else post.owner_id
+    notify(session, recipient, "New private message", f"{user.name} sent you a message about “{post.title}”.", f"/messages/{rr.id}")
     session.commit()
     session.refresh(msg)
     return MessageOut(

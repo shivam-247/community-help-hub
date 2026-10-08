@@ -1,74 +1,225 @@
-"use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button, Icon, Input } from "@santi020k/lumen-react";
-import { api } from "../lib/api";
-import { LOCATIONS_DATA, STATES_LIST } from "../lib/locations";
-import PostCard from "../components/PostCard";
-import { PostCardSkeleton } from "../components/Skeleton";
-const TYPES = ["All", "Need help", "Offer help", "Request item", "Offer service"];
-const CATEGORIES = ["All", "Help Requests", "Donations & Giveaways", "Skill Offers", "Community Alerts"];
-const CATEGORY_ICONS = ["layout-grid", "hand-heart", "gift", "wrench", "megaphone"];
-export default function FeedPage() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [state, setState] = useState("");
-  const [locality, setLocality] = useState("");
-  const [type, setType] = useState("All");
-  const [priority, setPriority] = useState("All");
-  const [category, setCategory] = useState("All");
-  const [q, setQ] = useState("");
-  const [sort, setSort] = useState("newest");
-  const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let active = true;
-    setLoading(true); setError("");
-    const timer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ sort });
-        if (locality || state) params.set("locality", locality || state);
-        if (type !== "All") params.set("type", type);
-        if (priority !== "All") params.set("priority", priority);
-        if (category !== "All") params.set("category", category);
-        if (q.trim()) params.set("q", q.trim());
-        const data = await api(`/posts?${params}`);
-        if (active) setPosts(data);
-      } catch (e) { if (active) setError(e.message); }
-      finally { if (active) setLoading(false); }
-    }, 250);
-    return () => { active = false; clearTimeout(timer); };
-  }, [state, locality, type, priority, category, q, sort, retry]);
-  const clear = () => { setState(""); setLocality(""); setType("All"); setPriority("All"); setCategory("All"); setQ(""); };
-  const filtered = state || locality || type !== "All" || priority !== "All" || category !== "All" || q;
-  return <div className="space-y-8">
-    <section className="border-b border-line pb-8 flex flex-col sm:flex-row gap-6 sm:items-end sm:justify-between">
-      <div className="max-w-xl"><p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">The neighborhood noticeboard</p><h1 className="text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">Good neighbors.<br />A little help goes a long way.</h1><p className="text-sm sm:text-base text-ink-muted mt-4 max-w-lg leading-relaxed">Ask for a hand, share something useful, or offer a skill. Find the everyday help that’s closer than you think.</p></div>
-      <Button asChild className="self-start sm:self-auto product-button shrink-0"><Link href="/create-post"><Icon name="plus" decorative />Create a post</Link></Button>
-    </section>
-    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-8">
-      <section className="min-w-0 space-y-5" aria-label="Neighborhood posts">
-        <div className="flex items-center justify-between gap-3"><h2 className="font-semibold text-lg">Noticeboard</h2><p aria-live="polite" className="text-xs text-ink-muted">{loading ? "Loading posts…" : error ? "Unable to load posts" : `${posts.length} ${posts.length === 1 ? "post" : "posts"}`}</p></div>
-        <div className="flex gap-1.5 overflow-x-auto pb-2" aria-label="Post categories">{CATEGORIES.map((cat, i) => <Button key={cat} variant={category === cat ? "secondary" : "ghost"} size="sm" className="category-button" aria-pressed={category === cat} onClick={() => setCategory(cat)}><Icon name={CATEGORY_ICONS[i]} size="sm" decorative />{cat === "All" ? "All posts" : cat === "Donations & Giveaways" ? "Giveaways" : cat === "Help Requests" ? "Help requests" : cat === "Skill Offers" ? "Skills" : "Alerts"}</Button>)}</div>
-        <div className="border border-line rounded-xl bg-surface p-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] gap-4">
-            <div><label className="filter-label" htmlFor="post-search">Find something</label><div className="relative"><Icon name="search" decorative className="absolute left-3 top-3 text-ink-muted" /><Input id="post-search" type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search for help, items or skills" className="pl-10 w-full" /></div></div>
-            <div><label className="filter-label" htmlFor="post-state">State</label><select id="post-state" value={state} onChange={e => { setState(e.target.value); setLocality(""); }} className="filter-control"><option value="">All states</option>{STATES_LIST.map(s => <option key={s}>{s}</option>)}</select></div>
+import {
+  HandHeart,
+  ArrowRight,
+  MapPin,
+  ShieldCheck,
+  MessageCircle,
+  Check,
+  BookOpen,
+  Wrench,
+} from "lucide-react";
+import { Button, Badge, Card } from "../components/ui";
+const steps = [
+  {
+    icon: MapPin,
+    title: "Start with your area",
+    body: "Choose Gota, Satellite, or your own neighbourhood. Find requests you can actually reach.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Agree on the details",
+    body: "Respond to a post. Once accepted, use a private conversation to arrange a time and a public meeting place.",
+  },
+  {
+    icon: HandHeart,
+    title: "Help, then close the loop",
+    body: "Both neighbours confirm the exchange. Earn community credits and build a reputation for showing up.",
+  },
+];
+const faqs = [
+  [
+    "Does helping involve money?",
+    "No. Requests, giveaways, and skill sharing are free. Optional plans support extra posting and society tools; they never turn an exchange into a sale.",
+  ],
+  [
+    "Can I write in Hindi or Gujarati?",
+    "Yes. Include your area, what you need, and when you can meet, in the language your neighbours use.",
+  ],
+  [
+    "What does verified mean?",
+    "A community administrator has reviewed the member’s submitted evidence. Email and phone checks are shown separately in the Trust Center. Verification is a useful signal, not a guarantee.",
+  ],
+  [
+    "How do society boards work?",
+    "A Society plan lets an administrator create a private board. Members join with an invite code and only members can read its posts.",
+  ],
+  [
+    "What should I avoid sharing?",
+    "Never post an Aadhaar number, passwords, OTPs, or financial details. Use a society reference for verification and arrange exchanges at a common area.",
+  ],
+];
+export default function LandingPage() {
+  return (
+    <div className="space-y-20 sm:space-y-24">
+      <section className="grid md:grid-cols-2 gap-10 items-center pt-4 sm:pt-10">
+        <div className="space-y-6">
+          <Badge variant="outline">
+            <MapPin className="size-3.5" />
+            Made for Indian neighbourhoods
+          </Badge>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.08]">
+            A little help.
+            <br />
+            <span className="text-brand">A closer neighbourhood.</span>
+          </h1>
+          <p className="text-base sm:text-lg text-ink-muted leading-relaxed">
+            The ladder next door. Books someone has outgrown. An hour of help
+            when you need it. Your neighbourhood has more to share than you
+            think.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href="/noticeboard">
+                Explore the noticeboard
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/signup">Join your neighbours</Link>
+            </Button>
           </div>
-          <details><summary className="cursor-pointer text-xs font-medium text-ink-soft min-h-8 flex items-center gap-2"><Icon name="sliders-horizontal" decorative size="sm" />More filters</summary><div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3">
-            <div><label className="filter-label" htmlFor="post-locality">Locality</label><select id="post-locality" value={locality} disabled={!state} onChange={e => setLocality(e.target.value)} className="filter-control disabled:opacity-50"><option value="">{state ? "All localities" : "Choose a state first"}</option>{(LOCATIONS_DATA[state] || []).map(l => <option key={l}>{l}</option>)}</select></div>
-            <div><label className="filter-label" htmlFor="post-type">Post type</label><select id="post-type" value={type} onChange={e => setType(e.target.value)} className="filter-control">{TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
-            <div><label className="filter-label" htmlFor="post-priority">Priority</label><select id="post-priority" value={priority} onChange={e => setPriority(e.target.value)} className="filter-control">{["All", "High", "Medium", "Low"].map(p => <option key={p}>{p}</option>)}</select></div>
-          </div></details>
-          <div className="border-t border-line pt-3 flex flex-wrap items-center justify-between gap-2"><div className="flex items-center gap-2"><label htmlFor="post-sort" className="text-xs text-ink-muted">Sort</label><select id="post-sort" value={sort} onChange={e => setSort(e.target.value)} className="border border-line rounded-lg px-2 text-sm!"><option value="newest">Newest first</option><option value="deadline">By deadline</option></select></div>{filtered && <Button variant="ghost" size="sm" onClick={clear}>Clear filters</Button>}</div>
+          <p className="text-xs text-ink-muted">
+            No buying or selling. Just neighbours helping neighbours.
+          </p>
         </div>
-        {error ? <div role="alert" className="border border-danger/30 bg-danger-soft rounded-xl p-6 space-y-3"><h3 className="font-semibold">We couldn’t load the noticeboard.</h3><p className="text-sm text-ink-soft">{error}</p><Button variant="outline" onClick={() => setRetry(x => x + 1)}>Try again</Button></div> : loading ? <div aria-label="Loading posts" className="grid sm:grid-cols-2 gap-4">{[0, 1, 2, 3].map(i => <PostCardSkeleton key={i} />)}</div> : posts.length ? <div className="grid sm:grid-cols-2 gap-4">{posts.map(p => <PostCard key={p.id} post={p} />)}</div> : <div className="border border-dashed border-line rounded-xl bg-surface p-8 sm:p-12 text-center"><Icon name="messages-square" size="xl" decorative className="text-ink-muted mb-4" /><h3 className="font-semibold text-lg">{filtered ? "No matching posts yet" : "Your neighborhood starts here"}</h3><p className="text-sm text-ink-muted mt-2 mb-6 max-w-sm mx-auto leading-relaxed">{filtered ? "Try another area or clear your filters to see more posts." : "Need a tool, have something to give away, or know a skill? Start the first conversation."}</p><Button asChild={!filtered} variant={filtered ? "outline" : "default"} onClick={filtered ? clear : undefined}>{filtered ? "Clear filters" : <Link href="/create-post"><Icon name="plus" decorative />Create the first post</Link>}</Button></div>}
+        <div className="bg-surface-muted rounded-2xl p-5 sm:p-8 border border-line">
+          <div className="flex justify-between items-center mb-5">
+            <p className="text-sm font-semibold">Around the neighbourhood</p>
+            <span className="text-xs text-ink-muted">Illustration</span>
+          </div>
+          <div className="space-y-3">
+            {[
+              [
+                BookOpen,
+                "Books looking for their next reader",
+                "Giveaway · Gota, 382481",
+              ],
+              [
+                Wrench,
+                "A ladder for a small Sunday repair",
+                "Need help · Satellite, 380015",
+              ],
+              [
+                HandHeart,
+                "ગુજરાતી વાંચવામાં થોડી મદદ",
+                "Skill offer · Your society",
+              ],
+            ].map(([Icon, title, meta]) => (
+              <Card key={title} className="p-4 sm:p-5 flex gap-4">
+                <span className="bg-brand-soft text-brand rounded-lg size-11 shrink-0 flex items-center justify-center">
+                  <Icon className="size-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm leading-relaxed">{title}</p>
+                  <p className="text-xs text-ink-muted mt-1">{meta}</p>
+                </div>
+              </Card>
+            ))}
+          </div>
+          <p className="flex gap-2 items-center text-xs text-ink-muted mt-5">
+            <ShieldCheck className="size-4 text-brand" />
+            Community review. Private conversations.
+          </p>
+        </div>
       </section>
-      <aside className="lg:pt-1 space-y-6">
-        <div className="bg-brand-soft rounded-xl p-5"><Icon name="hand-heart" decorative className="text-brand mb-3" /><h2 className="font-semibold text-sm">A hub built on trust</h2><p className="text-sm text-ink-soft leading-relaxed mt-2">Real people helping nearby. Keep requests clear, agree on the details, and look out for each other.</p><Link href="/about" className="inline-flex items-center gap-2 text-xs font-semibold text-brand mt-4 min-h-8">How the hub works <Icon name="arrow-right" decorative size="sm" /></Link></div>
-        <div className="px-1"><h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-4">Before you post</h2><ol className="space-y-4">{[["Be specific", "Say what you need and when."], ["Keep it local", "Choose the area where you can meet."], ["Close the loop", "Mark the post resolved after the exchange."]].map(([title, description], i) => <li key={title} className="flex gap-3"><span className="text-xs text-ink-muted pt-0.5 tabular-nums">0{i + 1}</span><div><p className="text-sm font-medium">{title}</p><p className="text-xs text-ink-muted leading-relaxed mt-1">{description}</p></div></li>)}</ol></div>
-        <div className="border-t border-line pt-5 px-1"><p className="text-xs text-ink-muted leading-relaxed">For emergencies, contact your local emergency services. Posts here are for community support.</p></div>
-      </aside>
+      <section>
+        <p className="text-xs uppercase tracking-widest text-brand font-semibold">
+          How it works
+        </p>
+        <h2 className="text-3xl font-semibold mt-3 mb-8">
+          Small gestures, real connections.
+        </h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          {steps.map(({ icon: Icon, title, body }, i) => (
+            <div key={title} className="border-t border-line pt-6">
+              <div className="flex items-center justify-between mb-5">
+                <Icon className="size-6 text-brand" />
+                <span className="text-xs tabular-nums text-ink-muted">
+                  0{i + 1}
+                </span>
+              </div>
+              <h3 className="text-lg font-semibold">{title}</h3>
+              <p className="text-sm text-ink-muted leading-relaxed mt-3">
+                {body}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="grid md:grid-cols-2 gap-8 p-6 sm:p-10 bg-brand-soft border border-line rounded-xl">
+        <div>
+          <ShieldCheck className="size-8 text-brand mb-5" />
+          <h2 className="text-3xl font-semibold">
+            Trust grows with every exchange.
+          </h2>
+          <p className="text-sm text-ink-soft leading-relaxed mt-4">
+            Community review, spam filtering, and earned badges help you make an
+            informed choice. Keep personal documents private and meet at your
+            society gate or a common area.
+          </p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/settings?tab=trust">
+              Visit the Trust Center
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
+        <ul className="space-y-5 self-center">
+          {[
+            "Separate email, phone, and community verification steps",
+            "Report a post to the moderation team",
+            "Credits awarded after both people confirm completion",
+            "Contact details shared only with your permission",
+          ].map((s) => (
+            <li key={s} className="flex gap-3 text-sm text-ink-soft">
+              <Check className="size-5 text-brand shrink-0" />
+              {s}
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="text-center max-w-2xl mx-auto">
+        <p className="text-xs uppercase tracking-widest text-brand font-semibold">
+          Plans that keep help accessible
+        </p>
+        <h2 className="text-3xl font-semibold mt-3">
+          Start free. Grow with your community.
+        </h2>
+        <p className="text-sm text-ink-muted leading-relaxed mt-4">
+          Free includes 5 posts a month. Plus adds more posts and alerts.
+          Society gives your residents a shared private board and simple
+          analytics.
+        </p>
+        <div className="flex justify-center flex-wrap gap-4 mt-6">
+          <Badge variant="outline">Free · ₹0</Badge>
+          <Badge>Plus · ₹99/month</Badge>
+          <Badge variant="outline">Society · ₹299/month</Badge>
+        </div>
+        <Button asChild variant="outline" className="mt-6">
+          <Link href="/pricing">
+            Compare plans
+            <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      </section>
+      <section className="max-w-3xl mx-auto">
+        <h2 className="text-3xl font-semibold mb-8">
+          A few things you might be wondering.
+        </h2>
+        <div className="border-t border-line">
+          {faqs.map(([q, a]) => (
+            <details key={q} className="border-b border-line py-2">
+              <summary className="cursor-pointer font-medium text-sm py-3 pr-3">
+                {q}
+              </summary>
+              <p className="text-sm text-ink-muted leading-relaxed pb-5 max-w-2xl">
+                {a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </section>
     </div>
-  </div>;
+  );
 }

@@ -4,7 +4,7 @@ const MAX_BODY = 6 * 1024 * 1024;
 export async function proxyRequest(request, path, ResponseClass, upstreamFetch = fetch) {
   const json = (body, status) => ResponseClass.json(body, { status, headers: { "Cache-Control": "no-store" } });
   if (!Array.isArray(path) || path.some((part) => !/^[a-zA-Z0-9_-]+(?:\.png)?$/.test(part)) ||
-      !["auth", "posts", "requests", "inbox", "users", "admin", "verification", "uploads"].includes(path[0])) {
+      !["auth", "posts", "requests", "inbox", "users", "admin", "verification", "uploads", "plans", "billing", "account", "notifications", "communities"].includes(path[0])) {
     return json({ detail: "Unknown endpoint." }, 404);
   }
   const mutating = !["GET", "HEAD"].includes(request.method);
@@ -29,6 +29,7 @@ export async function proxyRequest(request, path, ResponseClass, upstreamFetch =
     return json({ detail: "API server configuration is unavailable." }, 503);
   }
   const headers = new Headers();
+  if (request.headers.get("last-event-id")) headers.set("Last-Event-ID", request.headers.get("last-event-id"));
   const token = request.cookies.get(COOKIE)?.value;
   if (token) headers.set("Authorization", `Bearer ${token}`);
   if (request.headers.get("content-type")) headers.set("Content-Type", request.headers.get("content-type"));
@@ -63,6 +64,9 @@ export async function proxyRequest(request, path, ResponseClass, upstreamFetch =
     if (upstream.status >= 300 && upstream.status < 400) return json({ detail: "Unexpected API redirect." }, 502);
     if (upstream.status >= 500) return json({ detail: "The API is temporarily unavailable." }, 502);
     const contentType = upstream.headers.get("content-type") || "application/json";
+    if (upstream.ok && contentType.includes("text/event-stream")) {
+      return new ResponseClass(upstream.body, { status: 200, headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no" } });
+    }
     let data = await upstream.arrayBuffer();
     let newToken;
     if (contentType.includes("application/json")) {

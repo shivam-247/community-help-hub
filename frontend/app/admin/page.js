@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
+import TrustReview from "../../components/TrustReview";
+import { Button } from "../../components/ui";
 import Avatar from "../../components/Avatars";
 import { useToast } from "../../components/ToastProvider";
 import {
@@ -230,6 +232,9 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Navigation Tabs */}
+      <Button variant={activeTab === "spam" ? "secondary" : "outline"} onClick={()=>setActiveTab("spam")}>Spam queue ({posts.filter(p=>p.spam_flag).length})</Button>
+      {activeTab === "spam" && !posts.some(p=>p.spam_flag) && <p className="text-sm text-ink-muted p-5 border border-line rounded-lg">No posts awaiting spam review.</p>}
+
       <button onClick={() => setActiveTab("reports")} className={`rounded-xl px-4 py-2 text-sm font-semibold ${activeTab === "reports" ? "bg-surface-strong text-on-brand" : "bg-surface border border-line"}`}>Reports ({reports.filter((report) => report.status === "Open").length} open)</button>
       {activeTab === "reports" && <div className="space-y-3">
         {!reports.length && <p className="rounded-xl border bg-surface p-8 text-center text-ink-muted">No reported posts. Your community queue is clear.</p>}
@@ -367,9 +372,9 @@ export default function AdminDashboardPage() {
       )}
 
       {/* Tab 2: Content Moderation */}
-      {activeTab === "posts" && (
+      {(activeTab === "posts" || activeTab === "spam") && (
         <div className="space-y-3">
-          {posts.map((p) => (
+          {(activeTab === "spam" ? posts.filter(p => p.spam_flag) : posts).map((p) => (
             <div
               key={p.id}
               className="bg-surface border border-line/90 rounded-xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
@@ -388,6 +393,7 @@ export default function AdminDashboardPage() {
                   <span className="text-[10px] font-semibold bg-brand-soft text-brand px-2 py-0.5 rounded-full">
                     {p.category}
                   </span>
+                  {p.spam_flag && <Button variant="outline" onClick={async()=>{try{await api(`/admin/posts/${p.id}/spam`,{method:"PATCH",auth:true});notify("Post approved.");await loadData()}catch(e){setError(e.message)}}}>Approve post</Button>}
                   {p.spam_flag && (
                     <span className="text-[10px] font-bold bg-danger-soft text-danger border border-danger-soft px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                       <AlertTriangleIcon className="w-3 h-3 text-danger" />
@@ -477,9 +483,9 @@ export default function AdminDashboardPage() {
 
                     <td className="p-4">
                       <span className={`px-2 py-0.5 rounded-full font-semibold text-[10px] ${
-                        u.verification_status === "Verified"
+                        u.verification_status === "verified"
                           ? "bg-success-soft text-success border border-success-soft"
-                          : u.verification_status === "Pending"
+                          : u.verification_status === "pending"
                           ? "bg-warning-soft text-warning border border-warning-soft"
                           : "bg-surface-muted text-ink-soft"
                       }`}>
@@ -500,6 +506,7 @@ export default function AdminDashboardPage() {
                     </td>
 
                     <td className="p-4 text-right">
+                      {u.id !== user.id && <TrustReview userId={u.id} onSaved={()=>notify("Trust review saved.")}/>}
                       {isSuperAdmin ? (
                         <select
                           value={u.role}

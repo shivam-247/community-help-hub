@@ -12,6 +12,10 @@ def delete_post_records(session, post):
     session.exec(delete(Rating).where(Rating.post_id == post.id))
     session.exec(delete(RatingClaim).where(RatingClaim.post_id == post.id))
     session.exec(delete(Report).where(Report.post_id == post.id))
+    from .product_models import CommunityPost, DemoPost, CompletionConfirmation
+    session.exec(delete(CommunityPost).where(CommunityPost.post_id == post.id))
+    session.exec(delete(DemoPost).where(DemoPost.post_id == post.id))
+    session.exec(delete(CompletionConfirmation).where(CompletionConfirmation.post_id == post.id))
     session.delete(post)
     session.flush()
     for user_id in set(rated_ids):

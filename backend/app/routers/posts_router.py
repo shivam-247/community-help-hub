@@ -18,6 +18,9 @@ from ..auth import get_current_user, get_current_user_optional, is_admin_or_supe
 from ..ml import ml_engine
 from .auth_router import get_or_create_locality
 
+from ..product import consume_post, active_plan, PLANS, notify
+from ..product_models import CommunityPost, CommunityMember, Community, DemoPost
+
 router = APIRouter(prefix="/posts", tags=["posts"])
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
@@ -27,7 +30,10 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 def _to_out(session: Session, post: Post) -> PostOut:
     owner = session.get(User, post.owner_id)
     loc = session.get(Locality, post.locality_id)
+    board = session.get(CommunityPost, post.id)
     return PostOut(
+        priority_listing=PLANS[active_plan(session, post.owner_id)]["priority"],
+        is_demo=bool(session.get(DemoPost, post.id)), community_id=board.community_id if board else None,
         id=post.id, owner_id=post.owner_id, owner_name=owner.name,
         owner_rating=owner.rating_avg, owner_badge=badge_for_credits(owner.credits),
         owner_avatar=getattr(owner, "avatar", "avatar-1") or "avatar-1",
@@ -75,10 +81,17 @@ def list_posts(
     type: Optional[str] = None,
     priority: Optional[str] = None,
     q: Optional[str] = None,
+    verified_only: bool = False,
+    user: Optional[User] = Depends(get_current_user_optional),
     sort: str = Query("deadline", description="deadline | newest"),
     session: Session = Depends(get_session),
 ):
-    stmt = select(Post)
+    if verified_only and (not user or active_plan(session, user.id) == "free"):
+        raise HTTPException(403, "Verified-member filters are included with Plus and Society plans.")
+    private_ids = session.exec(select(CommunityPost.post_id)).all()
+    stmt = select(Post).where(Post.spam_flag == False)
+    if private_ids:
+        stmt = stmt.where(Post.id.notin_(private_ids))
     if locality:
         # Use substring matching so "Gujarat" matches "Gota, Ahmedabad", etc.
         matching_locs = session.exec(
@@ -96,6 +109,8 @@ def list_posts(
     if priority and priority != "All":
         stmt = stmt.where(Post.priority == priority)
     posts = session.exec(stmt).all()
+    if verified_only:
+        posts = [p for p in posts if session.get(User, p.owner_id).verification_status == "verified"]
     if q:
         ql = q.lower()
         posts = [p for p in posts if ql in p.title.lower() or ql in p.description.lower()]
@@ -103,6 +118,7 @@ def list_posts(
         posts.sort(key=lambda p: p.created_at, reverse=True)
     else:
         posts.sort(key=lambda p: (p.deadline is None, p.deadline))
+    posts.sort(key=lambda p: not PLANS[active_plan(session, p.owner_id)]["priority"])
     return [_to_out(session, p) for p in posts]
 
 
@@ -122,7 +138,7 @@ def create_post(
     loc = get_or_create_locality(session, data.locality)
     full_text = f"{data.title} {data.description}"
 
-    category = ml_engine.predict_category(full_text)
+    category = data.category or ml_engine.predict_category(full_text)
     spam_score, spam_flag = ml_engine.spam_check(full_text)
 
     open_posts = session.exec(
@@ -138,17 +154,29 @@ def create_post(
         duplicate_of=json.dumps(duplicates) if duplicates else None,
         image_url=data.image_url,
     )
+    consume_post(session, user.id)
     session.add(post)
+    session.flush()
+    if data.community_id:
+        board = session.get(Community, data.community_id)
+        if not board or not session.get(CommunityMember, (board.id, user.id)) or active_plan(session, board.owner_id) != "society":
+            raise HTTPException(403, "Join an active society board before posting there.")
+        session.add(CommunityPost(post_id=post.id, community_id=board.id))
     session.commit()
     session.refresh(post)
     return _to_out(session, post)
 
 
 @router.get("/{post_id}", response_model=PostOut)
-def get_post(post_id: int, session: Session = Depends(get_session)):
+def get_post(post_id: int, session: Session = Depends(get_session), user: Optional[User] = Depends(get_current_user_optional)):
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
+    board = session.get(CommunityPost, post.id)
+    if board and (not user or not session.get(CommunityMember, (board.community_id, user.id))):
+        raise HTTPException(404, "Post not found.")
+    if post.spam_flag and (not user or (user.id != post.owner_id and not is_admin_or_super(user))):
+        raise HTTPException(404, "Post not found.")
     return _to_out(session, post)
 
 
@@ -166,6 +194,11 @@ def update_status(
     session.add(post)
     session.commit()
     session.refresh(post)
+    board = session.get(CommunityPost, post.id)
+    if board and (not user or not session.get(CommunityMember, (board.community_id, user.id))):
+        raise HTTPException(404, "Post not found.")
+    if post.spam_flag and (not user or (user.id != post.owner_id and not is_admin_or_super(user))):
+        raise HTTPException(404, "Post not found.")
     return _to_out(session, post)
 
 

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Icon } from "@santi020k/lumen-react";
+import { Icon } from "./ui";
 
 
 export default function ThemeControl() {
