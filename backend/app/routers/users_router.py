@@ -22,6 +22,7 @@ class ReviewOut(BaseModel):
 
 
 class UserProfileOut(BaseModel):
+    is_demo: bool = False
     id: int
     name: str
     locality: Optional[str] = None
@@ -99,6 +100,7 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
         )
 
     return UserProfileOut(
+        is_demo=target_user.email in {f"sample-{i}@example.invalid" for i in range(6)},
         id=target_user.id,
         name=target_user.name,
         locality=loc.name if loc else "Neighborhood",

@@ -93,7 +93,7 @@ def test_logout_revokes_token(setup):
 
 def test_signup_validation_and_no_input_echo(setup):
     client, *_ = setup
-    body = {"name": "New User", "email": "new@example.com", "password": "tiny-secret", "locality": "Gota"}
+    body = {"name": "New User", "email": "new@example.com", "password": "tiny-secret", "locality": "Gota", "privacy_consent": True, "terms_accepted": True, "adult_confirmed": True, "policy_version": "2026-10-10"}
     response = client.post("/auth/signup", json=body)
     assert response.status_code == 422 and "tiny-secret" not in response.text
     body.update(password="secure-password-123", role="super_admin")

@@ -89,5 +89,13 @@ class CommunityPost(SQLModel, table=True):
     post_id: int = Field(primary_key=True, foreign_key="post.id")
     community_id: int = Field(foreign_key="community.id", index=True)
 
+class AccountConsent(SQLModel, table=True):
+    user_id: int = Field(primary_key=True, foreign_key="user.id")
+    policy_version: str
+    privacy_consent: bool
+    terms_accepted: bool
+    adult_confirmed: bool
+    accepted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
 class DemoPost(SQLModel, table=True):
     post_id: int = Field(primary_key=True, foreign_key="post.id")

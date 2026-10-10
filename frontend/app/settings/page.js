@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useAuth } from "../../lib/auth-context";
 import Avatar from "../../components/Avatars";
 import BadgeTier from "../../components/BadgeTier";
@@ -45,6 +46,7 @@ export default function SettingsPage() {
           Manage your profile, privacy, and neighbourhood reputation.
         </p>
       </header>
+      <section aria-labelledby="privacy-options" className="border border-line rounded-xl p-5 space-y-3"><h2 id="privacy-options" className="text-lg font-semibold">Your information and choices</h2><p className="text-sm text-ink-muted">Phone and photo are optional. Edit your profile or turn off phone sharing here; optional email alerts can be disabled under Notifications. To request a copy, correction, deletion, consent withdrawal or nomination assistance, <a className="underline" href="mailto:parmarshivam247@gmail.com?subject=Community%20Help%20Hub%20privacy%20request">email the project maintainer</a> from your account email. Requests are handled manually. Do not send passwords or identity documents.</p><Link className="underline min-h-11 inline-flex items-center" href="/privacy">Read how we use your information</Link></section>
       <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
         <aside>
           <Card>

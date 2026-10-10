@@ -19,10 +19,10 @@ export default function RootLayout({ children }) {
       <a className="skip-link" href="#main-content">Skip to content</a>
       <AuthProvider><ToastProvider>
         <Nav />
-        <main id="main-content" className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10"><RouteGuard>{children}</RouteGuard></main>
+        <main tabIndex={-1} id="main-content" className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-10"><RouteGuard>{children}</RouteGuard></main>
         <footer className="border-t border-line mt-8"><div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between text-xs text-ink-muted">
           <p>Community Help Hub · A little closer to your neighbors.</p>
-          <nav aria-label="Footer" className="flex flex-wrap gap-3"><Link className="min-h-11 inline-flex items-center" href="/about">About the hub</Link><Link className="min-h-11 inline-flex items-center" href="/settings">Account &amp; safety</Link><Link className="min-h-11 inline-flex items-center" href="/pricing">Plans</Link></nav>
+          <nav aria-label="Footer" className="flex flex-wrap gap-3"><Link className="min-h-11 inline-flex items-center" href="/about">About the hub</Link><Link className="min-h-11 inline-flex items-center" href="/settings">Account &amp; safety</Link><Link className="min-h-11 inline-flex items-center" href="/pricing">Plans</Link><Link className="min-h-11 inline-flex items-center underline" href="/privacy">Privacy</Link><Link className="min-h-11 inline-flex items-center underline" href="/terms">Terms</Link><Link className="min-h-11 inline-flex items-center underline" href="/cookies">Cookies</Link><Link className="min-h-11 inline-flex items-center underline" href="/refunds">Refunds</Link><Link className="min-h-11 inline-flex items-center underline" href="/contact">Contact</Link><Link className="min-h-11 inline-flex items-center underline" href="/accessibility">Accessibility</Link></nav>
         </div></footer>
       </ToastProvider></AuthProvider>
     </body>

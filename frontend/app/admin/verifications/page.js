@@ -147,16 +147,17 @@ export default function AdminVerificationsPage() {
               {/* Comment and actions */}
               <div className="pt-2 border-t border-line flex flex-col sm:flex-row items-center gap-3">
                 <input
+                  aria-label={`Reviewer feedback for ${v.user_name}`}
                   placeholder="Reviewer feedback or notes (optional)..."
                   value={comments[v.id] || ""}
                   onChange={(e) => setComments({ ...comments, [v.id]: e.target.value })}
-                  className="w-full sm:flex-1 px-3 py-1.5 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand"
+                  className="w-full sm:flex-1 px-3 py-1.5 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus-visible:outline-brand focus:ring-2 focus:ring-brand"
                 />
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     disabled={busyId === v.id}
                     onClick={() => act(v.id, true)}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-4 py-1.5 text-xs font-semibold bg-success hover:bg-success text-on-brand rounded-xl shadow-xs transition-colors disabled:opacity-60"
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-4 py-1.5 text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand rounded-xl shadow-xs transition-colors disabled:opacity-60"
                   >
                     <CheckIcon className="w-3.5 h-3.5" />
                     <span>Approve</span>

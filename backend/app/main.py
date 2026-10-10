@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from .routers.uploads_router import router as uploads_router
 from . import database
 from .database import init_db
 from .bootstrap import provision_admin
@@ -45,7 +45,7 @@ app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=Fals
 app.add_middleware(SecurityMiddleware)
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
+app.include_router(uploads_router)
 for router in (auth_router.router, posts_router.router, responses_router.router, messages_router.router,
                ratings_router.router, verification_router.router, users_router.router, admin_router.router, mfa_router):
     app.include_router(router)

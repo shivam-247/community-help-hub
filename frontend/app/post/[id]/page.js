@@ -221,7 +221,7 @@ export default function PostDetailPage({ params }) {
             <div className="rounded-xl overflow-hidden bg-surface-muted border border-line/80 max-h-96">
               <img
                 src={`/api/backend${post.image_url}`}
-                alt=""
+                alt={`Photo accompanying ${post.title}`}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -287,7 +287,7 @@ export default function PostDetailPage({ params }) {
                 <form onSubmit={submitRating} className="space-y-4">
                   {/* Star selector */}
                   <div>
-                    <label className="text-xs font-semibold text-ink-soft block mb-2">Your Rating</label>
+                    <p id="rating-label" className="text-xs font-semibold text-ink-soft block mb-2">Your rating</p>
                     <div className="flex items-center gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -295,8 +295,10 @@ export default function PostDetailPage({ params }) {
                           type="button"
                           onMouseEnter={() => setRatingHover(star)}
                           onMouseLeave={() => setRatingHover(0)}
+                          aria-label={`Rate ${star} out of 5 stars`}
+                          aria-pressed={ratingStars === star}
                           onClick={() => setRatingStars(star)}
-                          className="transition-transform hover:scale-125 focus:outline-none"
+                          className="min-w-11 transition-transform hover:scale-110"
                         >
                           <StarIcon
                             className={`w-7 h-7 transition-colors ${
@@ -317,12 +319,13 @@ export default function PostDetailPage({ params }) {
 
                   {/* Tag pills */}
                   <div>
-                    <label className="text-xs font-semibold text-ink-soft block mb-2">Quick Tags (optional)</label>
+                    <p className="text-xs font-semibold text-ink-soft block mb-2">Quick tags (optional)</p>
                     <div className="flex flex-wrap gap-2">
                       {RATING_TAGS.map((tag) => (
                         <button
                           key={tag}
                           type="button"
+                          aria-pressed={ratingTags.includes(tag)}
                           onClick={() => toggleTag(tag)}
                           className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
                             ratingTags.includes(tag)
@@ -338,27 +341,29 @@ export default function PostDetailPage({ params }) {
 
                   {/* Testimonial comment */}
                   <div>
-                    <label className="text-xs font-semibold text-ink-soft block mb-1.5">Testimonial (optional)</label>
+                    <label htmlFor="exchange-review" className="text-xs font-semibold text-ink-soft block mb-1.5">Exchange review (optional, public)</label>
                     <textarea
+                      id="exchange-review"
+                      maxLength={2000}
                       rows={3}
                       value={ratingComment}
                       onChange={(e) => setRatingComment(e.target.value)}
                       placeholder="Share a quick note about this neighbor's helpfulness..."
-                      className="w-full p-3 text-xs bg-surface border border-line rounded-xl focus:outline-none focus:ring-2 focus:ring-warning-soft focus:border-transparent transition-all"
+                      className="w-full p-3 text-xs bg-surface border border-line rounded-xl focus-visible:outline-brand focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                     />
                   </div>
 
                   {ratingError && (
-                    <p className="text-xs text-danger font-medium">{ratingError}</p>
+                    <p role="alert" className="text-xs text-danger font-medium">{ratingError}</p>
                   )}
 
                   <button
                     type="submit"
                     disabled={ratingBusy || !ratingStars}
-                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-warning hover:bg-warning text-on-brand transition-all shadow-xs disabled:opacity-60"
+                    className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand transition-all shadow-xs disabled:opacity-60"
                   >
                     <StarIcon className="w-4 h-4" />
-                    {ratingBusy ? "Submitting..." : "Submit Rating & Testimonial"}
+                    {ratingBusy ? "Submitting..." : "Publish exchange review"}
                   </button>
                 </form>
               </div>
@@ -496,13 +501,16 @@ export default function PostDetailPage({ params }) {
                   <h4 className="font-bold text-ink text-sm mb-1">{post.is_demo ? "Sample notice" : "Offer help / respond"}</h4>
                   {post.is_demo && <p className="text-sm text-warning mb-3">This sample shows how a notice looks. Create your own post to arrange a real exchange.</p>}
                   <p className="text-xs text-ink-muted mb-2">Send a brief note introducing yourself.</p>
+                  <label htmlFor="exchange-response" className="text-sm font-medium block mb-2">Message to the post author</label>
                   <textarea
+                    id="exchange-response"
+                    maxLength={2000}
                     required
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="Hi! I live nearby and can help you with this today..."
-                    className="w-full p-3 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
+                    className="w-full p-3 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus-visible:outline-brand focus:ring-2 focus:ring-brand focus:border-transparent transition-all"
                   />
                 </div>
 

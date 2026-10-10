@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 from typing import Annotated, Literal
 
 class InputModel(BaseModel):
@@ -16,6 +16,10 @@ class SignupIn(InputModel):
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
     locality: ShortText
+    privacy_consent: Literal[True]
+    terms_accepted: Literal[True]
+    adult_confirmed: Literal[True]
+    policy_version: Literal["2026-10-10"]
 
 
 class LoginIn(InputModel):
@@ -60,9 +64,19 @@ class UserRoleUpdateIn(InputModel):
 
 
 class VerificationSubmitIn(InputModel):
-    proof_type: Literal["Government ID", "Certificate", "Reference"]
+    proof_type: Literal["Reference"]
     proof_value: str = Field(min_length=1, max_length=1000)
     note: Optional[str] = Field(default=None, max_length=2000)
+
+
+    @field_validator("proof_value", "note")
+    @classmethod
+    def no_identity_numbers(cls, value):
+        import re
+        if value and (re.search(r"(?<!\d)\d{4}[ -]?\d{4}[ -]?\d{4}(?!\d)", value)
+                      or re.search(r"\b[A-Z]{5}\d{4}[A-Z]\b", value, re.I)):
+            raise ValueError("Do not submit government identity numbers. Use a society reference.")
+        return value
 
 
 class VerificationOut(BaseModel):

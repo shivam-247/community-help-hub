@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { policies, POLICY_VERSION, operator } from "../lib/legal";
+export default function PolicyPage({kind}) {
+ const policy=policies[kind];
+ return <article className="max-w-3xl mx-auto space-y-8 break-anywhere"><header className="space-y-4"><h1 className="text-3xl sm:text-4xl font-semibold">{policy.title}</h1><p className="text-sm text-ink-muted">Last updated: {POLICY_VERSION}</p><p className="leading-relaxed">{policy.intro}</p></header><nav aria-label="On this page" className="border border-line rounded-xl p-5"><ul className="space-y-2">{policy.sections.map(([title],i)=><li key={title}><a className="underline inline-flex items-center min-h-11" href={`#section-${i}`}>{title}</a></li>)}</ul></nav>{policy.sections.map(([title,body],i)=><section id={`section-${i}`} key={title} className="space-y-3 scroll-mt-24"><h2 className="text-xl font-semibold">{title}</h2><p className="text-ink-soft leading-relaxed">{body}</p></section>)}<p className="border-t border-line pt-5">Questions? <a className="underline" href={`mailto:${operator.email}`}>Email {operator.name}</a>. <Link className="underline" href="/contact">Operator and contact details</Link>.</p></article>;
+}

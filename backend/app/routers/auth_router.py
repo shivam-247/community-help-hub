@@ -39,7 +39,12 @@ def signup(data: SignupIn, session: Session = Depends(get_session)):
         locality_id=loc.id,
         role=Role.user,
     )
+    from ..product_models import AccountConsent
     session.add(user)
+    session.flush()
+    session.add(AccountConsent(user_id=user.id, policy_version=data.policy_version,
+        privacy_consent=data.privacy_consent, terms_accepted=data.terms_accepted,
+        adult_confirmed=data.adult_confirmed))
     session.commit()
     session.refresh(user)
     token = create_access_token({"sub": str(user.id)})

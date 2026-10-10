@@ -29,7 +29,7 @@ export default function PostCard({ post }) {
       {post.image_url && (
         <img
           src={`/api/backend${post.image_url}`}
-          alt="Item shared by the post author"
+          alt={`Photo accompanying ${post.title}`}
           loading="lazy"
           className="w-full h-40 object-cover rounded-lg"
         />

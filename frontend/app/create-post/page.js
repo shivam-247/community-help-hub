@@ -203,9 +203,9 @@ export default function CreatePostPage() {
                   id={`create-${key}`}
                   placeholder={placeholder}
                   {...register(key)}
-                  aria-invalid={!!errors[key]}
+                  aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined}
                 />
-                <FieldError error={errors[key]} />
+                <FieldError id={`error-${key}`} error={errors[key]} />
               </div>
             ))}
             <div>
@@ -216,9 +216,9 @@ export default function CreatePostPage() {
                 className="filter-control"
                 placeholder="Tell neighbours what you need or can share, when you’re available, and a safe place to meet."
                 {...register("description")}
-                aria-invalid={!!errors.description}
+                aria-invalid={!!errors.description} aria-describedby={errors.description ? "error-description" : undefined}
               />
-              <FieldError error={errors.description} />
+              <FieldError id="error-description" error={errors.description} />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
@@ -258,6 +258,7 @@ export default function CreatePostPage() {
                 permission.
               </p>
             </div>
+            <p className="text-sm text-ink-muted">Publishing shares your notice and profile details with visitors, or members of the selected society board. Photos must be yours or licensed for this use; get permission for identifiable people. Public-notice photos are public; society-notice photos are limited to members and authorised reviewers. Do not post a full home address or identity documents. <Link className="underline" href="/privacy">Read the privacy notice</Link>.</p>
             <ErrorMessage message={error} />
             <Button
               type="submit"

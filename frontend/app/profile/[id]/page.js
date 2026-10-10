@@ -90,7 +90,7 @@ export default function ProfilePage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      
+
       {/* Back button */}
       <Link
         href="/noticeboard"
@@ -102,13 +102,13 @@ export default function ProfilePage({ params }) {
       {/* Hero Profile Card */}
       <div className="bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          
+
           <div className="flex items-center gap-4 sm:gap-5">
             <Avatar id={profile.avatar || "avatar-1"} name={profile.name} size="w-20 h-20" className="shadow-lg ring-4 ring-brand shrink-0" />
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold text-ink leading-tight">{profile.name}</h1>
+                <h1 className="text-2xl font-bold text-ink leading-tight">{profile.name}</h1>{profile.is_demo && <span className="text-sm border border-line rounded-md px-2 py-1">Fictional sample profile</span>}
                 {isSuperAdmin && (
                   <span className="inline-flex items-center gap-1 bg-brand-solid text-on-brand px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs">
                     Super Admin
@@ -150,7 +150,7 @@ export default function ProfilePage({ params }) {
 
         {/* Reputation & Trust Stats Bar — Clean and star-free */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-line select-none">
-          
+
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
             <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Badge Rank</span>
             <span className="font-bold text-brand text-sm mt-0.5 block">
@@ -285,7 +285,7 @@ export default function ProfilePage({ params }) {
         profile.reviews.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-              
+
             </div>
             <h3 className="font-bold text-ink text-sm mb-1">No testimonials yet</h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">

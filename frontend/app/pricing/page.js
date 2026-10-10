@@ -72,6 +72,7 @@ export default function PricingPage() {
             </TabsList>
           </Tabs>
           <Badge>Save about 20% yearly</Badge>
+          <p className="text-sm text-ink-muted">Test checkout only; no money is charged. <Link className="underline" href="/refunds">Refund and cancellation policy</Link> · <Link className="underline" href="/terms">Terms</Link> · <Link className="underline" href="/contact">Operator details</Link></p>
         </div>
       </header>
       {error && (
@@ -101,7 +102,7 @@ export default function PricingPage() {
                   <CardHeader>
                     <div className="flex justify-between gap-2 items-center">
                       <CardTitle>{plan.name}</CardTitle>
-                      {key === "plus" && <Badge>Most popular</Badge>}
+                      {key === "plus" && <Badge>More posting capacity</Badge>}
                     </div>
                     <CardDescription>{descriptions[key]}</CardDescription>
                   </CardHeader>

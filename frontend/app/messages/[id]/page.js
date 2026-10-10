@@ -108,7 +108,7 @@ export default function MessagesPage({ params }) {
           <MessageSkeleton />
         ) : messages.length === 0 ? (
           <div className="m-auto text-center p-6 text-ink-muted">
-            
+
             <p className="font-medium text-ink-soft text-sm">Start the conversation</p>
             <p className="text-xs text-ink-muted mt-0.5">Introduce yourself and coordinate details.</p>
           </div>
@@ -150,7 +150,7 @@ export default function MessagesPage({ params }) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder="Type a message to your neighbor..."
-          className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-surface border border-line rounded-xl focus:outline-hidden focus:ring-2 focus:ring-brand focus:border-transparent transition-all shadow-xs"
+          className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-surface border border-line rounded-xl focus-visible:outline-brand focus:ring-2 focus:ring-brand focus:border-transparent transition-all shadow-xs"
         />
         <button
           type="submit"

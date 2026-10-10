@@ -20,6 +20,13 @@ def seed_demo(engine):
     if os.getenv("DEMO_SEED_ENABLED") != "true":
         return
     with Session(engine) as session:
+        # Old sample credits were illustrative, not earned. Never present them as reputation.
+        for sample in session.exec(select(User).where(User.email.in_([f"sample-{i}@example.invalid" for i in range(len(SAMPLES))]))).all():
+            sample.credits = 0
+            sample.rating_avg = 0
+            sample.rating_count = 0
+            session.add(sample)
+        session.commit()
         if session.exec(select(DemoPost)).first():
             return
         for i, (name, area, title, description, category, kind) in enumerate(SAMPLES):
@@ -29,7 +36,7 @@ def seed_demo(engine):
             if not loc:
                 loc = Locality(name=area); session.add(loc); session.flush()
             if not user:
-                user = User(name=name, email=email, hashed_password=hash_password(secrets.token_urlsafe(48)), locality_id=loc.id, credits=[10,55,100,0,20,10][i], avatar="initials")
+                user = User(name=name, email=email, hashed_password=hash_password(secrets.token_urlsafe(48)), locality_id=loc.id, credits=0, avatar="initials")
                 session.add(user); session.flush()
             post = Post(owner_id=user.id, locality_id=loc.id, type=kind, title=title, description=description, category=category, priority=Priority.medium, created_at=datetime.now(timezone.utc)-timedelta(hours=i*3+1))
             session.add(post); session.flush(); session.add(DemoPost(post_id=post.id))

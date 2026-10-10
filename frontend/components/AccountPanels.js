@@ -28,7 +28,7 @@ import {
   Badge,
 } from "./ui";
 const profileSchema = z.object({
-  name: z.string().trim().min(2, "Enter your full name").max(100),
+  name: z.string().trim().min(2, "Enter your display name").max(100),
   locality: z.string().trim().min(2, "Enter your area").max(100),
   contact_phone: z
     .string()
@@ -39,7 +39,7 @@ const profileSchema = z.object({
   contact_visible: z.boolean(),
 });
 const proofSchema = z.object({
-  proof_type: z.enum(["Reference", "Government ID", "Certificate"]),
+  proof_type: z.enum(["Reference"]),
   proof_value: z
     .string()
     .trim()
@@ -57,9 +57,9 @@ export function ErrorMessage({ message }) {
     </p>
   ) : null;
 }
-export function FieldError({ error }) {
+export function FieldError({ error, id }) {
   return error ? (
-    <p role="alert" className="text-xs text-danger mt-1">
+    <p id={id} role="alert" className="text-xs text-danger mt-1">
       {error.message}
     </p>
   ) : null;
@@ -193,9 +193,9 @@ export function ProfilePanel() {
                 id={`profile-${key}`}
                 {...register(key)}
                 placeholder={placeholder}
-                aria-invalid={!!errors[key]}
+                aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined}
               />
-              <FieldError error={errors[key]} />
+              <FieldError id={`error-${key}`} error={errors[key]} />
             </div>
           ))}
           <label className="flex items-start gap-3 min-h-11 text-sm">
@@ -424,8 +424,7 @@ export function TrustPanel() {
                   {...register("proof_type")}
                 >
                   <option>Reference</option>
-                  <option>Government ID</option>
-                  <option>Certificate</option>
+
                 </select>
               </div>
               <div>
@@ -434,19 +433,22 @@ export function TrustPanel() {
                 </Label>
                 <textarea
                   id="proof-value"
+                  aria-invalid={!!errors.proof_value}
+                  aria-describedby={errors.proof_value ? "error-proof_value" : undefined}
                   className="filter-control"
                   rows={4}
-                  placeholder="Society name, area and reference contact. For example: our society secretary in Gota can confirm that I live here."
+                  placeholder="Society name and area; a society secretary who has agreed to vouch for you. No government ID, full address or unsolicited contact details."
                   {...register("proof_value")}
                 />
-                <FieldError error={errors.proof_value} />
+                <FieldError id="error-proof_value" error={errors.proof_value} />
               </div>
               <div>
                 <Label htmlFor="proof-note">Note to reviewer (optional)</Label>
                 <Input id="proof-note" {...register("note")} />
               </div>
+              <p className="text-sm text-ink-muted">Submitting shares this reference with authorised reviewers for community verification. Get the reference person’s permission first. <Link className="underline" href="/privacy">How we use this information</Link>.</p>
               <Button type="submit" loading={isSubmitting}>
-                Submit for review
+                Submit reference for review
               </Button>
             </form>
           )}

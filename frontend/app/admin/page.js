@@ -343,14 +343,15 @@ export default function AdminDashboardPage() {
                   <input
                     value={verComments[v.id] || ""}
                     onChange={(e) => setVerComments({ ...verComments, [v.id]: e.target.value })}
+                    aria-label={`Feedback for ${v.user_name}`}
                     placeholder="Optional feedback note to applicant..."
-                    className="flex-1 px-3 py-1.5 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus:outline-hidden focus:ring-2 focus:ring-brand transition-all"
+                    className="flex-1 px-3 py-1.5 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus-visible:outline-brand focus:ring-2 focus:ring-brand transition-all"
                   />
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleVerification(v.id, true)}
                       disabled={verBusyId === v.id}
-                      className="inline-flex items-center gap-1 bg-success hover:bg-success text-on-brand text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors shadow-xs disabled:opacity-50"
+                      className="inline-flex items-center gap-1 bg-brand-solid hover:brightness-110 text-on-brand text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors shadow-xs disabled:opacity-50"
                     >
                       <CheckIcon className="w-3.5 h-3.5" />
                       <span>Approve</span>
@@ -509,10 +510,11 @@ export default function AdminDashboardPage() {
                       {u.id !== user.id && <TrustReview userId={u.id} onSaved={()=>notify("Trust review saved.")}/>}
                       {isSuperAdmin ? (
                         <select
+                          aria-label={`Role for ${u.name}`}
                           value={u.role}
                           disabled={userRoleBusyId === u.id || u.id === user.id}
                           onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                          className="px-2 py-1 text-xs bg-surface-muted border border-line rounded-lg focus:outline-hidden focus:ring-1 focus:ring-brand transition-all disabled:opacity-40"
+                          className="px-2 py-1 text-xs bg-surface-muted border border-line rounded-lg focus-visible:outline-brand focus:ring-1 focus:ring-brand transition-all disabled:opacity-40"
                         >
                           <option value="user">User</option>
                           <option value="admin">Admin</option>

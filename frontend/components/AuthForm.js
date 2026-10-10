@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
+import { POLICY_VERSION } from "../lib/legal";
 import {
   Button,
   Input,
@@ -28,6 +29,9 @@ const signupSchema = z.object({
   email: z.email("Enter a valid email address"),
   password: z.string().min(12, "Use at least 12 characters").max(128),
   locality: z.string().trim().min(2, "Enter your area").max(100),
+  privacy_consent: z.literal(true, {error: "Consent to the account purposes to continue"}),
+  terms_accepted: z.literal(true, {error: "Accept the terms to continue"}),
+  adult_confirmed: z.literal(true, {error: "Accounts are for people aged 18 or older"}),
 });
 export default function AuthForm({ signup = false }) {
   const auth = useAuth(),
@@ -41,13 +45,13 @@ export default function AuthForm({ signup = false }) {
   } = useForm({
     resolver: zodResolver(signup ? signupSchema : loginSchema),
     defaultValues: signup
-      ? { name: "", email: "", password: "", locality: "" }
+      ? { name: "", email: "", password: "", locality: "", privacy_consent:false, terms_accepted:false, adult_confirmed:false }
       : { email: "", password: "", totp_code: "" },
   });
   async function submit(v) {
     setError("");
     try {
-      if (signup) await auth.signup(v.name, v.email, v.password, v.locality);
+      if (signup) await auth.signup(v.name, v.email, v.password, v.locality, {privacy_consent:v.privacy_consent, terms_accepted:v.terms_accepted, adult_confirmed:v.adult_confirmed, policy_version:POLICY_VERSION});
       else await auth.login(v.email, v.password, v.totp_code);
       const next = new URLSearchParams(window.location.search).get("next");
       router.replace(
@@ -97,7 +101,7 @@ export default function AuthForm({ signup = false }) {
           <form onSubmit={handleSubmit(submit)} className="space-y-5">
             {(signup
               ? [
-                  ["name", "Full name", "Shivam Parmar"],
+                  ["name", "Display name", "Shivam"],
                   ["email", "Email address", "you@example.com"],
                   ["locality", "Area / society", "Gota, Ahmedabad · 382481"],
                 ]
@@ -117,9 +121,9 @@ export default function AuthForm({ signup = false }) {
                         : "address-level2"
                   }
                   {...register(key)}
-                  aria-invalid={!!errors[key]}
+                  aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined}
                 />
-                <FieldError error={errors[key]} />
+                <FieldError id={`error-${key}`} error={errors[key]} />
               </div>
             ))}
             <div>
@@ -133,7 +137,7 @@ export default function AuthForm({ signup = false }) {
                   type={show ? "text" : "password"}
                   autoComplete={signup ? "new-password" : "current-password"}
                   {...register("password")}
-                  aria-invalid={!!errors.password}
+                  aria-invalid={!!errors.password} aria-describedby={errors.password ? "error-password" : undefined}
                 />
                 <Button
                   type="button"
@@ -150,7 +154,7 @@ export default function AuthForm({ signup = false }) {
                   )}
                 </Button>
               </div>
-              <FieldError error={errors.password} />
+              <FieldError id="error-password" error={errors.password} />
             </div>
             {!signup && (
               <details>
@@ -162,14 +166,21 @@ export default function AuthForm({ signup = false }) {
                 </Label>
                 <Input
                   id="auth-code"
+                  aria-invalid={!!errors.totp_code}
+                  aria-describedby={errors.totp_code ? "error-totp_code" : undefined}
                   inputMode="numeric"
                   maxLength={6}
                   autoComplete="one-time-code"
                   {...register("totp_code")}
                 />
-                <FieldError error={errors.totp_code} />
+                <FieldError id="error-totp_code" error={errors.totp_code} />
               </details>
             )}
+            {signup && <fieldset className="space-y-3 border-t border-line pt-4"><legend className="font-semibold text-sm">Before creating your account</legend><p className="text-sm text-ink-muted">We use your display name, email, password and area to run your account and nearby exchanges. Name and area appear on your profile. Phone and photo are optional; email alerts start off. Use an area, not your full home address. <Link className="underline" href="/privacy">Privacy notice and withdrawal options</Link>.</p>{[
+              ["privacy_consent", <>I consent to use of my information for these account and exchange purposes.</>],
+              ["terms_accepted", <>I agree to the <Link className="underline" href="/terms">Terms and conditions</Link>.</>],
+              ["adult_confirmed", <>I confirm I am at least 18 years old.</>]
+            ].map(([key,label])=><div key={key}><label className="min-h-11 flex items-start gap-3 py-2 text-sm" htmlFor={`auth-${key}`}><input id={`auth-${key}`} type="checkbox" {...register(key)} aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined} aria-describedby={errors[key]?`error-${key}`:undefined} /><span>{label}</span></label>{errors[key]&&<p id={`error-${key}`} role="alert" className="text-danger text-sm">{errors[key].message}</p>}</div>)}</fieldset>}
             <Button loading={isSubmitting} type="submit" className="w-full">
               {signup ? "Create account" : "Sign in"}
             </Button>

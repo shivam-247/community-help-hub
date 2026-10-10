@@ -34,10 +34,10 @@ export function AuthProvider({ children }) {
     await refresh();
   };
 
-  const signup = async (name, email, password, locality) => {
+  const signup = async (name, email, password, locality, consent) => {
     await api("/auth/signup", {
       method: "POST",
-      body: { name, email, password, locality },
+      body: { name, email, password, locality, ...consent },
     });
     await refresh();
   };

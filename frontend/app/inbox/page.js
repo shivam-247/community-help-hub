@@ -52,7 +52,7 @@ export default function InboxPage() {
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-surface border border-line/90 rounded-xl p-8 shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3">
-            
+
           </div>
           <h2 className="font-bold text-ink text-lg mb-1">Log in to view your inbox</h2>
           <p className="text-xs text-ink-muted mb-5">
@@ -87,7 +87,7 @@ export default function InboxPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-ink">Communication Center</h1>
@@ -154,7 +154,7 @@ export default function InboxPage() {
         incoming.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-              
+
             </div>
             <h3 className="font-bold text-ink text-sm mb-1">No incoming responses yet</h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">
@@ -223,7 +223,7 @@ export default function InboxPage() {
                         <button
                           disabled={busyId === r.id}
                           onClick={() => act(r.id, "accept")}
-                          className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-success hover:bg-success text-on-brand transition-colors shadow-xs"
+                          className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand transition-colors shadow-xs"
                         >
                           <CheckIcon className="w-3.5 h-3.5" />
                           <span>Accept Offer</span>
@@ -265,7 +265,7 @@ export default function InboxPage() {
       ) : sent.length === 0 ? (
         <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-            
+
           </div>
           <h3 className="font-bold text-ink text-sm mb-1">No offers sent</h3>
           <p className="text-xs text-ink-muted max-w-sm mx-auto mb-4">

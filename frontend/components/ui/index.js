@@ -28,7 +28,7 @@ export const Button = forwardRef(function Button(
     outline: "border border-line bg-surface hover:bg-surface-muted",
     secondary: "bg-brand-soft text-brand hover:brightness-95",
     ghost: "hover:bg-surface-muted",
-    destructive: "bg-danger text-surface",
+    destructive: "bg-danger-soft text-danger border border-danger",
   };
   return (
     <Comp
