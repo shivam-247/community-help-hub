@@ -51,14 +51,14 @@ const faqs = [
 ];
 export default function LandingPage() {
   return (
-    <div className="space-y-20 sm:space-y-24">
-      <section className="grid md:grid-cols-2 gap-10 items-center pt-4 sm:pt-10">
+    <div className="space-y-20 sm:space-y-24 landing-page">
+      <section className="grid md:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center pt-2 sm:pt-6">
         <div className="space-y-6">
           <Badge variant="outline">
             <MapPin className="size-3.5" />
             Made for Indian neighbourhoods
           </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.08]">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.12] tracking-tight">
             A little help.
             <br />
             <span className="text-brand">A closer neighbourhood.</span>
@@ -79,14 +79,18 @@ export default function LandingPage() {
               <Link href="/signup">Join your neighbours</Link>
             </Button>
           </div>
-          <p className="text-xs text-ink-muted">
-            No buying or selling. Just neighbours helping neighbours.
-          </p>
+          <form action="/noticeboard" method="get" className="pt-5 border-t border-line max-w-md">
+            <label htmlFor="landing-area" className="block text-xs font-semibold mb-2">What’s happening in your area?</label>
+            <div className="flex gap-2">
+              <input id="landing-area" name="locality" type="search" maxLength={120} placeholder="Your area or PIN code" className="flex-1 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm" />
+              <Button type="submit" variant="secondary">Find posts<ArrowRight className="size-4" aria-hidden="true" /></Button>
+            </div>
+          </form>
         </div>
-        <div className="bg-surface-muted rounded-2xl p-5 sm:p-8 border border-line">
+        <div className="home-board rounded-2xl p-5 sm:p-8 border border-line">
           <div className="flex justify-between items-center mb-5">
-            <p className="text-sm font-semibold">Around the neighbourhood</p>
-            <span className="text-xs text-ink-muted">Illustration</span>
+            <p className="text-sm font-semibold">The neighbourhood board</p>
+            <span className="text-xs text-ink-muted">Example posts</span>
           </div>
           <div className="space-y-3">
             {[

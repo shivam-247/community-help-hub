@@ -192,7 +192,7 @@ try {
   );
   await page.screenshot({
     path: join(temporary, "invoice-mobile.png"),
-    fullPage: true,
+    fullPage: false,
   });
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("link", { name: "Download invoice (HTML)" }).click();
@@ -288,6 +288,20 @@ try {
   await page
     .getByRole("button", { name: "Previous page", exact: true })
     .click();
+  phase = "area search and filters";
+  await page.goto(base + "/");
+  await page.getByLabel("What’s happening in your area?").fill("Gota");
+  await page.getByRole("button", {name: "Find posts", exact: true}).click();
+  await page.waitForURL("**/noticeboard?locality=Gota");
+  await page.waitForFunction(() => document.querySelector("#post-area")?.value === "Gota");
+  assert.equal(await page.locator("#post-area").inputValue(), "Gota");
+  await page.locator(".post-card").first().waitFor();
+  await page.getByRole("button", {name: "More filters", exact: true}).click();
+  await page.getByRole("dialog").waitFor();
+  await page.locator("#post-type").selectOption("Offer help");
+  await page.getByRole("button", {name: "Show posts", exact: true}).click();
+  await page.getByRole("dialog").waitFor({state: "hidden"});
+  await page.getByRole("button", {name: "Clear filters", exact: true}).first().click();
   const routes = [
     "/",
     "/noticeboard",
@@ -332,7 +346,17 @@ try {
       }
       await page.locator("main").waitFor();
       await page.locator("main h1").waitFor({ timeout: 15000 });
-      await page.waitForTimeout(1200);
+      // Dev CSS chunks can arrive after streamed HTML, especially on CI.
+      // Wait for usable controls rather than measuring an unstyled first paint.
+      await page.waitForFunction(() => {
+        const header = document.querySelector("header");
+        return header && getComputedStyle(header).position === "sticky" &&
+          [...document.querySelectorAll("button")].every(b => {
+            const rect = b.getBoundingClientRect();
+            return !rect.width || rect.height >= 43;
+          });
+      }, null, { timeout: 15000 });
+      await page.waitForTimeout(500);
       const state = await page.evaluate(() => ({
         width: innerWidth,
         scroll: document.documentElement.scrollWidth,
@@ -378,6 +402,24 @@ try {
         );
         await page.keyboard.press("Escape");
       }
+      if ([360, 1440].includes(width) && ["/", "/noticeboard"].includes(route)) {
+        if (route === "/noticeboard") await page.locator(".post-card").first().waitFor();
+        for (const theme of ["dark", "light"]) {
+          await page.getByRole("button", { name: `Use ${theme} theme`, exact: true }).click();
+          await page.waitForFunction(value => document.documentElement.dataset.theme === value, theme);
+          assert.equal(await page.evaluate(() => localStorage.getItem("chh-theme")), theme);
+          await page.waitForTimeout(200);
+          await page.screenshot({path: join(temporary, `${route === "/" ? "home" : "feed"}-${width}-${theme}.png`), fullPage: false});
+        }
+        if (width === 360) {
+          const dock = page.getByRole("navigation", {name: "Quick navigation"});
+          assert.ok(await dock.isVisible());
+          for (const link of await dock.getByRole("link").all()) {
+            const box = await link.boundingBox();
+            assert.ok(box.width >= 44 && box.height >= 44, "Mobile navigation tap target");
+          }
+        }
+      }
       checks.push({ width, route, overflow: false });
       console.log(`PASS ${phase}`);
     }
@@ -389,6 +431,11 @@ try {
     await page.locator("#password-current").getAttribute("type"),
     "text",
   );
+  phase = "theme persistence";
+  await page.getByRole("button", { name: "Use dark theme", exact: true }).click();
+  await page.reload();
+  await page.waitForFunction(() => document.documentElement.dataset.theme === "dark");
+  assert.equal(await page.evaluate(() => localStorage.getItem("chh-theme")), "dark");
   assert.equal(errors.length, 0, errors.join("\n"));
   writeFileSync(
     join(temporary, "checks.json"),
@@ -401,6 +448,10 @@ try {
           "posting",
           "chat send/history",
           "feed pagination",
+          "area search and filters",
+          "theme switching and persistence",
+          "mobile navigation",
+          "invoice preview and download",
           "password visibility",
         ],
         checks,

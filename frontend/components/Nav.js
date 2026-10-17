@@ -6,6 +6,7 @@ import { Button, Icon } from "./ui";
 import { useAuth } from "../lib/auth-context";
 import { api } from "../lib/api";
 import ThemeControl from "./ThemeControl";
+import Avatar from "./Avatars";
 
 export default function Nav() {
   const auth = useAuth();
@@ -107,21 +108,21 @@ export default function Nav() {
     };
   }, [user?.id]);
   const links = [
-    { href: "/noticeboard", name: "Noticeboard" },
-    { href: "/pricing", name: "Plans" },
+    { href: "/noticeboard", name: "Feed", icon: "layout-grid" },
+    ...(!user ? [{ href: "/pricing", name: "Plans", icon: "layers" }] : []),
     ...(user
       ? [
           {
             href: "/notifications",
-            name: `Updates${unread ? ` (${unread})` : ""}`,
+            name: "Updates", icon: "bell", count: unread,
           },
           {
             href: "/inbox",
-            name: `Inbox${pendingCount ? ` (${pendingCount})` : ""}`,
+            name: "Messages", icon: "message-circle", count: pendingCount,
           },
         ]
       : []),
-    ...(isAdmin ? [{ href: "/admin", name: "Admin" }] : []),
+    
   ];
   const navLinks = links.map((x) => (
     <Link
@@ -132,14 +133,17 @@ export default function Nav() {
           ? "page"
           : undefined
       }
-      className="app-link"
+      className="primary-nav-link"
     >
+      <Icon name={x.icon} decorative size="sm" />
       {x.name}
+      {!!x.count && <span className="nav-count">{x.count > 99 ? "99+" : x.count}</span>}
     </Link>
   ));
   return (
+    <>
     <header ref={headerRef} className="app-header sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 min-h-18 flex items-center justify-between gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 min-h-18 flex items-center justify-between gap-2">
         <Link
           href="/"
           aria-label="Community Help Hub home"
@@ -148,13 +152,13 @@ export default function Nav() {
           <span className="bg-brand-solid text-on-brand w-9 h-9 rounded-lg inline-flex items-center justify-center">
             <Icon name="handshake" decorative />
           </span>
-          <span className="font-semibold text-sm sm:text-base tracking-tight">
-            <span className="hidden sm:inline">Community </span>Help Hub
+          <span className="font-semibold text-sm sm:text-base tracking-tight leading-tight">
+            <span className="block"><span className="hidden sm:inline">Community </span>Help Hub</span><span className="block text-[10px] font-normal tracking-wide text-ink-muted mt-1">Your neighbourhood</span>
           </span>
         </Link>
         <nav
           aria-label="Main navigation"
-          className="hidden lg:flex items-center gap-1"
+          className="hidden lg:flex items-center self-stretch gap-1"
         >
           {navLinks}
         </nav>
@@ -162,8 +166,8 @@ export default function Nav() {
           <ThemeControl />
           {user ? (
             <details ref={accountRef} className="relative hidden lg:block">
-              <summary className="app-link cursor-pointer list-none border border-line">
-                <Icon name="user" decorative />
+              <summary className="account-trigger cursor-pointer list-none">
+                <Avatar id={user.avatar} name={user.name} size="size-8" />
                 <span className="max-w-24 truncate">
                   {user.name.split(" ")[0]}
                 </span>
@@ -181,6 +185,8 @@ export default function Nav() {
                       : "Community member"}
                   </p>
                 </div>
+                <Link className="app-link w-full" href="/pricing">Plans &amp; billing</Link>
+                {isAdmin && <Link className="app-link w-full" href="/admin">Administration</Link>}
                 <Link className="app-link w-full" href={`/profile/${user.id}`}>
                   My profile
                 </Link>
@@ -202,7 +208,7 @@ export default function Nav() {
               </div>
             </details>
           ) : (
-            <Link href="/login" className="app-link hidden lg:inline-flex">
+            <Link href="/login" className="app-link nav-sign-in">
               Sign in
             </Link>
           )}
@@ -214,9 +220,9 @@ export default function Nav() {
           </Button>
           <Button
             ref={mobileTrigger}
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="lg:hidden product-button"
+            className="lg:hidden product-button shrink-0"
             aria-label={open ? "Close navigation" : "Open navigation"}
             aria-expanded={open}
             aria-controls="mobile-navigation"
@@ -235,9 +241,11 @@ export default function Nav() {
         <nav
           id="mobile-navigation"
           aria-label="Mobile navigation"
-          className="lg:hidden border-t border-line px-4 py-3 grid grid-cols-2 gap-1"
+          className="lg:hidden border-t border-line px-4 py-3 grid grid-cols-2 gap-1 bg-surface"
         >
           {navLinks}
+          <Link href="/pricing" className="app-link">Plans &amp; billing</Link>
+          {isAdmin && <Link href="/admin" className="app-link">Administration</Link>}
           {user ? (
             <>
               <Link href="/create-post" className="app-link text-brand">
@@ -272,5 +280,17 @@ export default function Nav() {
         </nav>
       )}
     </header>
+    <nav aria-label="Quick navigation" className="mobile-dock lg:hidden">
+      {[
+        { href: "/noticeboard", name: "Feed", icon: "layout-grid" },
+        { href: "/inbox", name: "Messages", icon: "message-circle", count: user ? pendingCount : 0 },
+        { href: "/create-post", name: "Post", icon: "plus" },
+        { href: user ? "/settings" : "/login", name: user ? "Account" : "Sign in", icon: "user" },
+      ].map(item => <Link key={item.href} href={item.href} aria-current={path.startsWith(item.href) ? "page" : undefined} className="dock-link">
+        <span className="relative"><Icon name={item.icon} decorative />{!!item.count && <span className="dock-dot" aria-label={`${item.count} pending responses`} />}</span>
+        <span>{item.name}</span>
+      </Link>)}
+    </nav>
+    </>
   );
 }

@@ -19,13 +19,21 @@ export default function PostCard({ post }) {
   );
   return (
     <article className="post-card flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <Avatar id={post.owner_avatar} name={post.owner_name} size="size-10" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold truncate">{post.owner_name}</p>
+          <p className="flex items-center gap-1 text-xs text-ink-muted mt-1"><MapPin aria-hidden="true" className="size-3 shrink-0" />{post.locality}</p>
+        </div>
+        <BadgeTier tier={post.owner_badge} />
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <Badge>{post.category}</Badge>
         {post.is_demo && <Badge variant="outline">Sample</Badge>}
         {post.priority_listing && (
           <Badge variant="outline">Priority listing</Badge>
         )}
-        <span className="text-xs text-ink-muted ml-auto">{post.status}</span>
+        <span className="text-xs text-ink-muted ml-auto flex items-center gap-1.5"><span className={`size-1.5 rounded-full ${post.status === "Open" ? "bg-success" : "bg-ink-muted"}`} />{post.status}</span>
       </div>
       {post.image_url && (
         <img
@@ -36,7 +44,7 @@ export default function PostCard({ post }) {
         />
       )}
       <div className="flex-1">
-        <h3 className="text-lg font-semibold leading-snug">
+        <h3 className="text-xl font-semibold leading-snug">
           <Link className="hover:text-brand" href={`/post/${post.id}`}>
             {post.title}
           </Link>
@@ -45,37 +53,18 @@ export default function PostCard({ post }) {
           {post.description}
         </p>
       </div>
-      <div className="space-y-2 text-xs text-ink-muted">
-        <p className="flex gap-1.5 items-center">
-          <MapPin className="size-3.5 shrink-0" />
-          {post.locality}
-        </p>
-        <p className="flex gap-1.5 items-center">
-          <Clock className="size-3.5" />
-          {age < 1
-            ? "Just posted"
-            : age < 24
-              ? `${age} ${age === 1 ? "hour" : "hours"} ago`
-              : `${Math.floor(age / 24)} ${Math.floor(age / 24) === 1 ? "day" : "days"} ago`}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 border-t border-line pt-4">
-        <Avatar id={post.owner_avatar} name={post.owner_name} size="size-10" />
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-medium truncate mb-1.5">
-            {post.owner_name}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            <BadgeTier tier={post.owner_badge} />
-            <MemberBadge plan={post.owner_plan} />
-          </div>
+      <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+          <Clock aria-hidden="true" className="size-3.5" />
+          <span>{age < 1 ? "Just posted" : age < 24 ? `${age}h ago` : `${Math.floor(age / 24)}d ago`}</span>
+          <MemberBadge plan={post.owner_plan} />
         </div>
         <Link
           href={`/post/${post.id}`}
-          className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-brand px-2 rounded-lg hover:bg-brand-soft"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold text-brand px-3 rounded-lg bg-brand-soft hover:brightness-95"
           aria-label={`View ${post.title}`}
         >
-          View
+          View post
           <ArrowUpRight className="size-4" />
         </Link>
       </div>

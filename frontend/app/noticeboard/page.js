@@ -41,7 +41,10 @@ export default function FeedPage() {
   const [community, setCommunity] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => {
-    setCommunity(new URLSearchParams(window.location.search).get("community"));
+    const params = new URLSearchParams(window.location.search);
+    setCommunity(params.get("community"));
+    setLocality(params.get("locality") || "");
+    setQ(params.get("q") || "");
   }, []);
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1),
@@ -138,32 +141,14 @@ export default function FeedPage() {
     verified;
   return (
     <div className="space-y-8">
-      <section className="border-b border-line pb-8 flex flex-col sm:flex-row gap-6 sm:items-end sm:justify-between">
-        <div className="max-w-xl">
-          <p className="text-xs font-semibold tracking-widest uppercase text-brand mb-4">
-            The neighborhood noticeboard
-          </p>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
-            Good neighbors.
-            <br />A little help goes a long way.
-          </h1>
-          <p className="text-sm sm:text-base text-ink-muted mt-4 max-w-lg leading-relaxed">
-            Ask for a hand, share something useful, or offer a skill. Find the
-            everyday help that’s closer than you think.
-          </p>
+      <section className="flex flex-col sm:flex-row gap-5 sm:items-center sm:justify-between">
+        <div>
+          <p className="text-xs text-brand font-semibold mb-2 flex items-center gap-2"><Icon name="map-pin" decorative size="sm" /> Your neighbourhood, connected</p>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">The noticeboard</h1>
+          <p className="text-sm text-ink-muted mt-3">A hand to lend. Something to share. Find it close to home.</p>
         </div>
-        <Button
-          asChild
-          className="self-start sm:self-auto product-button shrink-0"
-        >
-          <Link
-            href={
-              community ? `/create-post?community=${community}` : "/create-post"
-            }
-          >
-            <Icon name="plus" decorative />
-            Create a post
-          </Link>
+        <Button asChild className="self-start sm:self-auto shrink-0">
+          <Link href={community ? `/create-post?community=${community}` : "/create-post"}><Icon name="plus" decorative />Create a post</Link>
         </Button>
       </section>
       {community && (
@@ -171,16 +156,25 @@ export default function FeedPage() {
           Private society board · visible to members only
         </p>
       )}
-      {posts.some((p) => p.is_demo) && (
-        <p className="text-xs text-ink-muted border border-line rounded-lg p-3">
-          Sample posts show how the noticeboard works. They are labelled Sample
-          and do not accept responses.
-        </p>
-      )}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-8">
+      <div className="feed-layout">
+        <aside className="hidden lg:block feed-aside" aria-label="Explore the neighbourhood">
+          <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3">Explore</p>
+          <div className="space-y-1">
+            {CATEGORIES.map((cat, i) => <Button key={cat} variant={category === cat ? "secondary" : "ghost"} className="w-full justify-start text-sm" aria-pressed={category === cat} onClick={() => setCategory(cat)}>
+              <Icon name={CATEGORY_ICONS[i]} decorative size="sm" />{["All posts", "Help requests", "Giveaways", "Skills", "Local alerts"][i]}
+            </Button>)}
+          </div>
+          <div className="border-t border-line mt-6 pt-5 px-3 space-y-1">
+            <p className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-2">Your hub</p>
+            <Link className="app-link" href="/inbox"><Icon name="message-circle" decorative size="sm" />Messages</Link>
+            <Link className="app-link" href="/settings?tab=trust"><Icon name="shield-check" decorative size="sm" />Trust Center</Link>
+            <Link className="app-link" href="/settings?tab=billing"><Icon name="layers" decorative size="sm" />Your plan</Link>
+          </div>
+          <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7">No buying or selling.<br />Just neighbours helping neighbours.</p>
+        </aside>
         <section className="min-w-0 space-y-5" aria-label="Neighborhood posts">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-lg">Noticeboard</h2>
+            <h2 className="font-semibold text-lg">Around you</h2>
             <p aria-live="polite" className="text-xs text-ink-muted">
               {loading
                 ? "Loading posts…"
@@ -190,7 +184,7 @@ export default function FeedPage() {
             </p>
           </div>
           <div
-            className="chip-row flex gap-1.5 overflow-x-auto pb-2"
+            className="chip-row flex gap-1.5 overflow-x-auto pb-2 lg:hidden"
             aria-label="Post categories"
           >
             {CATEGORIES.map((cat, i) => (
@@ -198,7 +192,7 @@ export default function FeedPage() {
                 key={cat}
                 variant={category === cat ? "secondary" : "ghost"}
                 size="sm"
-                className="category-button"
+                className="category-button feed-category"
                 aria-pressed={category === cat}
                 onClick={() => setCategory(cat)}
               >
@@ -215,11 +209,11 @@ export default function FeedPage() {
               </Button>
             ))}
           </div>
-          <div className="border border-line rounded-xl bg-surface p-4 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_180px] gap-4">
+          <div className="feed-controls space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_150px] gap-3">
               <div>
                 <label className="filter-label" htmlFor="post-search">
-                  Find something
+                  Search the noticeboard
                 </label>
                 <div className="relative">
                   <Icon
@@ -232,12 +226,12 @@ export default function FeedPage() {
                     type="search"
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
-                    placeholder="Search for help, items or skills"
+                    placeholder="Books, a spare tool, a helping hand…"
                     className="pl-10 w-full"
                   />
                 </div>
               </div>
-              <div>
+              <div className="hidden sm:block lg:hidden xl:block">
                 <label className="filter-label" htmlFor="post-area">
                   Area / PIN code
                 </label>
@@ -250,6 +244,7 @@ export default function FeedPage() {
                 />
               </div>
             </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
             <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline">
@@ -263,6 +258,10 @@ export default function FeedPage() {
                   Choose an area and the kind of help you’re looking for.
                 </SheetDescription>
                 <div className="grid grid-cols-1 gap-4 pt-6">
+                  <div className="sm:hidden lg:block xl:hidden">
+                    <label className="filter-label" htmlFor="filter-area">Area / PIN code</label>
+                    <Input id="filter-area" type="search" value={locality} onChange={e => setLocality(e.target.value)} placeholder="Gota or 382481" />
+                  </div>
                   <div>
                     <label className="filter-label" htmlFor="post-type">
                       Post type
@@ -307,7 +306,7 @@ export default function FeedPage() {
                 </SheetClose>
               </SheetContent>
             </Sheet>
-            <div className="border-t border-line pt-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-2">
                 <label htmlFor="post-sort" className="text-xs text-ink-muted">
                   Sort
@@ -328,7 +327,9 @@ export default function FeedPage() {
                 </Button>
               )}
             </div>
+            </div>
           </div>
+          {posts.some(p => p.is_demo) && <p className="text-xs text-ink-muted flex items-start gap-2"><Icon name="info" decorative size="sm" className="shrink-0" /> Sample posts are labelled and cannot receive responses.</p>}
           {error ? (
             <div
               role="alert"
@@ -345,7 +346,7 @@ export default function FeedPage() {
           ) : loading ? (
             <div
               aria-label="Loading posts"
-              className="grid sm:grid-cols-2 gap-4"
+              className="grid gap-4"
             >
               {[0, 1, 2, 3].map((i) => (
                 <PostCardSkeleton key={i} />
@@ -353,7 +354,7 @@ export default function FeedPage() {
             </div>
           ) : posts.length ? (
             <div className="space-y-5">
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid gap-4">
                 {posts.map((p) => (
                   <PostCard key={p.id} post={p} />
                 ))}
@@ -420,19 +421,18 @@ export default function FeedPage() {
             </div>
           )}
         </section>
-        <aside className="lg:pt-1 space-y-6">
-          <div className="bg-brand-soft rounded-xl p-5">
+        <aside className="feed-aside space-y-6">
+          <div className="bg-surface border border-line rounded-2xl p-5">
             <Icon name="hand-heart" decorative className="text-brand mb-3" />
-            <h2 className="font-semibold text-sm">A hub built on trust</h2>
+            <h2 className="font-semibold text-sm">Make yourself at home</h2>
             <p className="text-sm text-ink-soft leading-relaxed mt-2">
-              Real people helping nearby. Keep requests clear, agree on the
-              details, and look out for each other.
+              Complete your profile and verification steps before arranging your first exchange.
             </p>
             <Link
-              href="/about"
+              href="/settings?tab=trust"
               className="inline-flex items-center gap-2 text-xs font-semibold text-brand mt-4 min-h-8"
             >
-              How the hub works <Icon name="arrow-right" decorative size="sm" />
+              Open Trust Center <Icon name="arrow-right" decorative size="sm" />
             </Link>
           </div>
           <div className="px-1">
@@ -449,7 +449,7 @@ export default function FeedPage() {
                 ],
               ].map(([title, description], i) => (
                 <li key={title} className="flex gap-3">
-                  <span className="text-xs text-ink-muted pt-0.5 tabular-nums">
+                  <span className="text-xs text-ink-muted pt-0.5 tabular-nums shrink-0 w-5">
                     0{i + 1}
                   </span>
                   <div>

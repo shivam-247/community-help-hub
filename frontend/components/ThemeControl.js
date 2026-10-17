@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Icon } from "./ui";
+import { Moon, Sun, Monitor } from "lucide-react";
 
 
 export default function ThemeControl() {
@@ -19,11 +19,11 @@ export default function ThemeControl() {
     apply(); media.addEventListener("change", apply);
     return () => media.removeEventListener("change", apply);
   }, [preference, ready]);
-  return <label className="flex items-center gap-1 text-ink-muted">
-    <Icon name={preference === "dark" ? "moon" : "sun"} decorative className="hidden sm:inline-flex" />
-    <span className="sr-only">Color theme</span>
-    <select aria-label="Color theme" value={preference} onChange={e => { setPreference(e.target.value); try { localStorage.setItem("chh-theme", e.target.value); } catch {} }} className="rounded-lg border border-line px-2 text-xs! max-w-24">
-      <option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>
-    </select>
-  </label>;
+  return <div className="theme-switch" role="group" aria-label="Color theme">
+    {[["light", Sun], ["system", Monitor], ["dark", Moon]].map(([value, ThemeIcon]) =>
+      <button key={value} type="button" aria-label={`Use ${value} theme`} title={`${value[0].toUpperCase() + value.slice(1)} theme`} aria-pressed={preference === value} onClick={() => { setPreference(value); try { localStorage.setItem("chh-theme", value); } catch {} }}>
+        <ThemeIcon aria-hidden="true" className="size-4" />
+      </button>
+    )}
+  </div>;
 }
