@@ -1,7 +1,6 @@
 import os
 import asyncio
 from contextlib import suppress
-from . import product_models
 from .product import email_worker
 from .routers.product_router import router as product_router
 from .demo import seed_demo
@@ -15,6 +14,7 @@ from . import database
 from .database import init_db
 from .bootstrap import provision_admin
 from .security import SecurityMiddleware
+from .observability import ObservabilityMiddleware
 from .mfa import router as mfa_router
 from .routers import (auth_router, posts_router, responses_router, messages_router,
     ratings_router, verification_router, users_router, admin_router, reports_router)
@@ -43,6 +43,7 @@ if "*" in origins:
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=False,
     allow_methods=["GET", "POST", "PATCH", "DELETE"], allow_headers=["Authorization", "Content-Type"])
 app.add_middleware(SecurityMiddleware)
+app.add_middleware(ObservabilityMiddleware)
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.include_router(uploads_router)
@@ -54,6 +55,7 @@ app.include_router(reports_router.router)
 app.include_router(product_router)
 
 
+@app.get("/health", include_in_schema=False)
 @app.get("/")
 def root():
     return {"status": "ok", "service": "Community Help Hub API"}

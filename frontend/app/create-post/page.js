@@ -13,7 +13,6 @@ import {
   Button,
   Card,
   CardHeader,
-  CardTitle,
   CardDescription,
   CardContent,
   Input,
@@ -86,18 +85,11 @@ export default function CreatePostPage() {
           throw Error("Photo must be smaller than 5 MB.");
         const form = new FormData();
         form.append("file", file);
-        const res = await fetch("/api/backend/posts/upload-image", {
+        const data = await api("/posts/upload-image", {
           method: "POST",
-          headers: { "X-CHH-CSRF": "1" },
+          auth: true,
           body: form,
         });
-        const data = await res.json();
-        if (!res.ok)
-          throw Error(
-            typeof data.detail === "string"
-              ? data.detail
-              : "Photo upload failed.",
-          );
         image_url = data.image_url;
       }
       const post = await api("/posts", {
@@ -136,7 +128,9 @@ export default function CreatePostPage() {
       </Button>
       <Card>
         <CardHeader>
-          <CardTitle>Create a neighbourhood notice</CardTitle>
+          <h1 className="text-xl font-semibold">
+            Create a neighbourhood notice
+          </h1>
           <CardDescription>
             {community
               ? "Share with members of your private society board."
@@ -145,7 +139,11 @@ export default function CreatePostPage() {
           </CardDescription>
           {billing && (
             <p className="text-xs text-ink-muted">
-              {billing.used} of {billing.limit} posts used this month ·{" "}
+              {billing.used} posts used this month
+              {billing.limit == null
+                ? " · Unlimited allowance"
+                : ` · ${billing.limit} allowed`}{" "}
+              ·{" "}
               <Link
                 className="text-brand underline"
                 href="/settings?tab=billing"
@@ -203,7 +201,8 @@ export default function CreatePostPage() {
                   id={`create-${key}`}
                   placeholder={placeholder}
                   {...register(key)}
-                  aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined}
+                  aria-invalid={!!errors[key]}
+                  aria-describedby={errors[key] ? `error-${key}` : undefined}
                 />
                 <FieldError id={`error-${key}`} error={errors[key]} />
               </div>
@@ -216,7 +215,10 @@ export default function CreatePostPage() {
                 className="filter-control"
                 placeholder="Tell neighbours what you need or can share, when you’re available, and a safe place to meet."
                 {...register("description")}
-                aria-invalid={!!errors.description} aria-describedby={errors.description ? "error-description" : undefined}
+                aria-invalid={!!errors.description}
+                aria-describedby={
+                  errors.description ? "error-description" : undefined
+                }
               />
               <FieldError id="error-description" error={errors.description} />
             </div>
@@ -258,24 +260,41 @@ export default function CreatePostPage() {
                 permission.
               </p>
             </div>
-            <p className="text-sm text-ink-muted">Publishing shares your notice and profile details with visitors, or members of the selected society board. Photos must be yours or licensed for this use; get permission for identifiable people. Public-notice photos are public; society-notice photos are limited to members and authorised reviewers. Do not post a full home address or identity documents. <Link className="underline" href="/privacy">Read the privacy notice</Link>.</p>
+            <p className="text-sm text-ink-muted">
+              Publishing shares your notice and profile details with visitors,
+              or members of the selected society board. Photos must be yours or
+              licensed for this use; get permission for identifiable people.
+              Public-notice photos are public; society-notice photos are limited
+              to members and authorised reviewers. Do not post a full home
+              address or identity documents.{" "}
+              <Link className="underline" href="/privacy">
+                Read the privacy notice
+              </Link>
+              .
+            </p>
             <ErrorMessage message={error} />
             <Button
               type="submit"
               loading={isSubmitting}
-              disabled={billing && billing.used >= billing.limit}
+              disabled={
+                billing &&
+                billing.limit != null &&
+                billing.used >= billing.limit
+              }
             >
               Publish notice
             </Button>
-            {billing && billing.used >= billing.limit && (
-              <p className="text-sm text-warning">
-                Your monthly allowance is used.{" "}
-                <Link href="/pricing" className="underline">
-                  Compare plans
-                </Link>{" "}
-                or wait for next month.
-              </p>
-            )}
+            {billing &&
+              billing.limit != null &&
+              billing.used >= billing.limit && (
+                <p className="text-sm text-warning">
+                  Your monthly allowance is used.{" "}
+                  <Link href="/pricing" className="underline">
+                    Compare plans
+                  </Link>{" "}
+                  or wait for next month.
+                </p>
+              )}
           </form>
         </CardContent>
       </Card>

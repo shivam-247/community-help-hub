@@ -11,3 +11,9 @@ MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 if os.environ.get("PROXY_SHARED_SECRET") and len(os.environ["PROXY_SHARED_SECRET"]) < 32:
     raise RuntimeError("PROXY_SHARED_SECRET must contain at least 32 random characters.")
+
+if os.getenv("APP_ENV") == "production":
+    from urllib.parse import urlsplit
+    origin = urlsplit(os.getenv("APP_ORIGIN", ""))
+    if origin.scheme != "https" or not origin.netloc or origin.username or origin.password:
+        raise RuntimeError("Set APP_ORIGIN to the HTTPS frontend origin in production.")

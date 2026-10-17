@@ -1,9 +1,10 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response, Query
+from ..pagination import PageParams, paginate
 from sqlmodel import Session, select
 
 from ..database import get_session
-from ..models import Message, ResponseRequest, Post, User, RequestStatus, Role
+from ..models import Message, ResponseRequest, Post, User, RequestStatus
 from ..schemas import MessageIn, MessageOut
 from ..auth import get_current_user
 
@@ -22,16 +23,20 @@ def _check_participant(session: Session, rr: ResponseRequest, user: User):
 
 @router.get("/{request_id}/messages", response_model=List[MessageOut])
 def get_messages(
-    request_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session),
+    request_id: int, response: Response, before_id: int | None = Query(None,ge=1), paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session),
 ):
     rr = session.get(ResponseRequest, request_id)
     if not rr:
         raise HTTPException(status_code=404, detail="Request not found.")
     _check_participant(session, rr, user)
-    msgs = session.exec(
-        select(Message).where(Message.response_request_id == request_id)
-    ).all()
-    msgs.sort(key=lambda m: m.created_at)
+    if rr.status != RequestStatus.accepted:
+        raise HTTPException(403,"Chat opens after acceptance.")
+    # Latest window first at the SQL boundary, chronological order in the response.
+    statement=select(Message).where(Message.response_request_id == request_id)
+    if before_id is not None:
+        statement=statement.where(Message.id < before_id)
+    msgs = list(paginate(session, statement.order_by(Message.id.desc()), paging, response))
+    msgs.reverse()
     out = []
     for m in msgs:
         sender = session.get(User, m.sender_id)

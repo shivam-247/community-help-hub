@@ -2,16 +2,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import Pagination from "../../components/Pagination";
 import { api } from "../../lib/api";
 import { Button, Card, Badge } from "../../components/ui";
 import { ErrorMessage } from "../../components/AccountPanels";
 export default function NotificationsPage() {
+  const [page, setPage] = useState(1),
+    [hasMore, setHasMore] = useState(false);
   const [rows, setRows] = useState([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
   async function load() {
+    setLoading(true);
     try {
-      setRows(await api("/notifications", { auth: true }));
+      const data = await api(`/notifications?page=${page}&page_size=20`, {
+        auth: true,
+        pagination: true,
+      });
+      setRows(data.items);
+      setHasMore(data.has_more);
       setError("");
     } catch (e) {
       setError(e.message);
@@ -21,7 +30,7 @@ export default function NotificationsPage() {
   }
   useEffect(() => {
     load();
-  }, []);
+  }, [page]);
   async function read(id) {
     try {
       await api(`/notifications/${id}/read`, { method: "PATCH", auth: true });
@@ -36,14 +45,15 @@ export default function NotificationsPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       <header className="flex justify-between gap-3 items-center">
         <h1 className="text-3xl font-semibold">Notifications</h1>
-        <Button variant="outline" onClick={load}>
+        <Button variant="outline" disabled={loading} onClick={load}>
           Refresh
         </Button>
       </header>
       <ErrorMessage message={error} />
+      {error && <Button onClick={load}>Try again</Button>}
       {loading ? (
         <p role="status">Loading updates…</p>
-      ) : rows.length ? (
+      ) : error ? null : rows.length ? (
         <ul className="space-y-3">
           {rows.map((n) => (
             <li key={n.id}>
@@ -78,6 +88,14 @@ export default function NotificationsPage() {
             Responses and exchange updates will appear here.
           </p>
         </Card>
+      )}
+      {!loading && (
+        <Pagination
+          page={page}
+          hasMore={hasMore}
+          onPage={setPage}
+          label="notifications"
+        />
       )}
     </div>
   );

@@ -1,13 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Pagination from "../../../components/Pagination";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
-import { ShieldCheckIcon, CheckIcon, XIcon, AlertTriangleIcon } from "../../../components/Icons";
+import {
+  ShieldCheckIcon,
+  CheckIcon,
+  XIcon,
+  AlertTriangleIcon,
+} from "../../../components/Icons";
 
 export default function AdminVerificationsPage() {
   const auth = useAuth();
   const [items, setItems] = useState([]);
+  const [page, setPage] = useState(1),
+    [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [busyId, setBusyId] = useState(null);
@@ -15,9 +23,14 @@ export default function AdminVerificationsPage() {
 
   const load = async () => {
     setLoading(true);
+    setError("");
     try {
-      const data = await api("/admin/verifications", { auth: true });
-      setItems(data);
+      const data = await api(`/admin/verifications?page=${page}&page_size=20`, {
+        auth: true,
+        pagination: true,
+      });
+      setItems(data.items);
+      setHasMore(data.has_more);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -27,14 +40,16 @@ export default function AdminVerificationsPage() {
 
   useEffect(() => {
     if (auth?.user) load();
-  }, [auth?.user]);
+  }, [auth?.user, page]);
 
-  if (auth?.loading) return null;
+  if (auth?.loading) return <p role="status">Loading verification reviews…</p>;
 
   if (!auth?.user) {
     return (
       <div className="max-w-md mx-auto py-16 text-center">
-        <p className="text-ink-muted text-sm">Please log in as an administrator.</p>
+        <p className="text-ink-muted text-sm">
+          Please log in as an administrator.
+        </p>
       </div>
     );
   }
@@ -44,8 +59,12 @@ export default function AdminVerificationsPage() {
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-6">
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
-          <h3 className="font-bold text-danger text-sm mb-1">Restricted Access</h3>
-          <p className="text-xs text-danger">This management dashboard is restricted to verified administrators.</p>
+          <h3 className="font-bold text-danger text-sm mb-1">
+            Restricted Access
+          </h3>
+          <p className="text-xs text-danger">
+            This management dashboard is restricted to verified administrators.
+          </p>
         </div>
       </div>
     );
@@ -69,12 +88,13 @@ export default function AdminVerificationsPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-ink">Admin Review Queue</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-ink">
+              Admin Review Queue
+            </h1>
             <span className="bg-brand-soft text-brand border border-line text-xs font-semibold px-2.5 py-0.5 rounded-full">
               Admin Portal
             </span>
@@ -126,7 +146,9 @@ export default function AdminVerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-ink text-sm">{v.user_name}</h4>
-                  <span className="text-xs text-ink-muted font-medium">Type: {v.proof_type}</span>
+                  <span className="text-xs text-ink-muted font-medium">
+                    Type: {v.proof_type}
+                  </span>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-warning-soft text-warning border border-warning-soft">
                   {v.status}
@@ -150,7 +172,9 @@ export default function AdminVerificationsPage() {
                   aria-label={`Reviewer feedback for ${v.user_name}`}
                   placeholder="Reviewer feedback or notes (optional)..."
                   value={comments[v.id] || ""}
-                  onChange={(e) => setComments({ ...comments, [v.id]: e.target.value })}
+                  onChange={(e) =>
+                    setComments({ ...comments, [v.id]: e.target.value })
+                  }
                   className="w-full sm:flex-1 px-3 py-1.5 text-xs bg-surface-muted border border-line rounded-xl focus:bg-surface focus-visible:outline-brand focus:ring-2 focus:ring-brand"
                 />
                 <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -172,13 +196,19 @@ export default function AdminVerificationsPage() {
                   </button>
                 </div>
               </div>
-
             </div>
           ))}
         </div>
       )}
 
+      {!loading && (
+        <Pagination
+          page={page}
+          hasMore={hasMore}
+          onPage={setPage}
+          label="verifications"
+        />
+      )}
     </div>
   );
 }
-

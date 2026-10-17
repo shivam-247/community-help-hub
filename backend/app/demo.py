@@ -3,7 +3,7 @@ import os
 import secrets
 from datetime import datetime, timedelta, timezone
 from sqlmodel import Session, select
-from .models import User, Locality, Post, PostType, Priority, VerificationStatus
+from .models import User, Locality, Post, PostType, Priority
 from .product_models import DemoPost
 from .auth import hash_password
 

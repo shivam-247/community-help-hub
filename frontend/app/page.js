@@ -187,9 +187,9 @@ export default function LandingPage() {
           Start free. Grow with your community.
         </h2>
         <p className="text-sm text-ink-muted leading-relaxed mt-4">
-          Free includes 5 posts a month. Plus adds more posts and alerts.
-          Society gives your residents a shared private board and simple
-          analytics.
+          Free includes 5 posts a month. Plus adds unlimited posting and
+          optional email alerts. Society gives your residents a shared private
+          board and simple analytics.
         </p>
         <div className="flex justify-center flex-wrap gap-4 mt-6">
           <Badge variant="outline">Free · ₹0</Badge>

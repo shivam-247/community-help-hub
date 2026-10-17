@@ -3,8 +3,7 @@ from typing import Optional, List
 from pydantic import BaseModel, ConfigDict, Field, EmailStr, field_validator
 from typing import Annotated, Literal
 
-class InputModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", str_max_length=10000)
+from .input_validation import InputModel
 
 
 ShortText = Annotated[str, Field(min_length=1, max_length=200)]
@@ -115,6 +114,7 @@ class PostCreateIn(InputModel):
 
 
 class PostOut(BaseModel):
+    owner_plan: str = "free"
     priority_listing: bool = False
     is_demo: bool = False
     community_id: Optional[int] = None

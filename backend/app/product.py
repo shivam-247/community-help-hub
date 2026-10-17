@@ -13,8 +13,8 @@ from .product_models import Subscription, PostUsage, Notification, NotificationP
 
 PLANS = {
     "free": {"name": "Free", "posts_per_month": 5, "monthly_paise": 0, "yearly_paise": 0, "priority": False, "email_alerts": False, "community_tools": False},
-    "plus": {"name": "Plus", "posts_per_month": 30, "monthly_paise": 9900, "yearly_paise": 95000, "priority": True, "email_alerts": True, "community_tools": False},
-    "society": {"name": "Society / Community", "posts_per_month": 100, "monthly_paise": 29900, "yearly_paise": 287000, "priority": True, "email_alerts": True, "community_tools": True},
+    "plus": {"name": "Plus", "posts_per_month": None, "monthly_paise": 9900, "yearly_paise": 95000, "priority": True, "email_alerts": True, "community_tools": False},
+    "society": {"name": "Society / Community", "posts_per_month": None, "monthly_paise": 29900, "yearly_paise": 287000, "priority": True, "email_alerts": True, "community_tools": True},
 }
 
 def active_plan(session, user_id):
@@ -44,7 +44,10 @@ def consume_post(session, user_id):
         except IntegrityError:
             pass
     limit = PLANS[active_plan(session, user_id)]["posts_per_month"]
-    changed = session.execute(update(PostUsage).where(PostUsage.user_id == user_id, PostUsage.period == key[1], PostUsage.count < limit).values(count=PostUsage.count + 1)).rowcount
+    statement = update(PostUsage).where(PostUsage.user_id == user_id, PostUsage.period == key[1])
+    if limit is not None:
+        statement = statement.where(PostUsage.count < limit)
+    changed = session.execute(statement.values(count=PostUsage.count + 1)).rowcount
     if changed != 1:
         raise HTTPException(429, f"You have used your {limit} posts this month. Your allowance resets on the first of next month. Upgrade in Billing for more posts.")
 
@@ -91,5 +94,9 @@ def drain_outbox(engine):
 
 async def email_worker(engine):
     while True:
-        await asyncio.to_thread(drain_outbox, engine)
+        try:
+            await asyncio.to_thread(drain_outbox, engine)
+        except Exception as exc:
+            from .observability import logger
+            logger.error('email_worker_failed', extra={'error_type':type(exc).__name__})
         await asyncio.sleep(30)

@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Pagination from "../../components/Pagination";
+import RecoveryPanel from "../../components/RecoveryPanel";
 import BadgeTier from "../../components/BadgeTier";
 import Link from "next/link";
 import { api } from "../../lib/api";
@@ -12,12 +14,14 @@ import {
   CheckIcon,
   XIcon,
   StarIcon,
-  AlertTriangleIcon
+  AlertTriangleIcon,
 } from "../../components/Icons";
 
 export default function InboxPage() {
   const auth = useAuth();
   const notify = useToast();
+  const [page, setPage] = useState(1),
+    [hasMore, setHasMore] = useState(false);
   const [tab, setTab] = useState("incoming");
   const [incoming, setIncoming] = useState([]);
   const [sent, setSent] = useState([]);
@@ -28,12 +32,14 @@ export default function InboxPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const [inc, snt] = await Promise.all([
-        api("/inbox/incoming", { auth: true }),
-        api("/inbox/sent", { auth: true }),
-      ]);
-      setIncoming(inc);
-      setSent(snt);
+      setError("");
+      const data = await api(`/inbox/${tab}?page=${page}&page_size=20`, {
+        auth: true,
+        pagination: true,
+      });
+      if (tab === "incoming") setIncoming(data.items);
+      else setSent(data.items);
+      setHasMore(data.has_more);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -43,18 +49,20 @@ export default function InboxPage() {
 
   useEffect(() => {
     if (auth?.user) load();
-  }, [auth?.user]);
+  }, [auth?.user, tab, page]);
 
-  if (auth?.loading) return null;
+  if (auth?.loading) return <p role="status">Loading your inbox…</p>;
+  if (error && !loading)
+    return <RecoveryPanel message={error} onRetry={load} />;
 
   if (!auth?.user) {
     return (
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-surface border border-line/90 rounded-xl p-8 shadow-xs">
-          <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3">
-
-          </div>
-          <h2 className="font-bold text-ink text-lg mb-1">Log in to view your inbox</h2>
+          <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3"></div>
+          <h2 className="font-bold text-ink text-lg mb-1">
+            Log in to view your inbox
+          </h2>
           <p className="text-xs text-ink-muted mb-5">
             Manage conversations and responses to community posts.
           </p>
@@ -72,9 +80,17 @@ export default function InboxPage() {
   const act = async (requestId, action) => {
     setBusyId(requestId);
     try {
-      await api(`/requests/${requestId}`, { method: "PATCH", auth: true, body: { action } });
+      await api(`/requests/${requestId}`, {
+        method: "PATCH",
+        auth: true,
+        body: { action },
+      });
       await load();
-      notify(action === "accept" ? "Request accepted. You can now message your neighbor." : "Request rejected.");
+      notify(
+        action === "accept"
+          ? "Request accepted. You can now message your neighbor."
+          : "Request rejected.",
+      );
       window.dispatchEvent(new Event("chh-inbox-updated"));
     } catch (e) {
       notify(e.message, "error");
@@ -83,23 +99,30 @@ export default function InboxPage() {
     }
   };
 
-  const pendingIncomingCount = incoming.filter((r) => r.status === "Pending").length;
+  const pendingIncomingCount = incoming.filter(
+    (r) => r.status === "Pending",
+  ).length;
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Communication Center</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-ink">
+          Communication Center
+        </h1>
         <p className="text-xs sm:text-sm text-ink-muted mt-1">
-          Review incoming requests for your posts, and keep track of your active offers to help neighbors.
+          Review incoming requests for your posts, and keep track of your active
+          offers to help neighbors.
         </p>
       </div>
 
       {/* Modern Segmented Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-line/80 pb-3">
         <button
-          onClick={() => setTab("incoming")}
+          onClick={() => {
+            setPage(1);
+            setTab("incoming");
+          }}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             tab === "incoming"
               ? "bg-surface-strong text-on-brand shadow-xs"
@@ -107,9 +130,13 @@ export default function InboxPage() {
           }`}
         >
           <span>Incoming Requests</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            tab === "incoming" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
-          }`}>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              tab === "incoming"
+                ? "bg-surface-muted text-ink-muted"
+                : "bg-surface-muted text-ink-soft"
+            }`}
+          >
             {incoming.length}
           </span>
           {pendingIncomingCount > 0 && (
@@ -120,7 +147,10 @@ export default function InboxPage() {
         </button>
 
         <button
-          onClick={() => setTab("sent")}
+          onClick={() => {
+            setPage(1);
+            setTab("sent");
+          }}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             tab === "sent"
               ? "bg-surface-strong text-on-brand shadow-xs"
@@ -128,9 +158,13 @@ export default function InboxPage() {
           }`}
         >
           <span>Sent Offers</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            tab === "sent" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
-          }`}>
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              tab === "sent"
+                ? "bg-surface-muted text-ink-muted"
+                : "bg-surface-muted text-ink-soft"
+            }`}
+          >
             {sent.length}
           </span>
         </button>
@@ -153,18 +187,21 @@ export default function InboxPage() {
       ) : tab === "incoming" ? (
         incoming.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
-            <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-
-            </div>
-            <h3 className="font-bold text-ink text-sm mb-1">No incoming responses yet</h3>
+            <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
+            <h3 className="font-bold text-ink text-sm mb-1">
+              No incoming responses yet
+            </h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">
-              When a neighbor offers to help on one of your posts, their message and credentials will appear right here.
+              When a neighbor offers to help on one of your posts, their message
+              and credentials will appear right here.
             </p>
           </div>
         ) : (
           <div className="space-y-4">
             {incoming.map((r) => {
-              const initial = r.requester_name ? r.requester_name.charAt(0).toUpperCase() : "U";
+              const initial = r.requester_name
+                ? r.requester_name.charAt(0).toUpperCase()
+                : "U";
               return (
                 <div
                   key={r.id}
@@ -183,13 +220,15 @@ export default function InboxPage() {
                       </Link>
                     </div>
 
-                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                      r.status === "Accepted"
-                        ? "bg-success-soft text-success border-success-soft"
-                        : r.status === "Pending"
-                        ? "bg-warning-soft text-warning border-warning-soft"
-                        : "bg-surface-muted text-ink-soft border-line"
-                    }`}>
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                        r.status === "Accepted"
+                          ? "bg-success-soft text-success border-success-soft"
+                          : r.status === "Pending"
+                            ? "bg-warning-soft text-warning border-warning-soft"
+                            : "bg-surface-muted text-ink-soft border-line"
+                      }`}
+                    >
                       {r.status}
                     </span>
                   </div>
@@ -199,15 +238,19 @@ export default function InboxPage() {
                     <div className="w-7 h-7 rounded-full bg-brand-soft text-brand font-bold flex items-center justify-center text-[11px]">
                       {initial}
                     </div>
-                    <span className="font-semibold text-ink">{r.requester_name}</span>
+                    <span className="font-semibold text-ink">
+                      {r.requester_name}
+                    </span>
                     <span>·</span>
                     <span className="text-warning font-semibold inline-flex items-center gap-0.5">
                       <StarIcon className="w-3 h-3" />
-                      {r.requester_rating ? r.requester_rating.toFixed(1) : "0.0"}
+                      {r.requester_rating
+                        ? r.requester_rating.toFixed(1)
+                        : "0.0"}
                     </span>
                     <span>·</span>
                     <span className="bg-surface-muted text-ink-soft px-2 py-0.5 rounded-md font-medium text-[10px]">
-                      <BadgeTier tier={r.requester_badge}/>
+                      <BadgeTier tier={r.requester_badge} />
                     </span>
                   </div>
 
@@ -264,12 +307,11 @@ export default function InboxPage() {
         )
       ) : sent.length === 0 ? (
         <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
-          <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-
-          </div>
+          <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
           <h3 className="font-bold text-ink text-sm mb-1">No offers sent</h3>
           <p className="text-xs text-ink-muted max-w-sm mx-auto mb-4">
-            Browse the public feed to find neighbors in your area looking for help, tools, or skills.
+            Browse the public feed to find neighbors in your area looking for
+            help, tools, or skills.
           </p>
           <Link
             href="/"
@@ -298,19 +340,22 @@ export default function InboxPage() {
                   </Link>
                 </div>
 
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-                  r.status === "Accepted"
-                    ? "bg-success-soft text-success border-success-soft"
-                    : r.status === "Pending"
-                    ? "bg-warning-soft text-warning border-warning-soft"
-                    : "bg-surface-muted text-ink-soft border-line"
-                }`}>
+                <span
+                  className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
+                    r.status === "Accepted"
+                      ? "bg-success-soft text-success border-success-soft"
+                      : r.status === "Pending"
+                        ? "bg-warning-soft text-warning border-warning-soft"
+                        : "bg-surface-muted text-ink-soft border-line"
+                  }`}
+                >
                   {r.status}
                 </span>
               </div>
 
               <p className="text-xs text-ink-muted">
-                To post owner: <strong className="text-ink">{r.owner_name}</strong>
+                To post owner:{" "}
+                <strong className="text-ink">{r.owner_name}</strong>
               </p>
 
               <div className="bg-surface-muted border border-line rounded-xl p-3.5 text-xs text-ink-soft leading-relaxed">
@@ -320,12 +365,14 @@ export default function InboxPage() {
               <div className="pt-1">
                 {r.status === "Pending" && (
                   <p className="text-xs text-warning font-medium">
-                    ⏳ Waiting for {r.owner_name} to review and accept your offer.
+                    ⏳ Waiting for {r.owner_name} to review and accept your
+                    offer.
                   </p>
                 )}
                 {r.status === "Rejected" && (
                   <p className="text-xs text-ink-muted">
-                    This offer was not accepted. Thank you for offering your help!
+                    This offer was not accepted. Thank you for offering your
+                    help!
                   </p>
                 )}
                 {r.status === "Accepted" && (
@@ -351,7 +398,14 @@ export default function InboxPage() {
         </div>
       )}
 
+      {!loading && (
+        <Pagination
+          page={page}
+          hasMore={hasMore}
+          onPage={setPage}
+          label="conversations"
+        />
+      )}
     </div>
   );
 }
-

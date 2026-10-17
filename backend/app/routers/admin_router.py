@@ -1,6 +1,7 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from ..pagination import PageParams, paginate
 from sqlmodel import Session, select
+from sqlalchemy import func
 
 from ..database import get_session
 from ..models import User, Post, Verification, VerificationStatus, Report, ReportStatus, Role, badge_for_credits, Locality
@@ -13,14 +14,10 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 @router.get("/stats")
 def get_admin_stats(admin: User = Depends(require_admin), session: Session = Depends(get_session)):
-    total_users = len(session.exec(select(User)).all())
-    total_posts = len(session.exec(select(Post)).all())
-    pending_verifications = len(
-        session.exec(select(Verification).where(Verification.status == VerificationStatus.pending)).all()
-    )
-    open_reports = len(
-        session.exec(select(Report).where(Report.status == ReportStatus.open)).all()
-    )
+    total_users = session.exec(select(func.count(User.id))).one()
+    total_posts = session.exec(select(func.count(Post.id))).one()
+    pending_verifications = session.exec(select(func.count(Verification.id)).where(Verification.status == VerificationStatus.pending)).one()
+    open_reports = session.exec(select(func.count(Report.id)).where(Report.status == ReportStatus.open)).one()
     return {
         "total_users": total_users,
         "total_posts": total_posts,
@@ -30,8 +27,8 @@ def get_admin_stats(admin: User = Depends(require_admin), session: Session = Dep
 
 
 @router.get("/users")
-def list_all_users(admin: User = Depends(require_admin), session: Session = Depends(get_session)):
-    users = session.exec(select(User).order_by(User.id)).all()
+def list_all_users(response: Response, paging: PageParams = Depends(), admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    users = paginate(session, select(User).order_by(User.id), paging, response)
     result = []
     for u in users:
         loc = session.get(Locality, u.locality_id) if u.locality_id else None
@@ -80,8 +77,8 @@ def update_user_role(
 
 
 @router.get("/posts")
-def list_all_posts(admin: User = Depends(require_admin), session: Session = Depends(get_session)):
-    posts = session.exec(select(Post).order_by(Post.created_at.desc())).all()
+def list_all_posts(spam_only: bool = False, response: Response = None, paging: PageParams = Depends(), admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    posts = paginate(session, select(Post).where(Post.spam_flag == True if spam_only else True).order_by(Post.created_at.desc(), Post.id.desc()), paging, response)
     result = []
     for p in posts:
         owner = session.get(User, p.owner_id)
@@ -119,9 +116,9 @@ def admin_delete_post(
 
 
 @router.get("/reports")
-def list_reports(admin: User = Depends(require_admin), session: Session = Depends(get_session)):
-    rows = session.exec(select(Report, Post, User).join(Post, Report.post_id == Post.id)
-        .join(User, Report.reporter_id == User.id).order_by(Report.created_at.desc())).all()
+def list_reports(response: Response, paging: PageParams = Depends(), admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    rows = paginate(session, select(Report, Post, User).join(Post, Report.post_id == Post.id)
+        .join(User, Report.reporter_id == User.id).order_by(Report.created_at.desc(), Report.id.desc()), paging, response)
     return [{"id": report.id, "post_id": post.id, "post_title": post.title,
         "reporter_id": reporter.id, "reporter_name": reporter.name,
         "reason": report.reason, "status": report.status, "created_at": report.created_at}
@@ -138,3 +135,4 @@ def update_report(report_id: int, data: ReportUpdateIn,
     session.add(report)
     session.commit()
     return {"ok": True, "id": report.id, "status": report.status}
+

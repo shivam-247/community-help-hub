@@ -14,46 +14,106 @@ export default function MessagesPage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
   const bottomRef = useRef(null);
 
+  const [hasOlder, setHasOlder] = useState(false),
+    [historyBusy, setHistoryBusy] = useState(false),
+    [completionBusy, setCompletionBusy] = useState(false);
+  const history = useRef(false),
+    lastSessionCheck = useRef(0);
+  const [connection, setConnection] = useState("Connecting…"),
+    [completion, setCompletion] = useState("");
+  const merge = (rows, m) =>
+    [...new Map([...rows, m].map((x) => [x.id, x])).values()]
+      .sort((a, b) => a.id - b.id)
+      .slice(-50);
   const load = async (isInitial = false) => {
     if (isInitial) setLoading(true);
+    setError("");
     try {
-      const data = await api(`/requests/${id}/messages`, { auth: true });
-      setMessages(data);
+      const data = await api(`/requests/${id}/messages?page_size=20`, {
+        auth: true,
+        pagination: true,
+      });
+      setMessages(data.items);
+      setHasOlder(data.has_more);
+      history.current = false;
+      return data.items;
+    } catch (e) {
+      setError(e.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  async function older() {
+    if (!messages.length || historyBusy) return;
+    setHistoryBusy(true);
+    setError("");
+    try {
+      const data = await api(
+        `/requests/${id}/messages?before_id=${messages[0].id}&page_size=20`,
+        { auth: true, pagination: true },
+      );
+      if (data.items.length) {
+        history.current = true;
+        setMessages(data.items);
+      }
+      setHasOlder(data.has_more);
     } catch (e) {
       setError(e.message);
     } finally {
-      if (isInitial) setLoading(false);
+      setHistoryBusy(false);
     }
-  };
-
-  const [connection, setConnection] = useState("Connecting…");
-  const [completion, setCompletion] = useState("");
+  }
   useEffect(() => {
     if (!auth?.user) return;
-    let cancelled=false, source, last=0;
-    async function connect(){
-      try {const data=await api(`/requests/${id}/messages`,{auth:true}); if(cancelled)return;setMessages(data);setLoading(false);last=data.at(-1)?.id||0;
-        source=new EventSource(`/api/backend/requests/${id}/events?after=${last}`);
-        source.onopen=()=>setConnection("Live");
-        source.onmessage=e=>{try{const m=JSON.parse(e.data);last=m.id;setMessages(rows=>rows.some(x=>x.id===m.id)?rows:[...rows,m]);}catch{setError("A message could not be loaded. Refresh the conversation.")}};
-        source.onerror=()=>setConnection("Reconnecting…");
-      }catch(e){if(!cancelled){setError(e.message);setLoading(false)}}
+    let cancelled = false,
+      source;
+    async function connect() {
+      const rows = await load(true);
+      if (cancelled || !rows) return;
+      source = new EventSource(
+        `/api/backend/requests/${id}/events?after=${rows.at(-1)?.id || 0}`,
+      );
+      source.onopen = () => setConnection("Live");
+      source.onmessage = (e) => {
+        try {
+          const m = JSON.parse(e.data);
+          if (!history.current) setMessages((rows) => merge(rows, m));
+        } catch {
+          setError("A message could not be loaded. Refresh the conversation.");
+        }
+      };
+      source.onerror = () => {
+        setConnection("Reconnecting…");
+        if (Date.now() - lastSessionCheck.current > 30000) {
+          lastSessionCheck.current = Date.now();
+          api("/auth/me", { auth: true }).catch(() => {});
+        }
+      };
     }
-    connect();return()=>{cancelled=true;source?.close()};
-  }, [auth?.user?.id, id]);
+    connect();
+    return () => {
+      cancelled = true;
+      source?.close();
+    };
+  }, [auth?.user?.id, id, connectionAttempt]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!history.current)
+      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  if (auth?.loading) return null;
+  if (auth?.loading) return <p role="status">Loading your conversation…</p>;
 
   if (!auth?.user) {
     return (
       <div className="max-w-md mx-auto py-16 text-center">
-        <p className="text-ink-muted text-sm">Please log in to view conversation.</p>
+        <p className="text-ink-muted text-sm">
+          Please log in to view conversation.
+        </p>
       </div>
     );
   }
@@ -63,9 +123,15 @@ export default function MessagesPage({ params }) {
     if (!text.trim() || sending) return;
     setSending(true);
     try {
-      await api(`/requests/${id}/messages`, { method: "POST", auth: true, body: { text } });
+      const message = await api(`/requests/${id}/messages`, {
+        method: "POST",
+        auth: true,
+        body: { text },
+      });
       setText("");
-      await load(false);
+      setError("");
+      if (history.current) await load(false);
+      else setMessages((rows) => merge(rows, message));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -75,18 +141,37 @@ export default function MessagesPage({ params }) {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
+      <div className="flex flex-wrap gap-3">
+        <button
+          className="min-h-11 px-3 border border-line rounded-lg text-sm disabled:opacity-50"
+          disabled={historyBusy || !hasOlder || loading}
+          onClick={older}
+        >
+          {historyBusy ? "Loading history…" : "Older messages"}
+        </button>
+        <button
+          className="min-h-11 px-3 border border-line rounded-lg text-sm"
+          disabled={loading}
+          onClick={() => setConnectionAttempt(n => n + 1)}
+        >
+          Latest messages / retry
+        </button>
+      </div>
       {/* Header Bar */}
       <div className="flex items-center justify-between bg-surface border border-line/90 rounded-xl p-4 shadow-xs">
         <div className="flex items-center gap-3">
           <Link
             href="/inbox"
-            className="w-8 h-8 rounded-lg bg-surface-muted hover:bg-surface-muted text-ink-soft flex items-center justify-center text-xs font-semibold transition-colors"
+            aria-label="Back to inbox"
+            className="w-11 h-11 rounded-lg bg-surface-muted hover:bg-surface-muted text-ink-soft flex items-center justify-center text-xs font-semibold transition-colors"
           >
             &larr;
           </Link>
           <div>
-            <h2 className="font-bold text-ink text-sm">Direct Exchange Chat</h2>
-            <p className="text-[11px] text-ink-muted">Private conversation between exchange participants</p>
+            <h1 className="font-bold text-ink text-sm">Direct exchange chat</h1>
+            <p className="text-[11px] text-ink-muted">
+              Private conversation between exchange participants
+            </p>
           </div>
         </div>
         <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success-soft px-2.5 py-0.5 rounded-full">
@@ -106,11 +191,16 @@ export default function MessagesPage({ params }) {
       <div className="bg-surface border border-line/90 rounded-xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs">
         {loading ? (
           <MessageSkeleton />
+        ) : error && messages.length === 0 ? (
+          <p role="status">Messages are unavailable. Use Latest messages / retry above.</p>
         ) : messages.length === 0 ? (
           <div className="m-auto text-center p-6 text-ink-muted">
-
-            <p className="font-medium text-ink-soft text-sm">Start the conversation</p>
-            <p className="text-xs text-ink-muted mt-0.5">Introduce yourself and coordinate details.</p>
+            <p className="font-medium text-ink-soft text-sm">
+              Start the conversation
+            </p>
+            <p className="text-xs text-ink-muted mt-0.5">
+              Introduce yourself and coordinate details.
+            </p>
           </div>
         ) : (
           messages.map((m) => {
@@ -141,7 +231,43 @@ export default function MessagesPage({ params }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="rounded-lg border border-line bg-surface p-4 space-y-3"><p className="text-sm text-ink-muted">Finished helping? Both participants must confirm to close the exchange and earn 10 credits each.</p><button className="min-h-11 rounded-lg border border-line px-4 text-sm hover:bg-brand-soft" onClick={async()=>{try{const result=await api(`/requests/${id}/complete`,{method:"POST",auth:true,body:{}});setCompletion(result.completed?"Exchange completed. Credits awarded once to both participants.":"Your confirmation is saved. Waiting for your neighbour.");await auth.refresh()}catch(e){setError(e.message)}}}>Confirm exchange completed</button>{completion&&<p role="status" className="text-sm text-success">{completion}</p>}</div>
+      <div className="rounded-lg border border-line bg-surface p-4 space-y-3">
+        <p className="text-sm text-ink-muted">
+          Finished helping? Both participants must confirm to close the exchange
+          and earn 10 credits each.
+        </p>
+        <button
+          className="min-h-11 rounded-lg border border-line px-4 text-sm hover:bg-brand-soft"
+          disabled={completionBusy}
+          onClick={async () => {
+            setCompletionBusy(true);
+            try {
+              const result = await api(`/requests/${id}/complete`, {
+                method: "POST",
+                auth: true,
+                body: {},
+              });
+              setCompletion(
+                result.completed
+                  ? "Exchange completed. Credits awarded once to both participants."
+                  : "Your confirmation is saved. Waiting for your neighbour.",
+              );
+              await auth.refresh();
+            } catch (e) {
+              setError(e.message);
+            } finally {
+              setCompletionBusy(false);
+            }
+          }}
+        >
+          Confirm exchange completed
+        </button>
+        {completion && (
+          <p role="status" className="text-sm text-success">
+            {completion}
+          </p>
+        )}
+      </div>
       {/* Input row */}
       <form onSubmit={send} className="flex gap-2">
         <input
@@ -154,6 +280,7 @@ export default function MessagesPage({ params }) {
         />
         <button
           type="submit"
+          aria-label="Send message"
           disabled={sending || !text.trim()}
           className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs disabled:opacity-60"
         >
@@ -164,4 +291,3 @@ export default function MessagesPage({ params }) {
     </div>
   );
 }
-

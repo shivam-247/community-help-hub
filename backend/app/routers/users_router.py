@@ -1,12 +1,15 @@
 import json
 from typing import List, Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from ..pagination import PageParams, paginate
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from ..database import get_session
-from ..models import User, Locality, Post, Rating, badge_for_credits, PostStatus
+from ..product_models import CommunityPost
+from ..product import active_plan
+from ..models import User, Locality, Post, Rating, badge_for_credits
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -23,6 +26,7 @@ class ReviewOut(BaseModel):
 
 class UserProfileOut(BaseModel):
     is_demo: bool = False
+    plan: str = "free"
     id: int
     name: str
     locality: Optional[str] = None
@@ -50,11 +54,11 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
     posts = session.exec(
         select(Post)
         .where(Post.owner_id == target_user.id)
-        .order_by(Post.created_at.desc())
+        .where(~select(CommunityPost.post_id).where(CommunityPost.post_id == Post.id).exists(), Post.spam_flag == False)
+        .order_by(Post.created_at.desc(), Post.id.desc()).limit(20)
     ).all()
 
-    from ..product_models import CommunityPost
-    private_ids = set(session.exec(select(CommunityPost.post_id)).all())
+    private_ids = set(session.exec(select(CommunityPost.post_id).where(CommunityPost.post_id.in_([p.id for p in posts]))).all())
     posts = [p for p in posts if p.id not in private_ids and not p.spam_flag]
     active_posts_data = [
         {
@@ -73,7 +77,8 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
     ratings = session.exec(
         select(Rating)
         .where(Rating.rated_user_id == target_user.id)
-        .order_by(Rating.created_at.desc())
+        .where(~select(CommunityPost.post_id).where(CommunityPost.post_id == Rating.post_id).exists())
+        .order_by(Rating.created_at.desc(), Rating.id.desc()).limit(20)
     ).all()
 
     reviews_data = []
@@ -100,6 +105,7 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
         )
 
     return UserProfileOut(
+        plan=active_plan(session, target_user.id),
         is_demo=target_user.email in {f"sample-{i}@example.invalid" for i in range(6)},
         id=target_user.id,
         name=target_user.name,
@@ -116,3 +122,28 @@ def get_user_profile(user_id: int, session: Session = Depends(get_session)):
         reviews=reviews_data,
     )
 
+
+@router.get("/{user_id}/posts")
+def public_posts(user_id: int, response: Response, paging: PageParams = Depends(), session: Session = Depends(get_session)):
+    if not session.get(User,user_id):
+        raise HTTPException(404,"User not found.")
+    from .posts_router import _to_out
+    stmt=select(Post).where(Post.owner_id==user_id,Post.spam_flag==False,
+        ~select(CommunityPost.post_id).where(CommunityPost.post_id==Post.id).exists()).order_by(Post.created_at.desc(),Post.id.desc())
+    return [_to_out(session,p) for p in paginate(session,stmt,paging,response)]
+
+@router.get("/{user_id}/reviews",response_model=List[ReviewOut])
+def public_reviews(user_id: int, response: Response, paging: PageParams = Depends(), session: Session = Depends(get_session)):
+    if not session.get(User,user_id):
+        raise HTTPException(404,"User not found.")
+    stmt=select(Rating).where(Rating.rated_user_id==user_id,
+        ~select(CommunityPost.post_id).where(CommunityPost.post_id==Rating.post_id).exists()).order_by(Rating.created_at.desc(),Rating.id.desc())
+    out=[]
+    for row in paginate(session,stmt,paging,response):
+        author=session.get(User,row.rater_id)
+        try:
+            tags=json.loads(row.tags) if row.tags else []
+        except (TypeError,ValueError):
+            tags=[]
+        out.append(ReviewOut(id=row.id,rater_name=author.name if author else 'Neighbour',rater_badge=badge_for_credits(author.credits) if author else 'Newcomer',stars=row.stars,tags=tags,comment=row.comment,created_at=row.created_at))
+    return out

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import InvoiceList from "./InvoiceList";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -107,18 +108,11 @@ export function ProfilePanel() {
         throw Error("Choose a photo smaller than 5 MB.");
       const body = new FormData();
       body.append("file", file);
-      const res = await fetch("/api/backend/posts/upload-image", {
+      const data = await api("/posts/upload-image", {
         method: "POST",
-        headers: { "X-CHH-CSRF": "1" },
+        auth: true,
         body,
       });
-      const data = await res.json();
-      if (!res.ok)
-        throw Error(
-          typeof data.detail === "string"
-            ? data.detail
-            : "Photo upload failed.",
-        );
       await api("/auth/avatar", {
         method: "PATCH",
         auth: true,
@@ -193,7 +187,8 @@ export function ProfilePanel() {
                 id={`profile-${key}`}
                 {...register(key)}
                 placeholder={placeholder}
-                aria-invalid={!!errors[key]} aria-describedby={errors[key] ? `error-${key}` : undefined}
+                aria-invalid={!!errors[key]}
+                aria-describedby={errors[key] ? `error-${key}` : undefined}
               />
               <FieldError id={`error-${key}`} error={errors[key]} />
             </div>
@@ -210,6 +205,15 @@ export function ProfilePanel() {
             </span>
           </label>
           <ErrorMessage message={error} />
+          {error && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.location.reload()}
+            >
+              Reload account section
+            </Button>
+          )}
           <Button loading={isSubmitting} type="submit">
             Save profile
           </Button>
@@ -393,6 +397,15 @@ export function TrustPanel() {
             ))}
           </ol>
           <ErrorMessage message={error} />
+          {error && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.location.reload()}
+            >
+              Reload account section
+            </Button>
+          )}
         </CardContent>
       </Card>
       <Card>
@@ -424,7 +437,6 @@ export function TrustPanel() {
                   {...register("proof_type")}
                 >
                   <option>Reference</option>
-
                 </select>
               </div>
               <div>
@@ -434,7 +446,9 @@ export function TrustPanel() {
                 <textarea
                   id="proof-value"
                   aria-invalid={!!errors.proof_value}
-                  aria-describedby={errors.proof_value ? "error-proof_value" : undefined}
+                  aria-describedby={
+                    errors.proof_value ? "error-proof_value" : undefined
+                  }
                   className="filter-control"
                   rows={4}
                   placeholder="Society name and area; a society secretary who has agreed to vouch for you. No government ID, full address or unsolicited contact details."
@@ -446,7 +460,15 @@ export function TrustPanel() {
                 <Label htmlFor="proof-note">Note to reviewer (optional)</Label>
                 <Input id="proof-note" {...register("note")} />
               </div>
-              <p className="text-sm text-ink-muted">Submitting shares this reference with authorised reviewers for community verification. Get the reference person’s permission first. <Link className="underline" href="/privacy">How we use this information</Link>.</p>
+              <p className="text-sm text-ink-muted">
+                Submitting shares this reference with authorised reviewers for
+                community verification. Get the reference person’s permission
+                first.{" "}
+                <Link className="underline" href="/privacy">
+                  How we use this information
+                </Link>
+                .
+              </p>
               <Button type="submit" loading={isSubmitting}>
                 Submit reference for review
               </Button>
@@ -483,7 +505,10 @@ export function NotificationsPanel() {
     [busy, setBusy] = useState(false);
   useEffect(() => {
     api("/notifications/preferences", { auth: true })
-      .then(setData)
+      .then((value) => {
+        setData(value);
+        setError("");
+      })
       .catch((e) => setError(e.message));
   }, []);
   async function save(e) {
@@ -515,6 +540,15 @@ export function NotificationsPanel() {
       </CardHeader>
       <CardContent>
         <ErrorMessage message={error} />
+        {error && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Reload account section
+          </Button>
+        )}
         {data ? (
           <form onSubmit={save} className="space-y-5">
             {[
@@ -576,7 +610,10 @@ export function BillingPanel() {
     [busy, setBusy] = useState(false);
   const load = () =>
     api("/billing", { auth: true })
-      .then(setData)
+      .then((value) => {
+        setData(value);
+        setError("");
+      })
       .catch((e) => setError(e.message));
   useEffect(() => {
     load();
@@ -613,6 +650,15 @@ export function BillingPanel() {
         </CardHeader>
         <CardContent className="space-y-5">
           <ErrorMessage message={error} />
+          {error && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => window.location.reload()}
+            >
+              Reload account section
+            </Button>
+          )}
           {data ? (
             <>
               <div className="flex flex-wrap justify-between gap-3">
@@ -624,12 +670,19 @@ export function BillingPanel() {
                       : "Free"}
                 </Badge>
                 <span className="text-sm text-ink-muted">
-                  {data.used} of {data.limit} posts this month
+                  {data.used} posts this month
+                  {data.limit == null
+                    ? " · Unlimited allowance"
+                    : ` · ${data.limit} allowed`}
                 </span>
               </div>
               <Progress
-                value={(data.used / data.limit) * 100}
-                label="Monthly post usage"
+                value={data.limit == null ? 0 : (data.used / data.limit) * 100}
+                label={
+                  data.limit == null
+                    ? "Unlimited monthly allowance"
+                    : "Monthly post usage"
+                }
               />
               {data.expires_at && (
                 <p className="text-xs text-ink-muted">
@@ -668,32 +721,7 @@ export function BillingPanel() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {data?.invoices?.length ? (
-            <ul className="divide-y divide-line">
-              {data.invoices.map((i) => (
-                <li
-                  key={i.id}
-                  className="flex flex-wrap justify-between gap-3 py-4 text-sm"
-                >
-                  <div>
-                    <p className="font-medium">
-                      CHH-TEST-{i.id} · {i.plan}
-                    </p>
-                    <p className="text-xs text-ink-muted mt-1">
-                      {new Date(i.created_at).toLocaleDateString("en-IN")} ·{" "}
-                      {i.cycle}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p>₹{(i.amount_paise / 100).toLocaleString("en-IN")}</p>
-                    <Badge variant="outline">Test · no charge</Badge>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-ink-muted">No invoices yet.</p>
-          )}
+          <InvoiceList />
         </CardContent>
       </Card>
       <SocietyPanel />
@@ -711,6 +739,7 @@ export function SocietyPanel() {
     [pin, setPin] = useState(""),
     [invite, setInvite] = useState("");
   async function load() {
+    setError("");
     try {
       const b = await api("/communities", { auth: true });
       setBoards(b);
@@ -721,7 +750,9 @@ export function SocietyPanel() {
               auth: true,
             });
             setAnalytics((v) => ({ ...v, [x.id]: a }));
-          } catch {}
+          } catch (e) {
+            setError(`Society analytics could not be loaded: ${e.message}`);
+          }
         }
     } catch (e) {
       setError(e.message);
@@ -754,6 +785,15 @@ export function SocietyPanel() {
       </CardHeader>
       <CardContent className="space-y-5">
         <ErrorMessage message={error} />
+        {error && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => window.location.reload()}
+          >
+            Reload account section
+          </Button>
+        )}
         {boards.map((b) => (
           <div
             key={b.id}

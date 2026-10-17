@@ -30,7 +30,7 @@ def test_checkout_server_price_idempotency_and_downgrade(setup):
         assert first.status_code==200
         assert first.json()['invoice']['amount_paise']==95000
         assert client.post('/billing/checkout',headers=auth(ids[0]),json=data).json()['duplicate']
-        assert client.get('/billing',headers=auth(ids[0])).json()['limit']==30
+        assert client.get('/billing',headers=auth(ids[0])).json()['limit'] is None
         assert len(client.get('/billing',headers=auth(ids[0])).json()['invoices'])==1
         assert client.post('/billing/checkout',headers=auth(ids[0]),json={**data,'plan':'free','checkout_key':secrets.token_hex(16)}).status_code==200
         assert client.get('/billing',headers=auth(ids[0])).json()['limit']==5

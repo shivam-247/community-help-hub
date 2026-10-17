@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MapPin, Clock, ArrowUpRight } from "lucide-react";
 import { Badge } from "./ui";
 import Avatar from "./Avatars";
+import MemberBadge from "./MemberBadge";
 import BadgeTier from "./BadgeTier";
 export default function PostCard({ post }) {
   const age = Math.max(
@@ -64,7 +65,10 @@ export default function PostCard({ post }) {
           <p className="text-xs font-medium truncate mb-1.5">
             {post.owner_name}
           </p>
-          <BadgeTier tier={post.owner_badge} />
+          <div className="flex flex-wrap gap-1.5">
+            <BadgeTier tier={post.owner_badge} />
+            <MemberBadge plan={post.owner_plan} />
+          </div>
         </div>
         <Link
           href={`/post/${post.id}`}

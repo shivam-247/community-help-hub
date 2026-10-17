@@ -31,7 +31,10 @@ export default function PricingPage() {
     [busy, setBusy] = useState("");
   const load = () =>
     api("/plans")
-      .then(setData)
+      .then((value) => {
+        setData(value);
+        setError("");
+      })
       .catch((e) => setError(e.message));
   useEffect(() => {
     load();
@@ -72,7 +75,26 @@ export default function PricingPage() {
             </TabsList>
           </Tabs>
           <Badge>Save about 20% yearly</Badge>
-          <p className="text-sm text-ink-muted">Test checkout only; no money is charged. <Link className="underline" href="/refunds">Refund and cancellation policy</Link> · <Link className="underline" href="/terms">Terms</Link> · <Link className="underline" href="/contact">Operator details</Link></p>
+          <p className="text-sm text-ink-muted">
+            Priority listings are labelled. Paid membership badges show a plan,
+            not an identity check. Identity verification requires a separate
+            evidence review on every plan. All plans currently have no ads.
+            Fair-use rate limits still apply.
+          </p>
+          <p className="text-sm text-ink-muted">
+            Test checkout only; no money is charged.{" "}
+            <Link className="underline" href="/refunds">
+              Refund and cancellation policy
+            </Link>{" "}
+            ·{" "}
+            <Link className="underline" href="/terms">
+              Terms
+            </Link>{" "}
+            ·{" "}
+            <Link className="underline" href="/contact">
+              Operator details
+            </Link>
+          </p>
         </div>
       </header>
       {error && (
@@ -118,7 +140,9 @@ export default function PricingPage() {
                     </p>
                     <ul className="space-y-3 text-sm">
                       {[
-                        `${plan.posts_per_month} posts each calendar month`,
+                        plan.posts_per_month == null
+                          ? "Unlimited posts and active notices"
+                          : `${plan.posts_per_month} posts each calendar month`,
                         "Area, category and search filters",
                         ...(plan.priority
                           ? [
@@ -151,7 +175,9 @@ export default function PricingPage() {
                         }
                         onClick={() => checkout(key)}
                       >
-                        {key === "free" ? "Choose Free" : "Try test checkout"}
+                        {key === "free"
+                          ? "Choose Free"
+                          : `Try ${plan.name} test checkout`}
                         <ArrowRight className="size-4" />
                       </Button>
                     ) : (
@@ -186,7 +212,14 @@ export default function PricingPage() {
                   </thead>
                   <tbody>
                     {[
-                      ["Posts per calendar month", 5, 30, 100],
+                      ["Posts per calendar month", 5, "Unlimited", "Unlimited"],
+                      [
+                        "Membership badge",
+                        "Free",
+                        "Plus member",
+                        "Society member",
+                      ],
+                      ["Ads", "None", "None", "None"],
                       ["Basic filters", "Included", "Included", "Included"],
                       [
                         "Priority listing & advanced filters",

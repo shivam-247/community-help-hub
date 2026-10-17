@@ -7,9 +7,10 @@ import secrets
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Literal
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
+from ..pagination import PageParams, paginate
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import Field, field_validator
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
@@ -31,12 +32,14 @@ def plans():
 def billing(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     name = active_plan(session, user.id)
     sub = session.get(Subscription, user.id)
-    invoices = session.exec(select(Invoice).where(Invoice.user_id == user.id).order_by(Invoice.created_at.desc())).all()
+    invoices = session.exec(select(Invoice).where(Invoice.user_id == user.id).order_by(Invoice.created_at.desc()).limit(20)).all()
     return {"plan": name, "cycle": sub.cycle if sub else "monthly", "expires_at": sub.expires_at if sub else None,
             "used": usage(session, user.id), "limit": PLANS[name]["posts_per_month"], "invoices": invoices, "mock_checkout": os.getenv("MOCK_CHECKOUT_ENABLED") == "true"}
 
-class ProductInput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+from ..input_validation import InputModel
+
+class ProductInput(InputModel):
+    pass
 
 class CheckoutIn(ProductInput):
     plan: Literal["free", "plus", "society"]
@@ -52,6 +55,8 @@ def checkout(data: CheckoutIn, user: User = Depends(get_current_user), session: 
     if existing:
         return {"invoice": existing, "duplicate": True}
     amount = PLANS[data.plan][f"{data.cycle}_paise"]
+    from ..billing_gateway import get_gateway
+    receipt = get_gateway().simulate(user.id, amount, 'INR', data.checkout_key) if data.plan != 'free' else None
     invoice = Invoice(checkout_key=key, user_id=user.id, plan=data.plan, cycle=data.cycle, amount_paise=amount)
     session.add(invoice)
     try:
@@ -59,6 +64,9 @@ def checkout(data: CheckoutIn, user: User = Depends(get_current_user), session: 
     except IntegrityError:
         session.rollback()
         return {"invoice": session.exec(select(Invoice).where(Invoice.checkout_key == key)).one(), "duplicate": True}
+    if receipt:
+        session.add(PaymentReference(invoice_id=invoice.id, provider=receipt.provider,
+                                     reference=receipt.reference, state=receipt.state))
     days = 365 if data.cycle == "yearly" else 30
     session.merge(Subscription(user_id=user.id, plan=data.plan, cycle=data.cycle,
                                expires_at=None if data.plan == "free" else datetime.now(timezone.utc) + timedelta(days=days)))
@@ -87,9 +95,18 @@ def set_preferences(data: PreferencesIn, user: User = Depends(get_current_user),
     session.commit()
     return preferences(user, session)
 
+@router.get("/notifications/unread-count")
+def unread_count(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from sqlalchemy import func
+    return {'count':session.exec(select(func.count(Notification.id)).where(Notification.user_id == user.id, Notification.read == False)).one()}
+
+@router.get("/billing/invoices")
+def invoices(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    return paginate(session, select(Invoice).where(Invoice.user_id == user.id).order_by(Invoice.id.desc()), paging, response)
+
 @router.get("/notifications")
-def notifications(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    return session.exec(select(Notification).where(Notification.user_id == user.id).order_by(Notification.created_at.desc()).limit(100)).all()
+def notifications(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    return paginate(session, select(Notification).where(Notification.user_id == user.id).order_by(Notification.created_at.desc(), Notification.id.desc()), paging, response)
 
 @router.patch("/notifications/{notification_id}/read")
 def read_notification(notification_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
@@ -255,7 +272,7 @@ class CommunityIn(ProductInput):
 
 @router.get("/communities")
 def communities(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    memberships = session.exec(select(CommunityMember).where(CommunityMember.user_id == user.id)).all()
+    memberships = session.exec(select(CommunityMember).where(CommunityMember.user_id == user.id).order_by(CommunityMember.community_id).limit(50)).all()
     out = []
     for m in memberships:
         board = session.get(Community, m.community_id)
@@ -293,9 +310,10 @@ def analytics(community_id: int, user: User = Depends(get_current_user), session
     board = session.get(Community, community_id)
     if not board or board.owner_id != user.id or active_plan(session, user.id) != "society":
         raise HTTPException(403, "Only the society administrator on an active Society plan can view analytics.")
-    links = session.exec(select(CommunityPost).where(CommunityPost.community_id == community_id)).all()
-    posts = [session.get(Post, link.post_id) for link in links]
-    return {"members": len(session.exec(select(CommunityMember).where(CommunityMember.community_id == community_id)).all()), "posts": len(posts), "completed": sum(p.status == PostStatus.resolved for p in posts if p)}
+    from sqlalchemy import func
+    members = session.exec(select(func.count()).select_from(CommunityMember).where(CommunityMember.community_id == community_id)).one()
+    base = select(func.count(Post.id)).join(CommunityPost,CommunityPost.post_id==Post.id).where(CommunityPost.community_id==community_id)
+    return {'members':members,'posts':session.exec(base).one(),'completed':session.exec(base.where(Post.status==PostStatus.resolved)).one()}
 
 @router.patch("/admin/posts/{post_id}/spam")
 def moderate_spam(post_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
@@ -336,16 +354,17 @@ def review_trust(user_id: int, data: TrustReviewIn, user: User = Depends(get_cur
     session.commit()
     return {"ok": True}
 
+@router.get("/communities/{community_id}/feed")
 @router.get("/communities/{community_id}/posts")
-def community_posts(community_id: int, verified_only: bool = False, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    board = session.get(Community, community_id)
-    if not board or not session.get(CommunityMember, (community_id, user.id)):
-        raise HTTPException(404, "Board not found.")
+def community_posts(community_id: int, response: Response, request: Request,
+    locality: str | None = Query(None, max_length=200), category: str | None = Query(None,max_length=100),
+    type: str | None = Query(None,max_length=50), priority: str | None = Query(None,max_length=20),
+    q: str | None = Query(None,max_length=200), verified_only: bool = False,
+    sort: Literal['newest','deadline'] = 'newest', paging: PageParams = Depends(),
+    user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from ..feed import feed_statement, feed_page
     from .posts_router import _to_out
-    links = session.exec(select(CommunityPost).where(CommunityPost.community_id == community_id)).all()
-    posts = [session.get(Post, row.post_id) for row in links]
-    if verified_only:
-        if active_plan(session, user.id) == "free":
-            raise HTTPException(403, "Verified-member filters are included with Plus and Society plans.")
-        posts = [p for p in posts if p and session.get(User, p.owner_id).verification_status == "verified"]
-    return [_to_out(session, p) for p in sorted((p for p in posts if p and not p.spam_flag), key=lambda p: p.created_at, reverse=True)]
+    stmt = feed_statement(session, user, community_id, locality, category, type, priority, q, verified_only, sort)
+    if request.url.path.endswith('/feed'):
+        return feed_page(session, stmt, paging)
+    return [_to_out(session, p) for p in paginate(session, stmt, paging, response)]

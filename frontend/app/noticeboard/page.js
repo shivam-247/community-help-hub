@@ -13,6 +13,7 @@ import {
   SheetClose,
 } from "../../components/ui";
 import { api } from "../../lib/api";
+import Pagination from "../../components/Pagination";
 import PostCard from "../../components/PostCard";
 import { PostCardSkeleton } from "../../components/Skeleton";
 const TYPES = [
@@ -43,6 +44,9 @@ export default function FeedPage() {
     setCommunity(new URLSearchParams(window.location.search).get("community"));
   }, []);
   const [posts, setPosts] = useState([]);
+  const [page, setPage] = useState(1),
+    [meta, setMeta] = useState({ total: 0, has_more: false });
+  const [loadedFilters, setLoadedFilters] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [locality, setLocality] = useState("");
@@ -55,6 +59,22 @@ export default function FeedPage() {
   const [retry, setRetry] = useState(0);
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const key = JSON.stringify([
+      locality,
+      type,
+      priority,
+      category,
+      q,
+      sort,
+      community,
+      verified,
+    ]);
+    if (loadedFilters !== key && page !== 1) {
+      setPage(1);
+      return;
+    }
+    setLoadedFilters(key);
     setLoading(true);
     setError("");
     const timer = setTimeout(async () => {
@@ -66,24 +86,18 @@ export default function FeedPage() {
         if (priority !== "All") params.set("priority", priority);
         if (category !== "All") params.set("category", category);
         if (q.trim()) params.set("q", q.trim());
-        let data = await api(
-          community ? `/communities/${community}/posts?verified_only=${verified}` : `/posts?${params}`,
-          { auth: true },
+        params.set("page", String(page));
+        params.set("page_size", "12");
+        const data = await api(
+          community
+            ? `/communities/${community}/feed?${params}`
+            : `/posts/feed?${params}`,
+          { auth: true, signal: controller.signal },
         );
-        if (community)
-          data = data.filter(
-            (p) =>
-              (!q ||
-                (p.title + p.description)
-                  .toLowerCase()
-                  .includes(q.toLowerCase())) &&
-              (!locality || p.locality.toLowerCase().includes(locality.toLowerCase())) &&
-              (category === "All" || p.category === category) &&
-              (type === "All" || p.type === type) &&
-              (priority === "All" || p.priority === priority),
-          );
-        if (community && sort === "deadline") data.sort((a,b) => (a.deadline == null) - (b.deadline == null) || new Date(a.deadline || 0) - new Date(b.deadline || 0));
-        if (active) setPosts(data);
+        if (active) {
+          setPosts(data.items);
+          setMeta(data);
+        }
       } catch (e) {
         if (active) setError(e.message);
       } finally {
@@ -93,6 +107,7 @@ export default function FeedPage() {
     return () => {
       active = false;
       clearTimeout(timer);
+      controller.abort();
     };
   }, [
     locality,
@@ -104,6 +119,7 @@ export default function FeedPage() {
     retry,
     community,
     verified,
+    page,
   ]);
   const clear = () => {
     setLocality("");
@@ -170,7 +186,7 @@ export default function FeedPage() {
                 ? "Loading posts…"
                 : error
                   ? "Unable to load posts"
-                  : `${posts.length} ${posts.length === 1 ? "post" : "posts"}`}
+                  : `${meta.total} ${meta.total === 1 ? "post" : "posts"}`}
             </p>
           </div>
           <div
@@ -222,7 +238,16 @@ export default function FeedPage() {
                 </div>
               </div>
               <div>
-                <label className="filter-label" htmlFor="post-area">Area / PIN code</label><Input id="post-area" type="search" value={locality} onChange={e=>setLocality(e.target.value)} placeholder="Gota or 382481"/>
+                <label className="filter-label" htmlFor="post-area">
+                  Area / PIN code
+                </label>
+                <Input
+                  id="post-area"
+                  type="search"
+                  value={locality}
+                  onChange={(e) => setLocality(e.target.value)}
+                  placeholder="Gota or 382481"
+                />
               </div>
             </div>
             <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
@@ -238,7 +263,6 @@ export default function FeedPage() {
                   Choose an area and the kind of help you’re looking for.
                 </SheetDescription>
                 <div className="grid grid-cols-1 gap-4 pt-6">
-                  
                   <div>
                     <label className="filter-label" htmlFor="post-type">
                       Post type
@@ -328,10 +352,19 @@ export default function FeedPage() {
               ))}
             </div>
           ) : posts.length ? (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {posts.map((p) => (
-                <PostCard key={p.id} post={p} />
-              ))}
+            <div className="space-y-5">
+              <div className="grid sm:grid-cols-2 gap-4">
+                {posts.map((p) => (
+                  <PostCard key={p.id} post={p} />
+                ))}
+              </div>
+              <Pagination
+                page={page}
+                hasMore={meta.has_more}
+                total={meta.total}
+                label="posts"
+                onPage={setPage}
+              />
             </div>
           ) : (
             <div className="border border-dashed border-line rounded-xl bg-surface p-8 sm:p-12 text-center">
@@ -349,6 +382,11 @@ export default function FeedPage() {
                 <div className="h-2 w-3/5 rounded bg-line mb-3" />
                 <div className="h-2 w-2/3 rounded bg-line" />
               </div>
+              {page > 1 && (
+                <Button variant="outline" onClick={() => setPage(page - 1)}>
+                  Return to previous page
+                </Button>
+              )}
               <h3 className="font-semibold text-lg">
                 {filtered
                   ? "No matching posts yet"

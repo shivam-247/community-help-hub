@@ -1,134 +1,75 @@
-# Community Help Hub 🏘️
+# Community Help Hub
 
-A **human-centered, AI-powered mutual aid platform** that connects neighbors across Indian cities for help requests, donations, skill sharing, and community alerts — with verified identity, spam filtering, and a transparent trust system.
+An individual college project by Shivam Parmar: a neighbourhood noticeboard for free help, giveaways and skills in Indian societies. Payments are simulated; no money changes hands. It is a portfolio/demo deployment, not a certified production service.
 
----
+## Stack
 
-## ✨ Key Features
+- Frontend: Next.js 16.4, React 19.3, Tailwind CSS 4, Radix/shadcn-style components, Lucide, react-hook-form and Zod.
+- Backend: Python, FastAPI, SQLModel, SQLite, Argon2id/JWT and encrypted TOTP MFA. Tests/CI use Python 3.12; the repository is not downgraded to an older frontend stack.
+- Deployment: Vercel frontend and Render API. Same-origin Next.js proxy keeps tokens in an HttpOnly cookie and protects writes with origin/CSRF checks.
 
-- **Smart Feed** — State & locality cascading dropdowns to filter notices by region
-- **Anti-Bogus Filter** — AI validates posts for quality; rejects keyboard mashing, number-only titles, and gibberish
-- **Post Types** — Help Requests, Donations & Giveaways, Skill Offers, Community Alerts
-- **Verified Identity** — Admin-reviewed credential verification with trust badges
-- **Interactive Ratings** — Rate resolved exchanges with stars, tags, and testimonials
-- **Avatar System** — 8 distinct colorful SVG avatars with per-user selection
-- **Super Admin RBAC** — Full role-based access control (`user`, `admin`, `super_admin`)
-- **Admin Command Center** — Verification queue, content moderation, and user role management
-- **Real-time Inbox** — Respond to help requests privately
-- **ML Auto-categorization** — Posts are auto-tagged by category and spam-scored
-- **Zero icon library dependency** — All icons are hand-crafted SVG
+## Features
 
----
+Paginated public/private society noticeboards; locality, category and keyword filters; labelled priority listings; controlled photo uploads; moderation/spam checks; accepted-exchange private SSE chat with message history; in-app notifications and optional SMTP alerts; two-person completion credits; separate trust checks; profiles/account security; Free, Plus and Society test plans; admin moderation; policy/contact/about/reference pages.
 
-## 🗂️ Project Structure
+Free allows five posts per calendar month. Plus and Society have unlimited posting and active notices, subject to fair-use rate limits and moderation. Paid membership badges never grant identity verification. All plans currently have no ads.
 
-```
-community-help-hub/
-├── backend/               # FastAPI + SQLModel + SQLite
-│   ├── app/
-│   │   ├── models.py      # SQLModel ORM models + enums
-│   │   ├── schemas.py     # Pydantic request/response schemas
-│   │   ├── auth.py        # JWT auth + RBAC dependencies
-│   │   ├── main.py        # FastAPI app + router registration
-│   │   ├── ml.py          # ML engine: spam scoring, categorization
-│   │   ├── database.py    # SQLite engine + session factory
-│   │   └── routers/
-│   │       ├── auth_router.py          # Signup, Login, Avatar, Contact
-│   │       ├── posts_router.py         # CRUD, locality filter, image upload
-│   │       ├── users_router.py         # Public profile + reviews
-│   │       ├── admin_router.py         # Admin stats, moderation, RBAC
-│   │       ├── verification_router.py  # Identity verification queue
-│   │       ├── ratings_router.py       # Post ratings + testimonials
-│   │       ├── inbox_router.py         # Private messages
-│   │       └── reports_router.py       # Content reporting
-│   ├── seed.py            # Multi-state demo data seeder
-│   └── requirements.txt   # Python dependencies
-│
-└── frontend/              # Next.js 14 App Router + Tailwind CSS
-    ├── app/
-    │   ├── page.js               # Feed with cascading location filters
-    │   ├── create-post/page.js   # Create notice with anti-bogus validation
-    │   ├── post/[id]/page.js     # Post detail with interactive ratings
-    │   ├── profile/[id]/page.js  # Public user profile + testimonials
-    │   ├── settings/page.js      # Avatar picker + contact + verification
-    │   ├── admin/page.js         # Super Admin command center
-    │   ├── inbox/page.js         # Private messaging inbox
-    │   └── about/page.js         # About us + mission
-    ├── components/
-    │   ├── Nav.js          # Sticky navbar with profile popover
-    │   ├── PostCard.js     # Feed post card with avatar + badges
-    │   ├── Avatars.js      # 8 SVG avatar presets
-    │   ├── Icons.js        # Zero-dep custom SVG icon library
-    │   └── Skeleton.js     # Loading skeleton components
-    └── lib/
-        ├── api.js           # Fetch wrapper with auth headers
-        ├── auth-context.js  # React auth context + JWT management
-        └── locations.js     # Indian states + localities catalog
-```
+## Local setup
 
----
+Use separate terminals for the backend and frontend. Do not commit `.env` files or real member data.
 
-## 🚀 Running Locally
+Backend:
 
-### Backend
 ```bash
 cd backend
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # Mac/Linux
-pip install -r requirements.txt
-# Configure JWT_SECRET_KEY in your shell or hosting environment first.
-# Demo seeding is optional and disabled by default; see SECURITY.md.
-uvicorn app.main:app --reload --port 8000
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+export JWT_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+export MFA_ENCRYPTION_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+export APP_ENV=development
+export DEMO_SEED_ENABLED=true
+export MOCK_CHECKOUT_ENABLED=true
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
-API runs at: `http://localhost:8000`  
-Swagger docs: `http://localhost:8000/docs`
 
-### Frontend
+The opt-in seeder creates labelled fictional notices, never demo login credentials or fake reviews. To administer a local account, register normally and use the authenticated operator CLI `python manage_user.py your-email@example.com --role super_admin`; this is not a public HTTP provisioning route.
+
+Frontend:
+
 ```bash
 cd frontend
-npm install
-npm run build    # Production (fast — sub-100ms per page)
-npm start
+npm ci
+# In frontend/.env.local, set:
+# API_BASE_URL=http://localhost:8000
+# APP_ORIGIN=http://localhost:3000
+npm run dev
 ```
-App runs at: `http://localhost:3000`
 
----
+Open `http://localhost:3000`. SMTP alerts require provider configuration and verified, opted-in recipients; a queued email is not proof of delivery.
 
-## Security and account setup
+## Verification
 
-Read [SECURITY.md](SECURITY.md) before deploying. Configure backend `JWT_SECRET_KEY` and
-`MFA_ENCRYPTION_KEY`, frontend `API_BASE_URL` and `APP_ORIGIN`, and HTTPS hosting.
-Browser authentication uses an HttpOnly session cookie through the Next.js server.
-Production no longer seeds accounts or accepts the old demo password.
-
-Bootstrap an administrator locally against the intended database:
 ```bash
 cd backend
-python manage_user.py your-email@example.com --role super_admin
+python -m pytest -q
+cd ../frontend
+npm test
+npm run build
+npm audit
+npx playwright install chromium
+# Use an absolute Python path with backend dependencies installed:
+PYTHON_BIN=/absolute/path/to/backend/.venv/bin/python npm run test:browser
 ```
-The CLI prompts for a strong password without logging it. Enable authenticator MFA in Settings.
 
-## 🛠️ Tech Stack
+The browser runner starts isolated local servers on ports 3100/8100, creates random test credentials and a temporary database, and tears the servers down. It checks real signup, login, mock checkout, posting, reviewed-account chat, history and feed paging, then every page at 360/768/1024/1440px. It never connects to the deployed database.
 
-| Layer | Technology |
-|-------|-----------|
-| Backend API | FastAPI + SQLModel |
-| Database | SQLite (file-based, zero-config) |
-| Auth | JWT (PyJWT), HttpOnly browser sessions, optional TOTP MFA |
-| ML Engine | scikit-learn / custom heuristics |
-| Frontend | Next.js 16 (App Router) |
-| Styling | Lumen React 4, Tailwind CSS, light/dark semantic themes |
-| Icons | Lumen Lucide icons and existing avatar illustrations |
-| Image Upload | FastAPI static files |
+## Deployment and operational limits
 
----
+Set strong environment secrets, an exact HTTPS `APP_ORIGIN`, exact CORS origins if required, `PROXY_SHARED_SECRET` on both services and the HTTPS `API_BASE_URL` on Vercel. Render terminates TLS; Vercel serves HTTPS; production responses use HSTS and CSP upgrades. Avoid adding application redirects that loop behind TLS termination. `/health` is available for service checks.
 
-## 📍 Covered Regions
+SQLite uses WAL/busy timeout and additive indexes; requests roll back failed transactions. Free Render storage remains ephemeral. Use durable database/image storage and tested backups before collecting real member data. No storage upgrade or paid infrastructure is silently provisioned.
 
-Posts can be created and filtered across: **Gujarat, Maharashtra, Karnataka, Delhi NCR, Telangana, Goa, Tamil Nadu, West Bengal, Rajasthan, Kerala** — with 50+ specific localities.
+API failures have safe JSON messages and request IDs. Structured application logs omit bodies, tokens, IPs, query values, SQL parameters and exception messages. Third-party mail requires its own operational/unsubscribe review. Policies are project-specific drafts and do not certify legal or accessibility compliance.
 
----
-
-Built with ❤️ for Indian neighborhoods by Shivam Parmar
-
+See `PORTFOLIO_RELEASE.md` for the module audit and contracts, `SECURITY.md` for security controls, `LEGAL_AND_PRIVACY_REVIEW.md` for remaining privacy/legal work and `THIRD_PARTY_NOTICES.md` for asset licences. The actual research-paper bibliography was not supplied; `/references` clearly labels its verified implementation sources instead of inventing paper citations.

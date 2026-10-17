@@ -5,14 +5,11 @@ ML Plan implementation (see Notion spec section 11):
 - Duplicate detection: cosine similarity of TF-IDF vectors, top-3 above threshold
 """
 import re
-import json
 from typing import List, Tuple
-import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics.pairwise import cosine_similarity
 
-from .models import CATEGORIES
 
 DUPLICATE_THRESHOLD = 0.85
 

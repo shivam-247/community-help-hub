@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from ..pagination import PageParams, paginate
 from sqlmodel import Session, select
 
 from ..database import get_session
@@ -49,19 +50,17 @@ def submit_verification(
 
 
 @router.get("/verification/mine", response_model=List[VerificationOut])
-def my_verifications(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    items = session.exec(select(Verification).where(Verification.user_id == user.id)).all()
+def my_verifications(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    items = paginate(session, select(Verification).where(Verification.user_id == user.id).order_by(Verification.created_at.desc(), Verification.id.desc()), paging, response)
     items.sort(key=lambda v: v.created_at, reverse=True)
     return [_to_out(session, v) for v in items]
 
 
 @router.get("/admin/verifications", response_model=List[VerificationOut])
 def list_pending_verifications(
-    admin: User = Depends(require_admin), session: Session = Depends(get_session),
+    response: Response, paging: PageParams = Depends(), admin: User = Depends(require_admin), session: Session = Depends(get_session),
 ):
-    items = session.exec(
-        select(Verification).where(Verification.status == VerificationStatus.pending)
-    ).all()
+    items = paginate(session, select(Verification).where(Verification.status == VerificationStatus.pending).order_by(Verification.id), paging, response)
     items.sort(key=lambda v: v.created_at)
     return [_to_out(session, v) for v in items]
 

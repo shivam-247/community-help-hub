@@ -3,6 +3,9 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
+import Pagination from "../../../components/Pagination";
+import MemberBadge from "../../../components/MemberBadge";
+import { usePagedResource } from "../../../lib/use-paged-resource";
 import BadgeTier from "../../../components/BadgeTier";
 import Avatar from "../../../components/Avatars";
 import {
@@ -28,6 +31,9 @@ export default function ProfilePage({ params }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("posts");
+  const postList = usePagedResource(`/users/${id}/posts`, { auth: false });
+  const reviewList = usePagedResource(`/users/${id}/reviews`, { auth: false });
+  const list = activeTab === "posts" ? postList : reviewList;
 
   useEffect(() => {
     async function loadProfile() {
@@ -70,9 +76,14 @@ export default function ProfilePage({ params }) {
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-6 text-danger">
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
           <h3 className="font-bold text-sm">User Not Found</h3>
-          <p className="text-xs text-danger mt-1">{error || "This profile could not be loaded."}</p>
+          <p className="text-xs text-danger mt-1">
+            {error || "This profile could not be loaded."}
+          </p>
         </div>
-        <Link href="/noticeboard" className="text-xs font-semibold text-brand hover:text-brand">
+        <Link
+          href="/noticeboard"
+          className="text-xs font-semibold text-brand hover:text-brand"
+        >
           &larr; Return to Community Noticeboard
         </Link>
       </div>
@@ -82,7 +93,9 @@ export default function ProfilePage({ params }) {
   const isSuperAdmin = profile.role === "super_admin";
 
   // Calculate progress to next badge tier
-  const currentTierIndex = BADGE_TIERS.findIndex((t) => t.name === profile.badge);
+  const currentTierIndex = BADGE_TIERS.findIndex(
+    (t) => t.name === profile.badge,
+  );
   const nextTier = BADGE_TIERS[currentTierIndex + 1];
   const progressPercent = nextTier
     ? Math.min(100, Math.round((profile.credits / nextTier.min) * 100))
@@ -90,7 +103,6 @@ export default function ProfilePage({ params }) {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-
       {/* Back button */}
       <Link
         href="/noticeboard"
@@ -102,24 +114,37 @@ export default function ProfilePage({ params }) {
       {/* Hero Profile Card */}
       <div className="bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-
           <div className="flex items-center gap-4 sm:gap-5">
-            <Avatar id={profile.avatar || "avatar-1"} name={profile.name} size="w-20 h-20" className="shadow-lg ring-4 ring-brand shrink-0" />
+            <Avatar
+              id={profile.avatar || "avatar-1"}
+              name={profile.name}
+              size="w-20 h-20"
+              className="shadow-lg ring-4 ring-brand shrink-0"
+            />
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-2xl font-bold text-ink leading-tight">{profile.name}</h1>{profile.is_demo && <span className="text-sm border border-line rounded-md px-2 py-1">Fictional sample profile</span>}
+                <h1 className="text-2xl font-bold text-ink leading-tight">
+                  {profile.name}
+                </h1>
+                <MemberBadge plan={profile.plan} />
+                {profile.is_demo && (
+                  <span className="text-sm border border-line rounded-md px-2 py-1">
+                    Fictional sample profile
+                  </span>
+                )}
                 {isSuperAdmin && (
                   <span className="inline-flex items-center gap-1 bg-brand-solid text-on-brand px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs">
                     Super Admin
                   </span>
                 )}
-                {profile.verification_status === "verified" && !isSuperAdmin && (
-                  <span className="inline-flex items-center gap-1 bg-success-soft text-success border border-success-soft px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
-                    <ShieldCheckIcon className="w-3.5 h-3.5 text-success" />
-                    Verified Neighbor
-                  </span>
-                )}
+                {profile.verification_status === "verified" &&
+                  !isSuperAdmin && (
+                    <span className="inline-flex items-center gap-1 bg-success-soft text-success border border-success-soft px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
+                      <ShieldCheckIcon className="w-3.5 h-3.5 text-success" />
+                      Verified Neighbor
+                    </span>
+                  )}
               </div>
 
               <div className="flex flex-wrap items-center gap-3 text-xs text-ink-muted mt-1.5">
@@ -150,45 +175,63 @@ export default function ProfilePage({ params }) {
 
         {/* Reputation & Trust Stats Bar — Clean and star-free */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-line select-none">
-
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Badge Rank</span>
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+              Badge Rank
+            </span>
             <span className="font-bold text-brand text-sm mt-0.5 block">
-              {isSuperAdmin ? "Super Admin" : <BadgeTier tier={profile.badge}/>}
+              {isSuperAdmin ? (
+                "Super Admin"
+              ) : (
+                <BadgeTier tier={profile.badge} />
+              )}
             </span>
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Exchanges Rated</span>
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+              Exchanges Rated
+            </span>
             <span className="font-bold text-ink text-sm mt-0.5 block">
               {profile.rating_count} Completed
             </span>
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Community Credits</span>
-            <span className="font-bold text-ink text-sm mt-0.5 block">{profile.credits} pts</span>
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+              Community Credits
+            </span>
+            <span className="font-bold text-ink text-sm mt-0.5 block">
+              {profile.credits} pts
+            </span>
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">Posts Published</span>
-            <span className="font-bold text-ink text-sm mt-0.5 block">{profile.active_posts.length}</span>
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+              Posts Published
+            </span>
+            <span className="font-bold text-ink text-sm mt-0.5 block">
+              {postList.items.length}
+            </span>
           </div>
-
         </div>
 
         {/* Badge Progression Meter */}
         <div className="bg-brand-soft/50 border border-line rounded-xl p-4 space-y-2 select-none">
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-brand">
-              Reputation Level: <strong className="text-brand">{profile.badge}</strong>
+              Reputation Level:{" "}
+              <strong className="text-brand">{profile.badge}</strong>
             </span>
             {nextTier ? (
               <span className="text-brand font-medium">
-                {profile.credits} / {nextTier.min} credits to reach <strong>{nextTier.name}</strong>
+                {profile.credits} / {nextTier.min} credits to reach{" "}
+                <strong>{nextTier.name}</strong>
               </span>
             ) : (
-              <span className="text-success font-bold">Champion tier achieved</span>
+              <span className="text-success font-bold">
+                Champion tier achieved
+              </span>
             )}
           </div>
 
@@ -199,7 +242,6 @@ export default function ProfilePage({ params }) {
             />
           </div>
         </div>
-
       </div>
 
       {/* Tabs: Active Posts vs Neighbor Reviews */}
@@ -213,10 +255,14 @@ export default function ProfilePage({ params }) {
           }`}
         >
           <span>Community Notices</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            activeTab === "posts" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
-          }`}>
-            {profile.active_posts.length}
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTab === "posts"
+                ? "bg-surface-muted text-ink-muted"
+                : "bg-surface-muted text-ink-soft"
+            }`}
+          >
+            {postList.items.length}
           </span>
         </button>
 
@@ -229,23 +275,30 @@ export default function ProfilePage({ params }) {
           }`}
         >
           <span>Neighbor Testimonials</span>
-          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-            activeTab === "reviews" ? "bg-surface-muted text-ink-muted" : "bg-surface-muted text-ink-soft"
-          }`}>
-            {profile.reviews.length}
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTab === "reviews"
+                ? "bg-surface-muted text-ink-muted"
+                : "bg-surface-muted text-ink-soft"
+            }`}
+          >
+            {reviewList.items.length}
           </span>
         </button>
       </div>
 
       {/* Tab 1: Posts by this User */}
-      {activeTab === "posts" && (
-        profile.active_posts.length === 0 ? (
+      {activeTab === "posts" &&
+        (postList.loading || postList.error ? null : postList.items.length ===
+          0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
-            <p className="text-xs text-ink-muted">No community notices posted yet by this neighbor.</p>
+            <p className="text-xs text-ink-muted">
+              No community notices posted yet by this neighbor.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {profile.active_posts.map((post) => (
+            {postList.items.map((post) => (
               <Link
                 key={post.id}
                 href={`/post/${post.id}`}
@@ -261,48 +314,57 @@ export default function ProfilePage({ params }) {
                         {post.category}
                       </span>
                     </div>
-                    <h4 className="font-semibold text-ink text-sm leading-snug">{post.title}</h4>
+                    <h4 className="font-semibold text-ink text-sm leading-snug">
+                      {post.title}
+                    </h4>
                   </div>
 
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
-                    post.status === "Open"
-                      ? "bg-success-soft text-success border-success-soft"
-                      : post.status === "In Progress"
-                      ? "bg-warning-soft text-warning border-warning-soft"
-                      : "bg-surface-muted text-ink-soft border-line"
-                  }`}>
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                      post.status === "Open"
+                        ? "bg-success-soft text-success border-success-soft"
+                        : post.status === "In Progress"
+                          ? "bg-warning-soft text-warning border-warning-soft"
+                          : "bg-surface-muted text-ink-soft border-line"
+                    }`}
+                  >
                     {post.status}
                   </span>
                 </div>
               </Link>
             ))}
           </div>
-        )
-      )}
+        ))}
 
       {/* Tab 2: Reviews Received */}
-      {activeTab === "reviews" && (
-        profile.reviews.length === 0 ? (
+      {activeTab === "reviews" &&
+        (reviewList.loading || reviewList.error ? null : reviewList.items
+            .length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
-            <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3">
-
-            </div>
-            <h3 className="font-bold text-ink text-sm mb-1">No testimonials yet</h3>
+            <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
+            <h3 className="font-bold text-ink text-sm mb-1">
+              No testimonials yet
+            </h3>
             <p className="text-xs text-ink-muted max-w-sm mx-auto">
-              Testimonials are submitted after completing a mutual aid exchange or item giveaway.
+              Testimonials are submitted after completing a mutual aid exchange
+              or item giveaway.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
-            {profile.reviews.map((rev) => (
+            {reviewList.items.map((rev) => (
               <div
                 key={rev.id}
                 className="bg-surface border border-line/90 rounded-xl p-5 shadow-xs space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-ink text-xs">{rev.rater_name}</span>
-                    <span className="text-ink-muted text-[10px]">· {rev.rater_badge}</span>
+                    <span className="font-bold text-ink text-xs">
+                      {rev.rater_name}
+                    </span>
+                    <span className="text-ink-muted text-[10px]">
+                      · {rev.rater_badge}
+                    </span>
                   </div>
 
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success px-2.5 py-0.5 rounded-full border border-success-soft/80">
@@ -332,10 +394,24 @@ export default function ProfilePage({ params }) {
               </div>
             ))}
           </div>
-        )
-      )}
+        ))}
 
+      {list.loading && <p role="status">Loading {activeTab}…</p>}
+      {list.error && (
+        <div role="alert">
+          <p>{list.error}</p>
+          <button className="min-h-11 underline" onClick={list.reload}>
+            Retry loading {activeTab}
+          </button>
+        </div>
+      )}
+      <Pagination
+        page={list.page}
+        hasMore={list.hasMore}
+        onPage={list.setPage}
+        loading={list.loading}
+        label={activeTab}
+      />
     </div>
   );
 }
-

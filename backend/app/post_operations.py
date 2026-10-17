@@ -1,7 +1,7 @@
 """Delete a post and its dependent records in one transaction, without schema changes."""
 from sqlalchemy import delete, func
 from sqlmodel import select
-from .models import Post, ResponseRequest, Message, Rating, RatingClaim, Report, User
+from .models import ResponseRequest, Message, Rating, RatingClaim, Report, User
 
 
 def delete_post_records(session, post):

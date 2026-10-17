@@ -1,5 +1,6 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
+from ..pagination import PageParams, paginate
 from sqlmodel import Session, select
 
 from ..database import get_session
@@ -68,22 +69,21 @@ def respond_to_post(
     return _to_out(session, rr)
 
 
+@router.get("/inbox/pending-count")
+def pending_count(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from sqlalchemy import func
+    return {'count':session.exec(select(func.count(ResponseRequest.id)).join(Post, Post.id == ResponseRequest.post_id).where(Post.owner_id == user.id,ResponseRequest.status == RequestStatus.pending)).one()}
+
 @router.get("/inbox/incoming", response_model=List[ResponseRequestOut])
-def incoming_requests(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    my_posts = session.exec(select(Post).where(Post.owner_id == user.id)).all()
-    post_ids = [p.id for p in my_posts]
-    if not post_ids:
-        return []
-    rrs = session.exec(select(ResponseRequest).where(ResponseRequest.post_id.in_(post_ids))).all()
-    rrs.sort(key=lambda r: r.created_at, reverse=True)
-    return [_to_out(session, r) for r in rrs]
+def incoming_requests(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    stmt = select(ResponseRequest).join(Post, Post.id == ResponseRequest.post_id).where(Post.owner_id == user.id).order_by(ResponseRequest.created_at.desc(), ResponseRequest.id.desc())
+    return [_to_out(session, row) for row in paginate(session, stmt, paging, response)]
 
 
 @router.get("/inbox/sent", response_model=List[ResponseRequestOut])
-def sent_requests(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    rrs = session.exec(select(ResponseRequest).where(ResponseRequest.requester_id == user.id)).all()
-    rrs.sort(key=lambda r: r.created_at, reverse=True)
-    return [_to_out(session, r) for r in rrs]
+def sent_requests(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    stmt = select(ResponseRequest).where(ResponseRequest.requester_id == user.id).order_by(ResponseRequest.created_at.desc(), ResponseRequest.id.desc())
+    return [_to_out(session, row) for row in paginate(session, stmt, paging, response)]
 
 
 @router.patch("/requests/{request_id}", response_model=ResponseRequestOut)

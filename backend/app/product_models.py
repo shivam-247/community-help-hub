@@ -28,6 +28,12 @@ class Invoice(SQLModel, table=True):
     status: str = "test_paid"
     created_at: datetime = Field(default_factory=now)
 
+class PaymentReference(SQLModel, table=True):
+    invoice_id: int = Field(primary_key=True, foreign_key="invoice.id")
+    provider: str
+    reference: str = Field(unique=True, index=True)
+    state: str
+
 class Notification(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id", index=True)

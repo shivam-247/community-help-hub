@@ -1,11 +1,10 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from ..database import get_session
-from ..models import Report, Post, User, ReportStatus
+from ..models import Report, Post, User
 from ..schemas import ReportIn
-from ..auth import get_current_user, require_admin
+from ..auth import get_current_user
 
 router = APIRouter(tags=["reports"])
 
