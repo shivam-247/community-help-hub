@@ -21,6 +21,7 @@ from ..models import User, Post, PostStatus, Message, ResponseRequest, RequestSt
 from ..product_models import *
 from pydantic import Field
 from ..product import PLANS, active_plan, usage, notify
+from ..invoice_receipts import smtp_available
 
 router = APIRouter(tags=["product"])
 
@@ -70,6 +71,8 @@ def checkout(data: CheckoutIn, user: User = Depends(get_current_user), session: 
     days = 365 if data.cycle == "yearly" else 30
     session.merge(Subscription(user_id=user.id, plan=data.plan, cycle=data.cycle,
                                expires_at=None if data.plan == "free" else datetime.now(timezone.utc) + timedelta(days=days)))
+    from ..invoice_receipts import ensure_receipt
+    ensure_receipt(session, invoice, user)
     notify(session, user.id, "Plan updated", f"Your {PLANS[data.plan]['name']} plan is active. Test checkout — no money was charged.", "/settings?tab=billing")
     session.commit()
     session.refresh(invoice)
@@ -84,7 +87,7 @@ def preferences(user: User = Depends(get_current_user), session: Session = Depen
     pref = session.get(NotificationPreference, user.id)
     trust = session.get(TrustRecord, user.id)
     return {"in_app": pref.in_app if pref else True, "email_alerts": pref.email_alerts if pref else False,
-            "email_available": bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_FROM")),
+            "email_available": smtp_available(),
             "email_verified": bool(trust and trust.email_verified), "plan_allows_email": PLANS[active_plan(session, user.id)]["email_alerts"]}
 
 @router.patch("/notifications/preferences")
@@ -103,6 +106,38 @@ def unread_count(user: User = Depends(get_current_user), session: Session = Depe
 @router.get("/billing/invoices")
 def invoices(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     return paginate(session, select(Invoice).where(Invoice.user_id == user.id).order_by(Invoice.id.desc()), paging, response)
+
+def owned_invoice(invoice_id, user, session):
+    invoice = session.get(Invoice, invoice_id)
+    if not invoice or invoice.user_id != user.id:
+        raise HTTPException(404, "Invoice not found.")
+    return invoice
+
+@router.get("/billing/invoices/{invoice_id}")
+def invoice_detail(invoice_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from ..invoice_receipts import receipt_payload
+    invoice = owned_invoice(invoice_id, user, session)
+    return receipt_payload(session, invoice, session.get(InvoiceReceipt, invoice_id), user)
+
+@router.post("/billing/invoices/{invoice_id}/email")
+def email_invoice(invoice_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from ..invoice_receipts import request_email, receipt_payload
+    invoice = owned_invoice(invoice_id, user, session)
+    row = request_email(session, invoice, session.get(InvoiceReceipt, invoice_id), user)
+    session.commit()
+    return receipt_payload(session, invoice, row, user)
+
+@router.get("/billing/invoices/{invoice_id}/document")
+def invoice_document(invoice_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from ..invoice_receipts import receipt_html
+    from fastapi.responses import HTMLResponse
+    invoice = owned_invoice(invoice_id, user, session)
+    row = session.get(InvoiceReceipt, invoice_id)
+    if not row:
+        raise HTTPException(409, "Generate a test receipt from Billing first.")
+    return HTMLResponse(receipt_html(invoice,row), headers={
+        "Content-Disposition":f'attachment; filename="CHH-{invoice_id:06d}-test-invoice.html"',
+        "Content-Security-Policy":"default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'"})
 
 @router.get("/notifications")
 def notifications(response: Response, paging: PageParams = Depends(), user: User = Depends(get_current_user), session: Session = Depends(get_session)):
@@ -155,7 +190,7 @@ def trust_status(user: User = Depends(get_current_user), session: Session = Depe
     trust = session.get(TrustRecord, user.id)
     return {"email": bool(trust and trust.email_verified), "phone": bool(trust and trust.phone_verified),
             "community": bool(trust and trust.address_verified), "status": user.verification_status,
-            "email_delivery_available": bool(os.getenv("SMTP_HOST") and os.getenv("SMTP_FROM")),
+            "email_delivery_available": smtp_available(),
             "phone_method": "Administrator review of your society reference; no SMS service is configured."}
 
 def code_digest(user_id, code):
@@ -163,7 +198,7 @@ def code_digest(user_id, code):
 
 @router.post("/account/email/send")
 def send_code(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
-    if not os.getenv("SMTP_HOST") or not os.getenv("SMTP_FROM"):
+    if not smtp_available():
         raise HTTPException(503, "Email delivery is not configured yet. You can still submit a society reference for community review.")
     old = session.get(EmailChallenge, user.id)
     if old and old.expires_at > int(time.time()) + 540:
@@ -188,6 +223,8 @@ def verify_code(data: CodeIn, user: User = Depends(get_current_user), session: S
     if valid:
         trust = session.get(TrustRecord, user.id) or TrustRecord(user_id=user.id)
         trust.email_verified = True
+        from ..invoice_receipts import release_verified_receipts
+        release_verified_receipts(session, user.id)
         session.add(trust)
         session.delete(row)
     session.commit()

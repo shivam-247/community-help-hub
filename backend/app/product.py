@@ -2,6 +2,7 @@
 import asyncio
 import os
 import smtplib
+import ssl
 from email.message import EmailMessage
 from datetime import datetime, timezone
 from fastapi import HTTPException
@@ -59,30 +60,47 @@ def notify(session, user_id, title, body, href):
     if pref and pref.email_alerts and trust and trust.email_verified and PLANS[active_plan(session, user_id)]["email_alerts"]:
         session.add(EmailOutbox(user_id=user_id, subject=title, body=body + "\n" + os.getenv("APP_ORIGIN", "http://localhost:3000") + href))
 
-def send_email(recipient, subject, body):
+def send_email(recipient, subject, body, html_body=None):
     message = EmailMessage()
     message["From"] = os.environ["SMTP_FROM"]
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(body)
+    if html_body:
+        message.add_alternative(html_body, subtype="html")
     with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.getenv("SMTP_PORT", "587")), timeout=15) as client:
         client.ehlo()
-        client.starttls()
+        client.starttls(context=ssl.create_default_context())
         client.ehlo()
         if os.getenv("SMTP_USER"):
             client.login(os.environ["SMTP_USER"], os.environ["SMTP_PASSWORD"])
         client.send_message(message)
 
 def drain_outbox(engine):
-    if not os.getenv("SMTP_HOST") or not os.getenv("SMTP_FROM"):
+    from .invoice_receipts import smtp_available
+    if not smtp_available():
         return
     with Session(engine) as session:
         for row in session.exec(select(EmailOutbox).where(EmailOutbox.status == "queued", EmailOutbox.attempts < 5).limit(20)).all():
             user = session.get(User, row.user_id)
+            from .product_models import InvoiceReceipt, Invoice
+            from .invoice_receipts import receipt_html
+            receipt = session.exec(select(InvoiceReceipt).where(InvoiceReceipt.outbox_id == row.id)).first()
+            if receipt and user:
+                trust = session.get(TrustRecord, user.id)
+                if not trust or not trust.email_verified or user.email != receipt.recipient_email:
+                    row.status = "awaiting_verification"
+                    session.add(row)
+                    session.commit()
+                    continue
             row.attempts += 1
             try:
                 if user:
-                    send_email(user.email, row.subject, row.body)
+                    if receipt:
+                        invoice = session.get(Invoice, receipt.invoice_id)
+                        send_email(receipt.recipient_email, row.subject, row.body, receipt_html(invoice, receipt))
+                    else:
+                        send_email(user.email, row.subject, row.body)
                     row.status = "sent"
                 else:
                     row.status = "failed"

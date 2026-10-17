@@ -1,6 +1,7 @@
 "use client";
 import { usePagedResource } from "../lib/use-paged-resource";
 import Pagination from "./Pagination";
+import InvoiceReceipt from "./InvoiceReceipt";
 import { Button } from "./ui";
 export default function InvoiceList() {
   const list = usePagedResource("/billing/invoices");
@@ -29,6 +30,7 @@ export default function InvoiceList() {
               <span>
                 ₹{(i.amount_paise / 100).toLocaleString("en-IN")} · No charge
               </span>
+              <InvoiceReceipt invoiceId={i.id} />
             </li>
           ))}
         </ul>

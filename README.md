@@ -73,3 +73,11 @@ SQLite uses WAL/busy timeout and additive indexes; requests roll back failed tra
 API failures have safe JSON messages and request IDs. Structured application logs omit bodies, tokens, IPs, query values, SQL parameters and exception messages. Third-party mail requires its own operational/unsubscribe review. Policies are project-specific drafts and do not certify legal or accessibility compliance.
 
 See `PORTFOLIO_RELEASE.md` for the module audit and contracts, `SECURITY.md` for security controls, `LEGAL_AND_PRIVACY_REVIEW.md` for remaining privacy/legal work and `THIRD_PARTY_NOTICES.md` for asset licences. The actual research-paper bibliography was not supplied; `/references` clearly labels its verified implementation sources instead of inventing paper citations.
+
+## Test invoice emails
+
+Every test checkout saves an immutable receipt with server-owned INR pricing, purchase time, 30-day or 365-day validity, usage allowance and INR 0 actually charged. In Account > Billing, choose View invoice to inspect it or download a printable HTML copy. These are practice receipts, not tax invoices or proof of payment.
+
+Invoice email is transactional and independent of marketing/alert preferences. Receipts retain the account name/email and purchase terms as a billing snapshot; they are visible only to that account. It is held until the account email is verified. Set SMTP_HOST, SMTP_PORT=587, SMTP_FROM and optional SMTP_USER/SMTP_PASSWORD on Render using a real provider and an authorised sender. Never commit credentials. Existing verification emails use the same provider. The background worker retries up to five times; Billing shows setup, verification, queue, failure or provider-accepted status. Provider acceptance is not a guarantee of inbox delivery. Repeated checkout keys create one invoice/email, and another copy has a one-minute cooldown.
+
+SMTP is not configured on the demo deployment. Preview/download work without it; real email delivery must be enabled and checked with a mailbox before claiming it works live. Free Render storage remains ephemeral, including queued receipts.

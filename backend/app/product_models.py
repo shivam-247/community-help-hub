@@ -105,3 +105,15 @@ class AccountConsent(SQLModel, table=True):
 
 class DemoPost(SQLModel, table=True):
     post_id: int = Field(primary_key=True, foreign_key="post.id")
+
+
+class InvoiceReceipt(SQLModel, table=True):
+    invoice_id: int = Field(primary_key=True, foreign_key="invoice.id")
+    recipient_name: str
+    recipient_email: str
+    plan_name: str
+    starts_at: datetime
+    expires_at: Optional[datetime] = None
+    allowance: str
+    outbox_id: int = Field(foreign_key="emailoutbox.id", unique=True, index=True)
+    email_requested_at: datetime = Field(default_factory=now)

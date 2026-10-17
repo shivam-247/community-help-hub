@@ -175,7 +175,7 @@ export async function proxyRequest(
         "Cache-Control": "no-store",
         "X-Request-ID": upstream.headers.get("x-request-id") || requestId,
         ...Object.fromEntries(
-          ["x-page", "x-page-size", "x-has-more"]
+          ["x-page", "x-page-size", "x-has-more", "content-disposition"]
             .filter((k) => upstream.headers.has(k))
             .map((k) => [k, upstream.headers.get(k)]),
         ),

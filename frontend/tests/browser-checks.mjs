@@ -177,6 +177,33 @@ try {
     .getByText("Unlimited allowance", { exact: false })
     .first()
     .waitFor();
+  phase = "invoice preview and download";
+  await page.setViewportSize({ width: 360, height: 900 });
+  await page
+    .getByRole("button", { name: /View test invoice/ })
+    .first()
+    .click();
+  await page.getByRole("heading", { name: /Test invoice CHH-/ }).waitFor();
+  await page.getByText("Valid until", { exact: true }).waitFor();
+  await page.getByText("Actually charged", { exact: true }).waitFor();
+  assert.ok((await page.getByRole("dialog").textContent()).includes("IST"));
+  assert.ok(
+    (await page.getByRole("dialog").textContent()).includes("INR 0.00"),
+  );
+  await page.screenshot({
+    path: join(temporary, "invoice-mobile.png"),
+    fullPage: true,
+  });
+  const downloadEvent = page.waitForEvent("download");
+  await page.getByRole("link", { name: "Download invoice (HTML)" }).click();
+  const download = await downloadEvent,
+    receiptFile = join(temporary, "receipt.html");
+  await download.saveAs(receiptFile);
+  assert.match(readFileSync(receiptFile, "utf8"), /No money was charged/);
+  assert.match(download.suggestedFilename(), /CHH-.*-test-invoice.html/);
+  await page.keyboard.press("Escape");
+  await page.getByRole("dialog").waitFor({ state: "hidden" });
+  await page.setViewportSize({ width: 1024, height: 900 });
   phase = "create post";
   await page.goto(base + "/create-post");
   await page
@@ -289,9 +316,13 @@ try {
     `/profile/${response.requester_id}`,
     `/messages/${response.id}`,
   ];
+  const checkedRoutes =
+    process.env.BROWSER_INVOICE_ONLY === "true"
+      ? ["/settings?tab=billing"]
+      : routes;
   for (const width of [360, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    for (const route of routes) {
+    for (const route of checkedRoutes) {
       phase = `${width} ${route}`;
       try {
         await page.goto(base + route, { waitUntil: "domcontentloaded" });
@@ -333,6 +364,20 @@ try {
         0,
         `${phase} small controls: ${state.smallButtons}`,
       );
+      if (route === "/settings?tab=billing") {
+        await page
+          .getByRole("button", { name: /View test invoice/ })
+          .first()
+          .click();
+        await page.getByText("Valid until", { exact: true }).waitFor();
+        assert.ok(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth + 1,
+          ),
+          "Invoice panel overflow",
+        );
+        await page.keyboard.press("Escape");
+      }
       checks.push({ width, route, overflow: false });
       console.log(`PASS ${phase}`);
     }
