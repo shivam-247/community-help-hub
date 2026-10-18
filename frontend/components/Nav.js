@@ -149,12 +149,7 @@ export default function Nav() {
           aria-label="Community Help Hub home"
           className="flex items-center gap-2.5 shrink-0"
         >
-          <span className="bg-brand-solid text-on-brand w-9 h-9 rounded-lg inline-flex items-center justify-center">
-            <Icon name="handshake" decorative />
-          </span>
-          <span className="font-semibold text-sm sm:text-base tracking-tight leading-tight">
-            <span className="block"><span className="hidden sm:inline">Community </span>Help Hub</span><span className="block text-[10px] font-normal tracking-wide text-ink-muted mt-1">Your neighbourhood</span>
-          </span>
+          <span className="meadow-wordmark">Help Hub</span>
         </Link>
         <nav
           aria-label="Main navigation"

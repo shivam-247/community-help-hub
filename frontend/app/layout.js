@@ -1,5 +1,6 @@
 import "@fontsource/noto-sans/400.css";
 import "@fontsource/noto-sans/600.css";
+import "@fontsource/noto-serif/600.css";
 import "@fontsource/noto-sans-gujarati/400.css";
 import "@fontsource/noto-sans-devanagari/400.css";
 import "./globals.css";

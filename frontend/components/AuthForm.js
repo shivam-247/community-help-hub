@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -40,7 +40,12 @@ export default function AuthForm({ signup = false }) {
   const auth = useAuth(),
     router = useRouter();
   const [error, setError] = useState(""),
-    [show, setShow] = useState(false);
+    [show, setShow] = useState(false),
+    [returnQuery, setReturnQuery] = useState("");
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next");
+    setReturnQuery(next ? `?${new URLSearchParams({ next })}` : "");
+  }, [signup]);
   const {
     register,
     handleSubmit,
@@ -280,7 +285,7 @@ export default function AuthForm({ signup = false }) {
             {signup ? "Already a neighbour? " : "New here? "}
             <Link
               className="text-brand font-medium"
-              href={signup ? "/login" : "/signup"}
+              href={`${signup ? "/login" : "/signup"}${returnQuery}`}
             >
               {signup ? "Sign in" : "Create an account"}
             </Link>

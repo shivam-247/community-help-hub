@@ -56,6 +56,7 @@ export default function CreatePostPage() {
     [billing, setBilling] = useState(null);
   const {
     register,
+    setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -71,7 +72,13 @@ export default function CreatePostPage() {
     },
   });
   useEffect(() => {
-    setCommunity(new URLSearchParams(window.location.search).get("community"));
+    const params = new URLSearchParams(window.location.search);
+    setCommunity(params.get("community"));
+    const presetType = params.get("type");
+    if (["Need help", "Offer help", "Request item", "Offer service"].includes(presetType)) {
+      setValue("type", presetType);
+      if (presetType === "Offer help" || presetType === "Offer service") setValue("category", "Skill Offers");
+    }
     api("/billing", { auth: true })
       .then(setBilling)
       .catch((e) => setError(e.message));

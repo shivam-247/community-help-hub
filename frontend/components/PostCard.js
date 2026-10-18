@@ -44,7 +44,7 @@ export default function PostCard({ post }) {
         />
       )}
       <div className="flex-1">
-        <h3 className="text-xl font-semibold leading-snug">
+        <h3 className="text-xl sm:text-2xl font-semibold leading-snug">
           <Link className="hover:text-brand" href={`/post/${post.id}`}>
             {post.title}
           </Link>
@@ -61,7 +61,7 @@ export default function PostCard({ post }) {
         </div>
         <Link
           href={`/post/${post.id}`}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold text-brand px-3 rounded-lg bg-brand-soft hover:brightness-95"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold text-brand px-4 rounded-full bg-surface/70 hover:brightness-95"
           aria-label={`View ${post.title}`}
         >
           View post

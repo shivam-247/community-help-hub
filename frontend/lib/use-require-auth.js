@@ -13,7 +13,7 @@ export function useRequireAuth(required = true, adminOnly = false) {
     !!user && (!adminOnly || ["admin", "super_admin"].includes(user.role));
   useEffect(() => {
     if (!required || loading || error) return;
-    if (!user) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (!user) router.replace(`/login?next=${encodeURIComponent(pathname + window.location.search)}`);
     else if (!allowed) {
       notify("Administrator access is required for that page.", "error");
       router.replace("/");

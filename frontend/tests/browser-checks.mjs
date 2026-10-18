@@ -123,11 +123,19 @@ try {
     if (m.type() === "error" && !m.text().includes("401 (Unauthorized)"))
       errors.push(`${phase}: ${m.text()}`);
   });
+  phase = "signed-out mobile landing";
+  await page.setViewportSize({ width: 360, height: 900 });
+  await page.goto(base + "/");
+  await page.getByRole("heading", { name: /Every neighbour is a/ }).waitFor();
+  await page.getByRole("link", { name: "Offer help", exact: true }).waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Signed-out mobile landing overflow");
+  await page.screenshot({path: join(temporary, "home-anonymous-360.png"), fullPage: false, caret: "initial"});
   phase = "signup";
   await page.goto(base + "/signup");
   await page
     .getByRole("heading", { name: "Join your neighbourhood", exact: true })
     .waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "Signed-out navigation should fit on mobile");
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
@@ -159,11 +167,19 @@ try {
   ).value;
   await context.clearCookies();
   phase = "login";
-  await page.goto(base + "/login");
+  await page.goto(base + "/");
+  await page.getByRole("link", { name: "Offer help", exact: true }).click();
+  await page.waitForURL(/\/login\?next=/);
+  await page.getByRole("link", { name: "Create an account", exact: true }).click();
+  await page.waitForURL(/\/signup\?next=/);
+  await page.locator("main").getByRole("link", { name: "Sign in", exact: true }).click();
+  await page.waitForURL(/\/login\?next=/);
   await page.locator("#auth-email").fill(email);
   await page.locator("#auth-password").fill(password);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await page.waitForURL("**/noticeboard");
+  await page.waitForURL(/\/create-post\?type=/);
+  await page.waitForFunction(() => document.querySelector('select[name="type"]')?.value === "Offer help");
+  assert.equal(new URL(page.url()).searchParams.get("type"), "Offer help");
   let token = (await context.cookies()).find(
     (c) => c.name === "chh_session",
   ).value;
@@ -192,7 +208,7 @@ try {
   );
   await page.screenshot({
     path: join(temporary, "invoice-mobile.png"),
-    fullPage: false,
+    fullPage: false, caret: "initial",
   });
   const downloadEvent = page.waitForEvent("download");
   await page.getByRole("link", { name: "Download invoice (HTML)" }).click();
@@ -403,17 +419,31 @@ try {
         await page.keyboard.press("Escape");
       }
       if ([360, 1440].includes(width) && ["/", "/noticeboard"].includes(route)) {
-        if (route === "/noticeboard") await page.locator(".post-card").first().waitFor();
+        if (route === "/noticeboard") {
+          await page.locator(".post-card").first().waitFor();
+          if (width === 360) {
+            const title = await page.locator(".post-card h3").first().boundingBox();
+            const dock = await page.getByRole("navigation", {name: "Quick navigation"}).boundingBox();
+            assert.ok(title.y + title.height < dock.y, "First notice title should appear above the mobile dock without scrolling");
+          }
+        }
         for (const theme of ["dark", "light"]) {
           await page.getByRole("button", { name: `Use ${theme} theme`, exact: true }).click();
           await page.waitForFunction(value => document.documentElement.dataset.theme === value, theme);
           assert.equal(await page.evaluate(() => localStorage.getItem("chh-theme")), theme);
           await page.waitForTimeout(200);
-          await page.screenshot({path: join(temporary, `${route === "/" ? "home" : "feed"}-${width}-${theme}.png`), fullPage: false});
+          await page.screenshot({path: join(temporary, `${route === "/" ? "home" : "feed"}-${width}-${theme}.png`), fullPage: false, caret: "initial"});
         }
         if (width === 360) {
           const dock = page.getByRole("navigation", {name: "Quick navigation"});
           assert.ok(await dock.isVisible());
+          await page.evaluate(() => window.dispatchEvent(new Event("chh-api-slow")));
+          await page.getByRole("button", {name: "Dismiss notification", exact: true}).waitFor();
+          const toast = await page.getByRole("button", {name: "Dismiss notification", exact: true}).locator("..").boundingBox();
+          const navBox = await dock.boundingBox();
+          assert.ok(toast.y + toast.height < navBox.y, "Toast must not cover mobile navigation");
+          await page.screenshot({path: join(temporary, "toast-above-dock.png"), fullPage: false, caret: "initial"});
+          await page.getByRole("button", {name: "Dismiss notification", exact: true}).click();
           for (const link of await dock.getByRole("link").all()) {
             const box = await link.boundingBox();
             assert.ok(box.width >= 44 && box.height >= 44, "Mobile navigation tap target");
@@ -451,6 +481,8 @@ try {
           "area search and filters",
           "theme switching and persistence",
           "mobile navigation",
+          "toast clearance and first-post visibility",
+          "offer intent preserved through sign-in",
           "invoice preview and download",
           "password visibility",
         ],

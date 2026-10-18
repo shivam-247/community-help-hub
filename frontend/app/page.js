@@ -1,228 +1,127 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  HandHeart,
-  ArrowRight,
-  MapPin,
-  ShieldCheck,
-  MessageCircle,
-  Check,
-  BookOpen,
-  Wrench,
-} from "lucide-react";
-import { Button, Badge, Card } from "../components/ui";
-const steps = [
-  {
-    icon: MapPin,
-    title: "Start with your area",
-    body: "Choose Gota, Satellite, or your own neighbourhood. Find requests you can actually reach.",
-  },
-  {
-    icon: MessageCircle,
-    title: "Agree on the details",
-    body: "Respond to a post. Once accepted, use a private conversation to arrange a time and a public meeting place.",
-  },
-  {
-    icon: HandHeart,
-    title: "Help, then close the loop",
-    body: "Both neighbours confirm the exchange. Earn community credits and build a reputation for showing up.",
-  },
+import { api } from "../lib/api";
+import PostCard from "../components/PostCard";
+import { PostCardSkeleton } from "../components/Skeleton";
+
+const CATEGORIES = [
+  { category: "Help Requests", title: "A helping hand", label: "Help requests", appearance: "meadow-yellow" },
+  { category: "Donations & Giveaways", title: "Something to share", label: "Giveaways", appearance: "meadow-blue" },
+  { category: "Skill Offers", title: "A skill to offer", label: "Skills", appearance: "meadow-pink" },
 ];
-const faqs = [
-  [
-    "Does helping involve money?",
-    "No. Requests, giveaways, and skill sharing are free. Optional plans support extra posting and society tools; they never turn an exchange into a sale.",
-  ],
-  [
-    "Can I write in Hindi or Gujarati?",
-    "Yes. Include your area, what you need, and when you can meet, in the language your neighbours use.",
-  ],
-  [
-    "What does verified mean?",
-    "A community administrator has reviewed the member’s submitted evidence. Email and phone checks are shown separately in the Trust Center. Verification is a useful signal, not a guarantee.",
-  ],
-  [
-    "How do society boards work?",
-    "A Society plan lets an administrator create a private board. Members join with an invite code and only members can read its posts.",
-  ],
-  [
-    "What should I avoid sharing?",
-    "Never post an Aadhaar number, passwords, OTPs, or financial details. Use a society reference for verification and arrange exchanges at a common area.",
-  ],
-];
+
+// Live, bounded public queries keep counts consistent with the noticeboard.
 export default function LandingPage() {
+  const [board, setBoard] = useState(null);
+  const [counts, setCounts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [countError, setCountError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    setCountError(false);
+    const paths = [
+      "/posts/feed?page=1&page_size=3",
+      ...CATEGORIES.map(({ category }) => `/posts/feed?${new URLSearchParams({ category, page: "1", page_size: "1" })}`),
+    ];
+    Promise.allSettled(paths.map(path => api(path, { signal: controller.signal }))).then(results => {
+      if (controller.signal.aborted) return;
+      if (results[0].status === "fulfilled") setBoard(results[0].value);
+      else { setBoard(null); setError(results[0].reason.message); }
+      const totals = {};
+      CATEGORIES.forEach(({ category }, i) => {
+        if (results[i + 1].status === "fulfilled") totals[category] = results[i + 1].value.total;
+      });
+      setCounts(totals);
+      setCountError(results.slice(1).some(result => result.status === "rejected"));
+      setLoading(false);
+    });
+    return () => controller.abort();
+  }, [attempt]);
+
+  const stats = [
+    { value: board?.total, label: "Notices on the board" },
+    { value: counts["Help Requests"], label: "Help requests" },
+    { value: counts["Skill Offers"], label: "Skill offers" },
+  ];
+  const recent = (board?.items || []).filter(post => post.status === "Resolved" && !post.is_demo);
+
   return (
-    <div className="space-y-20 sm:space-y-24 landing-page">
-      <section className="grid md:grid-cols-[1.05fr_1fr] gap-10 lg:gap-16 items-center pt-2 sm:pt-6">
-        <div className="space-y-6">
-          <Badge variant="outline">
-            <MapPin className="size-3.5" />
-            Made for Indian neighbourhoods
-          </Badge>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.12] tracking-tight">
-            A little help.
-            <br />
-            <span className="text-brand">A closer neighbourhood.</span>
-          </h1>
-          <p className="text-base sm:text-lg text-ink-muted leading-relaxed">
-            The ladder next door. Books someone has outgrown. An hour of help
-            when you need it. Your neighbourhood has more to share than you
-            think.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href="/noticeboard">
-                Explore the noticeboard
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link href="/signup">Join your neighbours</Link>
-            </Button>
-          </div>
-          <form action="/noticeboard" method="get" className="pt-5 border-t border-line max-w-md">
-            <label htmlFor="landing-area" className="block text-xs font-semibold mb-2">What’s happening in your area?</label>
-            <div className="flex gap-2">
-              <input id="landing-area" name="locality" type="search" maxLength={120} placeholder="Your area or PIN code" className="flex-1 min-w-0 rounded-lg border border-line bg-surface px-3 text-sm" />
-              <Button type="submit" variant="secondary">Find posts<ArrowRight className="size-4" aria-hidden="true" /></Button>
-            </div>
-          </form>
-        </div>
-        <div className="home-board rounded-2xl p-5 sm:p-8 border border-line">
-          <div className="flex justify-between items-center mb-5">
-            <p className="text-sm font-semibold">The neighbourhood board</p>
-            <span className="text-xs text-ink-muted">Example posts</span>
-          </div>
-          <div className="space-y-3">
-            {[
-              [
-                BookOpen,
-                "Books looking for their next reader",
-                "Giveaway · Gota, 382481",
-              ],
-              [
-                Wrench,
-                "A ladder for a small Sunday repair",
-                "Need help · Satellite, 380015",
-              ],
-              [
-                HandHeart,
-                "ગુજરાતી વાંચવામાં થોડી મદદ",
-                "Skill offer · Your society",
-              ],
-            ].map(([Icon, title, meta]) => (
-              <Card key={title} className="p-4 sm:p-5 flex gap-4">
-                <span className="bg-brand-soft text-brand rounded-lg size-11 shrink-0 flex items-center justify-center">
-                  <Icon className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm leading-relaxed">{title}</p>
-                  <p className="text-xs text-ink-muted mt-1">{meta}</p>
-                </div>
-              </Card>
-            ))}
-          </div>
-          <p className="flex gap-2 items-center text-xs text-ink-muted mt-5">
-            <ShieldCheck className="size-4 text-brand" />
-            Community review. Private conversations.
-          </p>
-        </div>
-      </section>
-      <section>
-        <p className="text-xs uppercase tracking-widest text-brand font-semibold">
-          How it works
+    <div className="mx-auto max-w-5xl space-y-9 sm:space-y-12 meadow-enter">
+      <section aria-labelledby="meadow-heading" className="meadow-hero px-6 pb-9 pt-14 text-center sm:px-12 sm:pb-12 sm:pt-20">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em]">Helping, gently</p>
+        <h1 id="meadow-heading" className="mx-auto mt-5 max-w-3xl text-balance text-[2.5rem] leading-[1.13] sm:text-6xl lg:text-7xl">
+          Every neighbour is a <em className="meadow-coral">petal</em> in the same bloom.
+        </h1>
+        <p className="mx-auto mt-6 max-w-md text-sm leading-7 text-ink-muted sm:text-base">
+          Ask for a hand, or offer one. Local connections, no money exchanged.
         </p>
-        <h2 className="text-3xl font-semibold mt-3 mb-8">
-          Small gestures, real connections.
-        </h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {steps.map(({ icon: Icon, title, body }, i) => (
-            <div key={title} className="border-t border-line pt-6">
-              <div className="flex items-center justify-between mb-5">
-                <Icon className="size-6 text-brand" />
-                <span className="text-xs tabular-nums text-ink-muted">
-                  0{i + 1}
-                </span>
-              </div>
-              <h3 className="text-lg font-semibold">{title}</h3>
-              <p className="text-sm text-ink-muted leading-relaxed mt-3">
-                {body}
-              </p>
-            </div>
-          ))}
+        <div className="mx-auto mt-7 flex max-w-lg flex-col gap-3 sm:flex-row sm:gap-4">
+          <Link href="/create-post?type=Need%20help" className="meadow-primary flex-1">Ask for help</Link>
+          <Link href="/create-post?type=Offer%20help" className="meadow-secondary flex-1">Offer help</Link>
         </div>
+        <Link href="/noticeboard" className="mt-5 inline-flex min-h-11 items-center rounded-full px-4 text-sm underline underline-offset-4">Explore the noticeboard</Link>
       </section>
-      <section className="grid md:grid-cols-2 gap-8 p-6 sm:p-10 bg-brand-soft border border-line rounded-xl">
-        <div>
-          <ShieldCheck className="size-8 text-brand mb-5" />
-          <h2 className="text-3xl font-semibold">
-            Trust grows with every exchange.
-          </h2>
-          <p className="text-sm text-ink-soft leading-relaxed mt-4">
-            Community review, spam filtering, and earned badges help you make an
-            informed choice. Keep personal documents private and meet at your
-            society gate or a common area.
-          </p>
-          <Button asChild variant="outline" className="mt-6">
-            <Link href="/settings?tab=trust">
-              Visit the Trust Center
-              <ArrowRight className="size-4" />
+
+      <section aria-label="Public noticeboard activity">
+        <ul className="grid grid-cols-3 gap-2.5 sm:gap-5" aria-busy={loading}>
+          {stats.map(({ value, label }) => <li key={label} className="meadow-glass min-w-0 px-2 py-5 text-center sm:px-5 sm:py-6">
+            <p className="text-3xl font-semibold tabular-nums sm:text-4xl">{loading ? "…" : value ?? "—"}</p>
+            <p className="mt-2 text-[11px] leading-4 text-ink-muted sm:text-sm sm:leading-5">{label}</p>
+          </li>)}
+        </ul>
+        <p className="mt-3 text-center text-xs text-ink-muted">Public board totals. Sample notices are clearly labelled.</p>
+        {countError && <p role="status" className="mt-2 text-center text-xs text-ink-muted">Some counts are unavailable. <button type="button" className="min-h-11 px-2 underline" onClick={() => setAttempt(value => value + 1)}>Retry counts</button></p>}
+      </section>
+
+      <section aria-labelledby="blocks-heading">
+        <h2 id="blocks-heading" className="text-3xl italic sm:text-4xl">Where help is blooming</h2>
+        <ul className="mt-5 grid gap-4 sm:grid-cols-3 sm:gap-5">
+          {CATEGORIES.map(({ category, title, label, appearance }) => <li key={category}>
+            <Link href={`/noticeboard?${new URLSearchParams({ category })}`} className={`meadow-tile h-full ${appearance}`}>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">{label}</p>
+              <h3 className="mt-4 text-2xl font-semibold leading-snug">{title}</h3>
+              <p className="mt-3 text-sm">{loading ? "Loading notices…" : counts[category] == null ? "Explore the board" : `${counts[category]} ${counts[category] === 1 ? "notice" : "notices"} on the board`}<span aria-hidden="true"> →</span></p>
             </Link>
-          </Button>
-        </div>
-        <ul className="space-y-5 self-center">
-          {[
-            "Separate email, phone, and community verification steps",
-            "Report a post to the moderation team",
-            "Credits awarded after both people confirm completion",
-            "Contact details shared only with your permission",
-          ].map((s) => (
-            <li key={s} className="flex gap-3 text-sm text-ink-soft">
-              <Check className="size-5 text-brand shrink-0" />
-              {s}
-            </li>
-          ))}
+          </li>)}
         </ul>
       </section>
-      <section className="text-center max-w-2xl mx-auto">
-        <p className="text-xs uppercase tracking-widest text-brand font-semibold">
-          Plans that keep help accessible
-        </p>
-        <h2 className="text-3xl font-semibold mt-3">
-          Start free. Grow with your community.
-        </h2>
-        <p className="text-sm text-ink-muted leading-relaxed mt-4">
-          Free includes 5 posts a month. Plus adds unlimited posting and
-          optional email alerts. Society gives your residents a shared private
-          board and simple analytics.
-        </p>
-        <div className="flex justify-center flex-wrap gap-4 mt-6">
-          <Badge variant="outline">Free · ₹0</Badge>
-          <Badge>Plus · ₹99/month</Badge>
-          <Badge variant="outline">Society · ₹299/month</Badge>
+
+      <section aria-labelledby="nearby-heading" aria-busy={loading}>
+        <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <h2 id="nearby-heading" className="text-3xl italic sm:text-4xl">Blooming nearby</h2>
+          <Link href="/noticeboard" className="inline-flex min-h-11 items-center rounded-full px-3 text-sm text-ink-muted underline underline-offset-4">View all notices</Link>
         </div>
-        <Button asChild variant="outline" className="mt-6">
-          <Link href="/pricing">
-            Compare plans
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+        <form action="/noticeboard" method="get" className="my-5">
+          <label htmlFor="landing-area" className="block text-xs font-semibold mb-2">What’s happening in your area?</label>
+          <div className="flex gap-2">
+            <input id="landing-area" name="locality" type="search" maxLength={100} placeholder="Your area or PIN code" className="min-w-0 flex-1 rounded-full border border-line bg-surface/50 px-4 text-sm" />
+            <button type="submit" className="meadow-primary shrink-0 text-sm">Find posts</button>
+          </div>
+        </form>
+        {error ? <div role="alert" className="meadow-glass p-6 space-y-3"><h3 className="text-xl">The board is taking a moment.</h3><p className="text-sm text-ink-muted">{error}</p><button type="button" onClick={() => setAttempt(value => value + 1)} className="meadow-primary text-sm">Try again</button></div>
+          : loading ? <div className="grid gap-4 sm:grid-cols-2" aria-label="Loading nearby notices">{[0, 1, 2].map(id => <PostCardSkeleton key={id} />)}</div>
+          : board?.items.length ? <ul className="grid gap-4 sm:grid-cols-2">{board.items.map(post => <li key={post.id}><PostCard post={post} /></li>)}</ul>
+          : <div className="meadow-glass p-8 text-center"><h3 className="text-2xl">Your neighbourhood starts with you.</h3><p className="mt-3 text-sm text-ink-muted">Ask for a hand, share an item, or offer a skill.</p><Link href="/create-post" className="meadow-primary mt-5 text-sm">Create the first post</Link></div>}
       </section>
-      <section className="max-w-3xl mx-auto">
-        <h2 className="text-3xl font-semibold mb-8">
-          A few things you might be wondering.
-        </h2>
-        <div className="border-t border-line">
-          {faqs.map(([q, a]) => (
-            <details key={q} className="border-b border-line py-2">
-              <summary className="cursor-pointer font-medium text-sm py-3 pr-3">
-                {q}
-              </summary>
-              <p className="text-sm text-ink-muted leading-relaxed pb-5 max-w-2xl">
-                {a}
-              </p>
-            </details>
-          ))}
-        </div>
+
+      <section aria-labelledby="kindness-heading">
+        <h2 id="kindness-heading" className="text-3xl italic sm:text-4xl">Recent kindness</h2>
+        {recent.length ? <ul className="mt-5 space-y-3">{recent.map(post => <li key={post.id} className="meadow-glass flex items-center justify-between gap-4 p-5"><p className="text-sm">{post.owner_name} closed “{post.title}”</p><Link href={`/post/${post.id}`} className="meadow-primary shrink-0 text-sm">View exchange</Link></li>)}</ul>
+          : <div className="meadow-glass mt-5 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between"><p className="max-w-lg text-sm leading-7 text-ink-muted">A small favour deserves a thank-you. After your exchange, confirm completion together and share your feedback.</p><Link href="/inbox" className="meadow-primary shrink-0 text-sm">Your conversations</Link></div>}
+      </section>
+
+      <section aria-labelledby="spotlight-heading" className="meadow-glass p-6 sm:p-9">
+        <p className="text-[11px] font-semibold uppercase tracking-widest">Neighbour spotlight</p>
+        <h2 id="spotlight-heading" className="mt-4 max-w-3xl text-2xl leading-snug sm:text-3xl">The quiet acts that make a neighbourhood feel like home.</h2>
+        <p className="mt-4 text-sm leading-7 text-ink-muted">A borrowed tool. Books passed on. An hour spent helping someone learn. Start with what you can share.</p>
+        <Link href="/create-post?type=Offer%20help" className="mt-4 inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold underline underline-offset-4">Offer a little kindness<span aria-hidden="true" className="ml-2">→</span></Link>
       </section>
     </div>
   );

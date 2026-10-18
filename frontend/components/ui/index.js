@@ -35,7 +35,7 @@ export const Button = forwardRef(function Button(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
         variants[variant] || variants.default,
         size === "icon" && "w-11 p-2",
         size === "sm" && "px-3 text-xs",
@@ -93,7 +93,7 @@ export const Badge = ({ className, variant = "secondary", ...props }) => (
 export const Card = ({ className, ...props }) => (
   <div
     className={cn(
-      "rounded-xl border border-line bg-surface text-ink",
+      "meadow-glass rounded-[28px] border border-line text-ink",
       className,
     )}
     {...props}

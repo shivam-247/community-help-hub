@@ -21,7 +21,7 @@ export function ToastProvider({ children }) {
     const slow = () => {
       if (Date.now() - lastSlowNotice > 60000) {
         lastSlowNotice = Date.now();
-        notify("The server may be waking up. Your request is still loading; this can take up to a minute.");
+        notify("The server may be waking up. Your request is still loading; this can take up to a minute.", "info");
       }
     };
     window.addEventListener("chh-api-slow", slow);
@@ -29,8 +29,8 @@ export function ToastProvider({ children }) {
   }, [notify]);
   return <ToastContext.Provider value={notify}>
     {children}
-    <div aria-live="polite" aria-atomic="false" className="fixed bottom-5 right-5 left-5 sm:left-auto sm:w-96 z-50 space-y-2">
-      {toasts.map((toast) => <div key={toast.id} role={toast.kind === "error" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 shadow-lg bg-surface text-sm ${toast.kind === "error" ? "border-danger-soft text-danger" : "border-success-soft text-success"}`}>
+    <div aria-live="polite" aria-atomic="false" className="toast-stack space-y-2">
+      {toasts.map((toast) => <div key={toast.id} role={toast.kind === "error" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 shadow-lg bg-surface text-sm ${toast.kind === "error" ? "border-danger-soft text-danger" : toast.kind === "info" ? "border-line text-ink-soft" : "border-success-soft text-success"}`}>
         <p className="flex-1">{toast.message}</p>
         <button aria-label="Dismiss notification" onClick={() => setToasts((items) => items.filter((item) => item.id !== toast.id))} className="min-h-11 min-w-11 flex items-center justify-center"> <X className="size-4" aria-hidden="true"/> </button>
       </div>)}

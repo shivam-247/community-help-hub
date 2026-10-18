@@ -45,6 +45,7 @@ export default function FeedPage() {
     setCommunity(params.get("community"));
     setLocality(params.get("locality") || "");
     setQ(params.get("q") || "");
+    if (CATEGORIES.includes(params.get("category"))) setCategory(params.get("category"));
   }, []);
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1),
@@ -140,14 +141,13 @@ export default function FeedPage() {
     q ||
     verified;
   return (
-    <div className="space-y-8">
-      <section className="flex flex-col sm:flex-row gap-5 sm:items-center sm:justify-between">
+    <div className="compact-feed flex flex-col gap-6 meadow-enter">
+      <section className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-xs text-brand font-semibold mb-2 flex items-center gap-2"><Icon name="map-pin" decorative size="sm" /> Your neighbourhood, connected</p>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">The noticeboard</h1>
-          <p className="text-sm text-ink-muted mt-3">A hand to lend. Something to share. Find it close to home.</p>
+          <h1 className="text-2xl sm:text-4xl italic tracking-tight">Blooming nearby</h1>
+          <p className="hidden sm:block text-sm text-ink-muted mt-2">Ask for a hand, or offer one. Find your neighbourhood’s next small kindness.</p>
         </div>
-        <Button asChild className="self-start sm:self-auto shrink-0">
+        <Button asChild className="hidden sm:inline-flex shrink-0 rounded-full">
           <Link href={community ? `/create-post?community=${community}` : "/create-post"}><Icon name="plus" decorative />Create a post</Link>
         </Button>
       </section>
@@ -172,9 +172,9 @@ export default function FeedPage() {
           </div>
           <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7">No buying or selling.<br />Just neighbours helping neighbours.</p>
         </aside>
-        <section className="min-w-0 space-y-5" aria-label="Neighborhood posts">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-semibold text-lg">Around you</h2>
+        <section className="min-w-0 flex flex-col gap-3" aria-label="Neighborhood posts">
+          <div className="flex items-center justify-end gap-3">
+            <h2 className="sr-only">Neighbourhood notices</h2>
             <p aria-live="polite" className="text-xs text-ink-muted">
               {loading
                 ? "Loading posts…"
@@ -209,10 +209,10 @@ export default function FeedPage() {
               </Button>
             ))}
           </div>
-          <div className="feed-controls space-y-4">
+          <div className="feed-controls space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_150px] gap-3">
               <div>
-                <label className="filter-label" htmlFor="post-search">
+                <label className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:text-xs sm:font-medium sm:text-ink-soft" htmlFor="post-search">
                   Search the noticeboard
                 </label>
                 <div className="relative">
@@ -346,7 +346,7 @@ export default function FeedPage() {
           ) : loading ? (
             <div
               aria-label="Loading posts"
-              className="grid gap-4"
+              className="feed-list grid gap-4"
             >
               {[0, 1, 2, 3].map((i) => (
                 <PostCardSkeleton key={i} />
@@ -354,7 +354,7 @@ export default function FeedPage() {
             </div>
           ) : posts.length ? (
             <div className="space-y-5">
-              <div className="grid gap-4">
+              <div className="feed-list grid gap-4">
                 {posts.map((p) => (
                   <PostCard key={p.id} post={p} />
                 ))}
