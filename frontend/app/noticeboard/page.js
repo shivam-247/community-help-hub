@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useLanguage, Text } from "../../lib/i18n";
 import Link from "next/link";
 import {
   Button,
@@ -13,6 +14,7 @@ import {
   SheetClose,
 } from "../../components/ui";
 import { api } from "../../lib/api";
+import { useSafety } from "../../components/SafetyMenu";
 import Pagination from "../../components/Pagination";
 import PostCard from "../../components/PostCard";
 import { PostCardSkeleton } from "../../components/Skeleton";
@@ -38,6 +40,8 @@ const CATEGORY_ICONS = [
   "megaphone",
 ];
 export default function FeedPage() {
+  const { t } = useLanguage();
+  const { hidden, restore } = useSafety();
   const [community, setCommunity] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   useEffect(() => {
@@ -45,7 +49,38 @@ export default function FeedPage() {
     setCommunity(params.get("community"));
     setLocality(params.get("locality") || "");
     setQ(params.get("q") || "");
-    if (CATEGORIES.includes(params.get("category"))) setCategory(params.get("category"));
+    setType(TYPES.includes(params.get("type")) ? params.get("type") : "All");
+    setPriority(
+      ["High", "Medium", "Low"].includes(params.get("priority"))
+        ? params.get("priority")
+        : "All",
+    );
+    setSort(params.get("sort") === "deadline" ? "deadline" : "newest");
+    setVerified(params.get("verified_only") === "true");
+    if (CATEGORIES.includes(params.get("category")))
+      setCategory(params.get("category"));
+  }, []);
+  useEffect(() => {
+    const restoreUrl = () => {
+      const p = new URLSearchParams(location.search);
+      setLocality(p.get("locality") || "");
+      setQ(p.get("q") || "");
+      setCategory(
+        CATEGORIES.includes(p.get("category")) ? p.get("category") : "All",
+      );
+      setCommunity(p.get("community"));
+      setType(TYPES.includes(p.get("type")) ? p.get("type") : "All");
+      setPriority(
+        ["High", "Medium", "Low"].includes(p.get("priority"))
+          ? p.get("priority")
+          : "All",
+      );
+      setSort(p.get("sort") === "deadline" ? "deadline" : "newest");
+      setVerified(p.get("verified_only") === "true");
+      setPage(1);
+    };
+    window.addEventListener("popstate", restoreUrl);
+    return () => window.removeEventListener("popstate", restoreUrl);
   }, []);
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1),
@@ -92,6 +127,10 @@ export default function FeedPage() {
         if (q.trim()) params.set("q", q.trim());
         params.set("page", String(page));
         params.set("page_size", "12");
+        const publicParams = new URLSearchParams(params);
+        publicParams.delete("page_size");
+        if (community) publicParams.set("community", community);
+        window.history.replaceState(null, "", `/noticeboard?${publicParams}`);
         const data = await api(
           community
             ? `/communities/${community}/feed?${params}`
@@ -144,11 +183,23 @@ export default function FeedPage() {
     <div className="compact-feed flex flex-col gap-6 meadow-enter">
       <section className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-4xl italic tracking-tight">Blooming nearby</h1>
-          <p className="hidden sm:block text-sm text-ink-muted mt-2">Ask for a hand, or offer one. Find your neighbourhood’s next small kindness.</p>
+          <h1 className="text-2xl sm:text-4xl italic tracking-tight">
+            Neighbourhood noticeboard
+          </h1>
+          <p className="hidden sm:block text-sm text-ink-muted mt-2">
+            Ask for a hand, or offer one. Find your neighbourhood’s next small
+            kindness.
+          </p>
         </div>
         <Button asChild className="hidden sm:inline-flex shrink-0 rounded-full">
-          <Link href={community ? `/create-post?community=${community}` : "/create-post"}><Icon name="plus" decorative />Create a post</Link>
+          <Link
+            href={
+              community ? `/create-post?community=${community}` : "/create-post"
+            }
+          >
+            <Icon name="plus" decorative />
+            Create a post
+          </Link>
         </Button>
       </section>
       {community && (
@@ -157,22 +208,62 @@ export default function FeedPage() {
         </p>
       )}
       <div className="feed-layout">
-        <aside className="hidden lg:block feed-aside" aria-label="Explore the neighbourhood">
-          <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3">Explore</p>
+        <aside
+          className="hidden lg:block feed-aside"
+          aria-label="Explore the neighbourhood"
+        >
+          <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3">
+            Explore
+          </p>
           <div className="space-y-1">
-            {CATEGORIES.map((cat, i) => <Button key={cat} variant={category === cat ? "secondary" : "ghost"} className="w-full justify-start text-sm" aria-pressed={category === cat} onClick={() => setCategory(cat)}>
-              <Icon name={CATEGORY_ICONS[i]} decorative size="sm" />{["All posts", "Help requests", "Giveaways", "Skills", "Local alerts"][i]}
-            </Button>)}
+            {CATEGORIES.map((cat, i) => (
+              <Button
+                key={cat}
+                variant={category === cat ? "secondary" : "ghost"}
+                className="w-full justify-start text-sm"
+                aria-pressed={category === cat}
+                onClick={() => setCategory(cat)}
+              >
+                <Icon name={CATEGORY_ICONS[i]} decorative size="sm" />
+                {
+                  [
+                    "All posts",
+                    "Help requests",
+                    "Giveaways",
+                    "Skills",
+                    "Local alerts",
+                  ][i]
+                }
+              </Button>
+            ))}
           </div>
           <div className="border-t border-line mt-6 pt-5 px-3 space-y-1">
-            <p className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-2">Your hub</p>
-            <Link className="app-link" href="/inbox"><Icon name="message-circle" decorative size="sm" />Messages</Link>
-            <Link className="app-link" href="/settings?tab=trust"><Icon name="shield-check" decorative size="sm" />Trust Center</Link>
-            <Link className="app-link" href="/settings?tab=billing"><Icon name="layers" decorative size="sm" />Your plan</Link>
+            <p className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-2">
+              Your hub
+            </p>
+            <Link className="app-link" href="/inbox">
+              <Icon name="message-circle" decorative size="sm" />
+              Messages
+            </Link>
+            <Link className="app-link" href="/settings?tab=trust">
+              <Icon name="shield-check" decorative size="sm" />
+              Trust Center
+            </Link>
+            <Link className="app-link" href="/settings?tab=billing">
+              <Icon name="layers" decorative size="sm" />
+              Your plan
+            </Link>
           </div>
-          <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7">No buying or selling.<br />Just neighbours helping neighbours.</p>
+          <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7">
+            No buying or selling.
+            <br />
+            Just neighbours helping neighbours.
+          </p>
         </aside>
-        <section className="min-w-0 flex flex-col gap-3" aria-label="Neighborhood posts">
+        <section
+          className="min-w-0 flex flex-col gap-3"
+          aria-label="Neighborhood posts"
+        >
           <div className="flex items-center justify-end gap-3">
             <h2 className="sr-only">Neighbourhood notices</h2>
             <p aria-live="polite" className="text-xs text-ink-muted">
@@ -183,153 +274,193 @@ export default function FeedPage() {
                   : `${meta.total} ${meta.total === 1 ? "post" : "posts"}`}
             </p>
           </div>
-          <div
-            className="chip-row flex gap-1.5 overflow-x-auto pb-2 lg:hidden"
-            aria-label="Post categories"
-          >
-            {CATEGORIES.map((cat, i) => (
-              <Button
-                key={cat}
-                variant={category === cat ? "secondary" : "ghost"}
-                size="sm"
-                className="category-button feed-category"
-                aria-pressed={category === cat}
-                onClick={() => setCategory(cat)}
-              >
-                <Icon name={CATEGORY_ICONS[i]} size="sm" decorative />
-                {cat === "All"
-                  ? "All posts"
-                  : cat === "Donations & Giveaways"
-                    ? "Giveaways"
-                    : cat === "Help Requests"
-                      ? "Help requests"
-                      : cat === "Skill Offers"
-                        ? "Skills"
-                        : "Alerts"}
-              </Button>
-            ))}
-          </div>
-          <div className="feed-controls space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_150px] gap-3">
-              <div>
-                <label className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:text-xs sm:font-medium sm:text-ink-soft" htmlFor="post-search">
-                  Search the noticeboard
-                </label>
-                <div className="relative">
-                  <Icon
-                    name="search"
-                    decorative
-                    className="absolute left-3 top-3 text-ink-muted"
-                  />
-                  <Input
-                    id="post-search"
-                    type="search"
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    placeholder="Books, a spare tool, a helping hand…"
-                    className="pl-10 w-full"
-                  />
-                </div>
-              </div>
-              <div className="hidden sm:block lg:hidden xl:block">
-                <label className="filter-label" htmlFor="post-area">
-                  Area / PIN code
-                </label>
-                <Input
-                  id="post-area"
-                  type="search"
-                  value={locality}
-                  onChange={(e) => setLocality(e.target.value)}
-                  placeholder="Gota or 382481"
-                />
-              </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
-            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline">
-                  <Icon name="sliders-horizontal" decorative size="sm" />
-                  More filters
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetTitle>Refine your noticeboard</SheetTitle>
-                <SheetDescription>
-                  Choose an area and the kind of help you’re looking for.
-                </SheetDescription>
-                <div className="grid grid-cols-1 gap-4 pt-6">
-                  <div className="sm:hidden lg:block xl:hidden">
-                    <label className="filter-label" htmlFor="filter-area">Area / PIN code</label>
-                    <Input id="filter-area" type="search" value={locality} onChange={e => setLocality(e.target.value)} placeholder="Gota or 382481" />
-                  </div>
-                  <div>
-                    <label className="filter-label" htmlFor="post-type">
-                      Post type
-                    </label>
-                    <select
-                      id="post-type"
-                      value={type}
-                      onChange={(e) => setType(e.target.value)}
-                      className="filter-control"
-                    >
-                      {TYPES.map((t) => (
-                        <option key={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="filter-label" htmlFor="post-priority">
-                      Priority
-                    </label>
-                    <select
-                      id="post-priority"
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                      className="filter-control"
-                    >
-                      {["All", "High", "Medium", "Low"].map((p) => (
-                        <option key={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <label className="flex items-center gap-3 text-sm min-h-11 mt-4">
-                  <input
-                    type="checkbox"
-                    checked={verified}
-                    onChange={(e) => setVerified(e.target.checked)}
-                  />
-                  Verified members only · Plus / Society
-                </label>
-                <SheetClose asChild>
-                  <Button className="w-full mt-6">Show posts</Button>
-                </SheetClose>
-              </SheetContent>
-            </Sheet>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-2">
-                <label htmlFor="post-sort" className="text-xs text-ink-muted">
-                  Sort
-                </label>
-                <select
-                  id="post-sort"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  className="border border-line rounded-lg px-2 text-sm!"
+          <div className="feed-mobile-sticky">
+            <div
+              className="chip-row flex gap-1.5 overflow-x-auto pb-2 lg:hidden"
+              aria-label="Post categories"
+            >
+              {CATEGORIES.map((cat, i) => (
+                <Button
+                  key={cat}
+                  variant={category === cat ? "secondary" : "ghost"}
+                  size="sm"
+                  className="category-button feed-category"
+                  aria-pressed={category === cat}
+                  onClick={() => setCategory(cat)}
                 >
-                  <option value="newest">Newest first</option>
-                  <option value="deadline">By deadline</option>
-                </select>
-              </div>
-              {filtered && (
-                <Button variant="ghost" size="sm" onClick={clear}>
-                  Clear filters
+                  <Icon name={CATEGORY_ICONS[i]} size="sm" decorative />
+                  {cat === "All"
+                    ? "All posts"
+                    : cat === "Donations & Giveaways"
+                      ? "Giveaways"
+                      : cat === "Help Requests"
+                        ? "Help requests"
+                        : cat === "Skill Offers"
+                          ? "Skills"
+                          : "Alerts"}
                 </Button>
-              )}
+              ))}
             </div>
+            <div className="feed-controls space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_150px] gap-3">
+                <div>
+                  <label
+                    className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:text-xs sm:font-medium sm:text-ink-soft"
+                    htmlFor="post-search"
+                  >
+                    <Text>Search the noticeboard</Text>
+                  </label>
+                  <div className="relative">
+                    <Icon
+                      name="search"
+                      decorative
+                      className="absolute left-3 top-3 text-ink-muted"
+                    />
+                    <Input
+                      id="post-search"
+                      type="search"
+                      value={q}
+                      onChange={(e) => setQ(e.target.value)}
+                      placeholder="Books, a spare tool, a helping hand…"
+                      className="pl-10 w-full"
+                    />
+                  </div>
+                </div>
+                <div className="hidden sm:block lg:hidden xl:block">
+                  <label className="filter-label" htmlFor="post-area">
+                    <Text>Area / PIN code</Text>
+                  </label>
+                  <Input
+                    id="post-area"
+                    type="search"
+                    value={locality}
+                    onChange={(e) => setLocality(e.target.value)}
+                    placeholder="Gota or 382481"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+                  <SheetTrigger asChild>
+                    <Button variant="outline">
+                      <Icon name="sliders-horizontal" decorative size="sm" />
+                      More filters
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetTitle>Refine your noticeboard</SheetTitle>
+                    <SheetDescription>
+                      Choose an area and the kind of help you’re looking for.
+                      Filters update the board as you change them.
+                    </SheetDescription>
+                    <div className="grid grid-cols-1 gap-4 pt-6">
+                      <div className="sm:hidden lg:block xl:hidden">
+                        <label className="filter-label" htmlFor="filter-area">
+                          <Text>Area / PIN code</Text>
+                        </label>
+                        <Input
+                          id="filter-area"
+                          type="search"
+                          value={locality}
+                          onChange={(e) => setLocality(e.target.value)}
+                          placeholder="Gota or 382481"
+                        />
+                      </div>
+                      <div>
+                        <label className="filter-label" htmlFor="post-type">
+                          <Text>Post type</Text>
+                        </label>
+                        <select
+                          id="post-type"
+                          value={type}
+                          onChange={(e) => setType(e.target.value)}
+                          className="filter-control"
+                        >
+                          {TYPES.map((value) => (
+                            <option key={value} value={value}>
+                              {t(value)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="filter-label" htmlFor="post-priority">
+                          <Text>Priority</Text>
+                        </label>
+                        <select
+                          id="post-priority"
+                          value={priority}
+                          onChange={(e) => setPriority(e.target.value)}
+                          className="filter-control"
+                        >
+                          {["All", "High", "Medium", "Low"].map((p) => (
+                            <option key={p} value={p}>
+                              {t(p)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-3 text-sm min-h-11 mt-4">
+                      <input
+                        type="checkbox"
+                        checked={verified}
+                        onChange={(e) => setVerified(e.target.checked)}
+                      />
+                      Verified members only · Plus / Society
+                    </label>
+                    <SheetClose asChild>
+                      <Button className="w-full mt-6">Close filters</Button>
+                    </SheetClose>
+                  </SheetContent>
+                </Sheet>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="post-sort"
+                      className="text-xs text-ink-muted"
+                    >
+                      <Text>Sort</Text>
+                    </label>
+                    <select
+                      id="post-sort"
+                      value={sort}
+                      onChange={(e) => setSort(e.target.value)}
+                      className="border border-line rounded-lg px-2 text-sm!"
+                    >
+                      <option value="newest">{t("Newest first")}</option>
+                      <option value="deadline">{t("By deadline")}</option>
+                    </select>
+                  </div>
+                  {filtered && (
+                    <Button variant="ghost" size="sm" onClick={clear}>
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-          {posts.some(p => p.is_demo) && <p className="text-xs text-ink-muted flex items-start gap-2"><Icon name="info" decorative size="sm" className="shrink-0" /> Sample posts are labelled and cannot receive responses.</p>}
+          <div className="flex flex-wrap gap-3 items-center">
+            <Button
+              variant="ghost"
+              disabled={loading}
+              onClick={() => setRetry((v) => v + 1)}
+            >
+              Refresh
+            </Button>
+            {hidden.length > 0 && (
+              <Button variant="outline" onClick={restore}>
+                Restore hidden posts ({hidden.length})
+              </Button>
+            )}
+          </div>
+          {posts.some((p) => p.is_demo) && (
+            <p className="text-xs text-ink-muted flex items-start gap-2">
+              <Icon name="info" decorative size="sm" className="shrink-0" />{" "}
+              Sample posts are labelled and cannot receive responses.
+            </p>
+          )}
           {error ? (
             <div
               role="alert"
@@ -345,6 +476,7 @@ export default function FeedPage() {
             </div>
           ) : loading ? (
             <div
+              role="status"
               aria-label="Loading posts"
               className="feed-list grid gap-4"
             >
@@ -352,12 +484,14 @@ export default function FeedPage() {
                 <PostCardSkeleton key={i} />
               ))}
             </div>
-          ) : posts.length ? (
+          ) : posts.some((p) => !hidden.includes(p.id)) ? (
             <div className="space-y-5">
               <div className="feed-list grid gap-4">
-                {posts.map((p) => (
-                  <PostCard key={p.id} post={p} />
-                ))}
+                {posts
+                  .filter((p) => !hidden.includes(p.id))
+                  .map((p) => (
+                    <PostCard key={p.id} post={p} />
+                  ))}
               </div>
               <Pagination
                 page={page}
@@ -389,21 +523,27 @@ export default function FeedPage() {
                 </Button>
               )}
               <h3 className="font-semibold text-lg">
-                {filtered
-                  ? "No matching posts yet"
-                  : "Your neighborhood starts here"}
+                {posts.length
+                  ? "Posts on this page are hidden"
+                  : filtered
+                    ? "No matching posts yet"
+                    : "Your neighborhood starts here"}
               </h3>
               <p className="text-sm text-ink-muted mt-2 mb-6 max-w-sm mx-auto leading-relaxed">
-                {filtered
-                  ? "Try another area or clear your filters to see more posts."
-                  : "Need a tool, have something to give away, or know a skill? Start the first conversation."}
+                {posts.length
+                  ? "Restore hidden notices to see this page again. Hiding does not block contact."
+                  : filtered
+                    ? "Try another area or clear your filters to see more posts."
+                    : "Need a tool, have something to give away, or know a skill? Start the first conversation."}
               </p>
               <Button
-                asChild={!filtered}
+                asChild={!filtered && !posts.length}
                 variant={filtered ? "outline" : "default"}
-                onClick={filtered ? clear : undefined}
+                onClick={posts.length ? restore : filtered ? clear : undefined}
               >
-                {filtered ? (
+                {posts.length ? (
+                  "Restore hidden posts"
+                ) : filtered ? (
                   "Clear filters"
                 ) : (
                   <Link
@@ -426,7 +566,8 @@ export default function FeedPage() {
             <Icon name="hand-heart" decorative className="text-brand mb-3" />
             <h2 className="font-semibold text-sm">Make yourself at home</h2>
             <p className="text-sm text-ink-soft leading-relaxed mt-2">
-              Complete your profile and verification steps before arranging your first exchange.
+              Complete your profile and verification steps before arranging your
+              first exchange.
             </p>
             <Link
               href="/settings?tab=trust"

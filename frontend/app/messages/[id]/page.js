@@ -1,5 +1,6 @@
 "use client";
 import { use, useEffect, useState, useRef } from "react";
+import SafetyMenu from "../../../components/SafetyMenu";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
@@ -15,7 +16,9 @@ export default function MessagesPage({ params }) {
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
-  const bottomRef = useRef(null);
+  const bottomRef = useRef(null),
+    messageListRef = useRef(null),
+    followEnd = useRef(true);
 
   const [hasOlder, setHasOlder] = useState(false),
     [historyBusy, setHistoryBusy] = useState(false),
@@ -102,8 +105,15 @@ export default function MessagesPage({ params }) {
   }, [auth?.user?.id, id, connectionAttempt]);
 
   useEffect(() => {
-    if (!history.current)
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!history.current && followEnd.current) {
+      const list = messageListRef.current;
+      list?.scrollTo({
+        top: list.scrollHeight,
+        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+      });
+    }
   }, [messages]);
 
   if (auth?.loading) return <p role="status">Loading your conversation…</p>;
@@ -128,6 +138,7 @@ export default function MessagesPage({ params }) {
         auth: true,
         body: { text },
       });
+      followEnd.current = true;
       setText("");
       setError("");
       if (history.current) await load(false);
@@ -152,18 +163,18 @@ export default function MessagesPage({ params }) {
         <button
           className="min-h-11 px-3 border border-line rounded-lg text-sm"
           disabled={loading}
-          onClick={() => setConnectionAttempt(n => n + 1)}
+          onClick={() => setConnectionAttempt((n) => n + 1)}
         >
           Latest messages / retry
         </button>
       </div>
       {/* Header Bar */}
-      <div className="flex items-center justify-between bg-surface border border-line/90 rounded-xl p-4 shadow-xs">
-        <div className="flex items-center gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-surface border border-line/90 rounded-xl p-4 shadow-xs">
+        <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/inbox"
             aria-label="Back to inbox"
-            className="w-11 h-11 rounded-lg bg-surface-muted hover:bg-surface-muted text-ink-soft flex items-center justify-center text-xs font-semibold transition-colors"
+            className="chat-back w-11 h-11 rounded-lg bg-surface-muted hover:bg-surface-muted text-ink-soft flex items-center justify-center text-xs font-semibold transition-colors"
           >
             &larr;
           </Link>
@@ -174,8 +185,12 @@ export default function MessagesPage({ params }) {
             </p>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success-soft px-2.5 py-0.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+        <SafetyMenu conversationId={id} />
+        <span
+          role="status"
+          className="col-span-2 justify-self-start shrink-0 whitespace-nowrap inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success-soft px-2.5 py-0.5 rounded-full"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-success " />
           {connection}
         </span>
       </div>
@@ -183,16 +198,30 @@ export default function MessagesPage({ params }) {
       {error && (
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-3 flex items-center gap-2 text-xs text-danger">
           <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0" />
-          <p>{error}</p>
+          <p role="alert">{error}</p>
         </div>
       )}
 
       {/* Message Stream Box */}
-      <div className="bg-surface border border-line/90 rounded-xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs">
+      <div
+        ref={messageListRef}
+        onScroll={(e) => {
+          const list = e.currentTarget;
+          followEnd.current =
+            list.scrollTop + list.clientHeight >= list.scrollHeight - 48;
+        }}
+        role="log"
+        aria-label="Conversation messages"
+        aria-live="polite"
+        tabIndex={0}
+        className="bg-surface border border-line/90 rounded-xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs"
+      >
         {loading ? (
           <MessageSkeleton />
         ) : error && messages.length === 0 ? (
-          <p role="status">Messages are unavailable. Use Latest messages / retry above.</p>
+          <p role="status">
+            Messages are unavailable. Use Latest messages / retry above.
+          </p>
         ) : messages.length === 0 ? (
           <div className="m-auto text-center p-6 text-ink-muted">
             <p className="font-medium text-ink-soft text-sm">
@@ -272,6 +301,7 @@ export default function MessagesPage({ params }) {
       <form onSubmit={send} className="flex gap-2">
         <input
           aria-label="Message to your neighbour"
+          disabled={sending}
           maxLength={4000}
           value={text}
           onChange={(e) => setText(e.target.value)}

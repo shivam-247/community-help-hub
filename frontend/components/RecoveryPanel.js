@@ -5,6 +5,7 @@ export default function RecoveryPanel({
   title = "This page could not be loaded",
   message = "Please try again. Contact support if the problem continues.",
   onRetry,
+  retryLabel = "Try again",
   reference,
 }) {
   return (
@@ -18,7 +19,7 @@ export default function RecoveryPanel({
         <p className="text-xs text-ink-muted">Support reference: {reference}</p>
       )}
       <div className="flex flex-wrap gap-3">
-        {onRetry && <Button onClick={onRetry}>Try again</Button>}
+        {onRetry && <Button onClick={onRetry}>{retryLabel}</Button>}
         <Button variant="outline" asChild>
           <Link href="/noticeboard">Back to noticeboard</Link>
         </Button>

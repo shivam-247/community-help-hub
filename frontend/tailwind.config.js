@@ -5,23 +5,18 @@ module.exports = {
     extend: {
       fontFamily: {
         sans: [
-          "Inter",
-          "-apple-system",
-          "BlinkMacSystemFont",
-          "'Segoe UI'",
-          "Roboto",
+          "var(--font-neighbour)",
+          "var(--font-hi)",
+          "var(--font-gu)",
           "sans-serif",
         ],
       },
+      borderRadius: { control: "8px", card: "16px" },
+      boxShadow: { quiet: "0 1px 3px #00000008" },
       keyframes: {
-        shimmer: {
-          "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.45" },
-        },
+        shimmer: { "0%, 100%": { opacity: "1" }, "50%": { opacity: ".55" } },
       },
-      animation: {
-        shimmer: "shimmer 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-      },
+      animation: { shimmer: "shimmer 150ms ease 2" },
     },
   },
   plugins: [],

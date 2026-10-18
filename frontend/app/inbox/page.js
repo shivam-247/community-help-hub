@@ -48,6 +48,10 @@ export default function InboxPage() {
   };
 
   useEffect(() => {
+    const value = new URLSearchParams(location.search).get("tab");
+    if (["incoming", "sent"].includes(value)) setTab(value);
+  }, []);
+  useEffect(() => {
     if (auth?.user) load();
   }, [auth?.user, tab, page]);
 
@@ -119,6 +123,7 @@ export default function InboxPage() {
       {/* Modern Segmented Navigation Tabs */}
       <div className="flex items-center gap-2 border-b border-line/80 pb-3">
         <button
+          aria-pressed={tab === "incoming"}
           onClick={() => {
             setPage(1);
             setTab("incoming");
@@ -129,7 +134,7 @@ export default function InboxPage() {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>Incoming Requests</span>
+          <span>My requests</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               tab === "incoming"
@@ -140,13 +145,14 @@ export default function InboxPage() {
             {incoming.length}
           </span>
           {pendingIncomingCount > 0 && (
-            <span className="bg-danger text-on-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+            <span className="bg-danger text-on-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full ">
               {pendingIncomingCount} new
             </span>
           )}
         </button>
 
         <button
+          aria-pressed={tab === "sent"}
           onClick={() => {
             setPage(1);
             setTab("sent");
@@ -157,7 +163,7 @@ export default function InboxPage() {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>Sent Offers</span>
+          <span>My responses</span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               tab === "sent"
@@ -177,6 +183,9 @@ export default function InboxPage() {
         </div>
       )}
 
+      <p className="text-sm text-ink-muted">
+        Counts show the conversations on this page.
+      </p>
       {/* Content Area with Skeletons */}
       {loading ? (
         <div className="space-y-4">
@@ -314,7 +323,7 @@ export default function InboxPage() {
             help, tools, or skills.
           </p>
           <Link
-            href="/"
+            href="/noticeboard"
             className="inline-flex items-center justify-center py-2 px-4 rounded-xl text-xs font-semibold bg-brand-solid text-on-brand"
           >
             Browse Noticeboard
@@ -365,8 +374,7 @@ export default function InboxPage() {
               <div className="pt-1">
                 {r.status === "Pending" && (
                   <p className="text-xs text-warning font-medium">
-                    ⏳ Waiting for {r.owner_name} to review and accept your
-                    offer.
+                    Waiting for {r.owner_name} to review and accept your offer.
                   </p>
                 )}
                 {r.status === "Rejected" && (

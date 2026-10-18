@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useLanguage, Text } from "../../lib/i18n";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Field, Textarea, Select } from "../../components/Fields";
 import { ImagePlus, ArrowLeft } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
@@ -17,8 +19,12 @@ import {
   CardContent,
   Input,
   Label,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
 } from "../../components/ui";
-import { ErrorMessage, FieldError } from "../../components/AccountPanels";
+import { ErrorMessage, FieldError } from "../../components/FormFeedback";
 const schema = z.object({
   type: z.enum(["Need help", "Offer help", "Request item", "Offer service"]),
   title: z
@@ -34,7 +40,10 @@ const schema = z.object({
     .string()
     .trim()
     .min(20, "Include what you need, where and when")
-    .max(10000)
+    .max(
+      9800,
+      "Leave space for the optional landmark (9,800 characters maximum)",
+    )
     .refine((s) => s.split(/\s+/).length >= 4, "Use at least four words"),
   locality: z.string().trim().min(2, "Enter your area").max(100),
   category: z.enum([
@@ -47,19 +56,25 @@ const schema = z.object({
   deadline: z.string(),
 });
 export default function CreatePostPage() {
+  const { t } = useLanguage();
   const auth = useAuth(),
     router = useRouter(),
     toast = useToast();
+  const [preview, setPreview] = useState(null),
+    [landmark, setLandmark] = useState(""),
+    [publishing, setPublishing] = useState(false);
   const [error, setError] = useState(""),
     [file, setFile] = useState(null),
     [community, setCommunity] = useState(null),
     [billing, setBilling] = useState(null);
   const {
     register,
+    watch,
     setValue,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
+    mode: "onBlur",
     resolver: zodResolver(schema),
     defaultValues: {
       type: "Need help",
@@ -75,9 +90,14 @@ export default function CreatePostPage() {
     const params = new URLSearchParams(window.location.search);
     setCommunity(params.get("community"));
     const presetType = params.get("type");
-    if (["Need help", "Offer help", "Request item", "Offer service"].includes(presetType)) {
+    if (
+      ["Need help", "Offer help", "Request item", "Offer service"].includes(
+        presetType,
+      )
+    ) {
       setValue("type", presetType);
-      if (presetType === "Offer help" || presetType === "Offer service") setValue("category", "Skill Offers");
+      if (presetType === "Offer help" || presetType === "Offer service")
+        setValue("category", "Skill Offers");
     }
     api("/billing", { auth: true })
       .then(setBilling)
@@ -85,6 +105,7 @@ export default function CreatePostPage() {
   }, []);
   async function submit(values) {
     setError("");
+    setPublishing(true);
     try {
       let image_url = null;
       if (file) {
@@ -104,6 +125,9 @@ export default function CreatePostPage() {
         auth: true,
         body: {
           ...values,
+          description: landmark.trim()
+            ? `${values.description}\n\nNearby public landmark: ${landmark.trim()}`
+            : values.description,
           deadline: values.deadline
             ? new Date(values.deadline).toISOString()
             : null,
@@ -119,6 +143,8 @@ export default function CreatePostPage() {
       router.push(`/post/${post.id}`);
     } catch (e) {
       setError(e.message);
+    } finally {
+      setPublishing(false);
     }
   }
   return (
@@ -136,7 +162,7 @@ export default function CreatePostPage() {
       <Card>
         <CardHeader>
           <h1 className="text-xl font-semibold">
-            Create a neighbourhood notice
+            <Text>Create a neighbourhood notice</Text>
           </h1>
           <CardDescription>
             {community
@@ -161,11 +187,21 @@ export default function CreatePostPage() {
           )}
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(submit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit((values) => {
+              setError("");
+              setPreview(values);
+            })}
+            aria-busy={publishing}
+            className="space-y-5"
+          >
+            <p className="text-sm font-semibold text-brand">
+              1. What are you sharing?
+            </p>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="create-type">I want to</Label>
-                <select
+                <Select
                   id="create-type"
                   className="filter-control"
                   {...register("type")}
@@ -176,13 +212,15 @@ export default function CreatePostPage() {
                     "Request item",
                     "Offer service",
                   ].map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {t(s)}
+                    </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="create-category">Category</Label>
-                <select
+                <Select
                   id="create-category"
                   className="filter-control"
                   {...register("category")}
@@ -193,9 +231,11 @@ export default function CreatePostPage() {
                     "Skill Offers",
                     "Community Alerts",
                   ].map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {t(s)}
+                    </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </div>
             {[
@@ -216,31 +256,54 @@ export default function CreatePostPage() {
             ))}
             <div>
               <Label htmlFor="create-description">Details</Label>
-              <textarea
+              <Textarea
                 id="create-description"
                 rows={5}
+                maxLength={9800}
+                aria-describedby="description-help error-description"
                 className="filter-control"
                 placeholder="Tell neighbours what you need or can share, when you’re available, and a safe place to meet."
                 {...register("description")}
                 aria-invalid={!!errors.description}
-                aria-describedby={
-                  errors.description ? "error-description" : undefined
-                }
               />
+              <p id="description-help" className="text-sm text-ink-muted mt-2">
+                {watch("description").length.toLocaleString("en-IN")} / 9,800
+                characters. Say what you need, where and when.
+              </p>
               <FieldError id="error-description" error={errors.description} />
+            </div>
+            <div className="border-t border-line pt-5 space-y-4">
+              <h2 className="text-base font-semibold">2. Where and when?</h2>
+              <Field
+                id="create-landmark"
+                label="Landmark (optional)"
+                value={landmark}
+                maxLength={80}
+                onChange={(e) => setLandmark(e.target.value)}
+                hint="e.g. Near Shiv Mandir, Gota. Use a public landmark, never a flat number or full home address. It will appear in your notice."
+              />
+              <p className="text-sm text-ink-muted">
+                Your phone is optional and stays in your account.{" "}
+                <Link className="underline" href="/settings">
+                  Manage your +91 contact number and sharing choices
+                </Link>
+                .
+              </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="create-priority">Urgency</Label>
-                <select
+                <Select
                   id="create-priority"
                   className="filter-control"
                   {...register("priority")}
                 >
                   {["Low", "Medium", "High"].map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {t(s)}
+                    </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="create-deadline">Needed by (optional)</Label>
@@ -260,7 +323,25 @@ export default function CreatePostPage() {
                 id="create-photo"
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                onChange={(e) => {
+                  const chosen = e.target.files?.[0];
+                  if (
+                    chosen &&
+                    (chosen.size > 5 * 1024 * 1024 ||
+                      !["image/png", "image/jpeg", "image/webp"].includes(
+                        chosen.type,
+                      ))
+                  ) {
+                    setFile(null);
+                    e.target.value = "";
+                    setError(
+                      "Choose a PNG, JPEG or WebP photo smaller than 5 MB.",
+                    );
+                  } else {
+                    setFile(chosen || null);
+                    setError("");
+                  }
+                }}
               />
               <p className="text-xs text-ink-muted mt-2">
                 Up to 5 MB. Avoid faces, documents, and personal details without
@@ -289,7 +370,7 @@ export default function CreatePostPage() {
                 billing.used >= billing.limit
               }
             >
-              Publish notice
+              Preview notice
             </Button>
             {billing &&
               billing.limit != null &&
@@ -303,6 +384,63 @@ export default function CreatePostPage() {
                 </p>
               )}
           </form>
+          <Sheet
+            open={!!preview}
+            onOpenChange={(open) => {
+              if (!open && !publishing) setPreview(null);
+            }}
+          >
+            <SheetContent
+              onInteractOutside={(event) => {
+                if (publishing) event.preventDefault();
+              }}
+            >
+              <SheetTitle>
+                <Text>Preview your notice</Text>
+              </SheetTitle>
+              <SheetDescription>
+                Check the public details before publishing. You can go back and
+                edit.
+              </SheetDescription>
+              {preview && (
+                <div className="mt-6 space-y-4">
+                  <p className="text-sm text-brand">
+                    {t(preview.type)} · {t(preview.category)}
+                  </p>
+                  <h2 className="text-2xl font-semibold">{preview.title}</h2>
+                  <p className="whitespace-pre-wrap break-anywhere">
+                    {preview.description}
+                  </p>
+                  <p className="text-sm text-ink-muted">
+                    {preview.locality}
+                    {landmark.trim() ? ` · ${landmark.trim()}` : ""}
+                  </p>
+                  <p className="text-sm">
+                    {t("Urgency")}: {t(preview.priority)}
+                  </p>
+                  {file && (
+                    <p className="text-sm break-anywhere">Photo: {file.name}</p>
+                  )}
+                  <ErrorMessage message={error} />
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      loading={publishing}
+                      onClick={() => submit(preview)}
+                    >
+                      Publish notice
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={publishing}
+                      onClick={() => setPreview(null)}
+                    >
+                      Edit notice
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
         </CardContent>
       </Card>
     </div>

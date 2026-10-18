@@ -1,11 +1,34 @@
 "use client";
 // shadcn-style primitives: Radix owns accessibility; tokens own the visual language.
+import { Text, useLanguage } from "../../lib/i18n";
 import { forwardRef } from "react";
 import { Slot } from "@radix-ui/react-slot";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
-import { icons, X, LoaderCircle, Circle } from "lucide-react";
+import {
+  X,
+  LoaderCircle,
+  Circle,
+  LayoutGrid,
+  Layers,
+  Bell,
+  MessageCircle,
+  Plus,
+  ArrowRight,
+  ChevronDown,
+  Menu,
+  User,
+  Search,
+  SlidersHorizontal,
+  HandHeart,
+  Gift,
+  Wrench,
+  Megaphone,
+  ClipboardList,
+  ShieldCheck,
+  Info,
+} from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 export const cn = (...v) => twMerge(clsx(v));
@@ -24,6 +47,8 @@ export const Button = forwardRef(function Button(
 ) {
   const Comp = asChild ? Slot : "button";
   const variants = {
+    primary: "bg-brand-solid text-on-brand hover:brightness-110",
+    danger: "bg-danger-soft text-danger border border-danger",
     default: "bg-brand-solid text-on-brand hover:brightness-110",
     outline: "border border-line bg-surface hover:bg-surface-muted",
     secondary: "bg-brand-soft text-brand hover:brightness-95",
@@ -35,7 +60,7 @@ export const Button = forwardRef(function Button(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
         variants[variant] || variants.default,
         size === "icon" && "w-11 p-2",
         size === "sm" && "px-3 text-xs",
@@ -50,13 +75,14 @@ export const Button = forwardRef(function Button(
           {loading ? (
             <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
           ) : null}
-          {children}
+          <Text>{children}</Text>
         </>
       )}
     </Comp>
   );
 });
 export const Input = forwardRef(function Input({ className, ...props }, ref) {
+  const { t } = useLanguage();
   return (
     <input
       ref={ref}
@@ -65,14 +91,14 @@ export const Input = forwardRef(function Input({ className, ...props }, ref) {
         className,
       )}
       {...props}
+      placeholder={t(props.placeholder)}
     />
   );
 });
 export const Label = ({ className, ...props }) => (
-  <label
-    className={cn("block text-sm font-medium mb-2", className)}
-    {...props}
-  />
+  <label className={cn("block text-sm font-medium mb-2", className)} {...props}>
+    <Text>{props.children}</Text>
+  </label>
 );
 export const Badge = ({ className, variant = "secondary", ...props }) => (
   <span
@@ -88,12 +114,14 @@ export const Badge = ({ className, variant = "secondary", ...props }) => (
       className,
     )}
     {...props}
-  />
+  >
+    <Text>{props.children}</Text>
+  </span>
 );
 export const Card = ({ className, ...props }) => (
   <div
     className={cn(
-      "meadow-glass rounded-[28px] border border-line text-ink",
+      "meadow-glass rounded-2xl border border-line text-ink",
       className,
     )}
     {...props}
@@ -103,7 +131,9 @@ export const CardHeader = ({ className, ...props }) => (
   <div className={cn("p-5 sm:p-6 space-y-2", className)} {...props} />
 );
 export const CardTitle = ({ className, ...props }) => (
-  <h2 className={cn("text-lg font-semibold", className)} {...props} />
+  <h2 className={cn("text-lg font-semibold", className)} {...props}>
+    <Text>{props.children}</Text>
+  </h2>
 );
 export const CardDescription = ({ className, ...props }) => (
   <p
@@ -131,7 +161,9 @@ export const TabsTrigger = ({ className, ...props }) => (
       className,
     )}
     {...props}
-  />
+  >
+    <Text>{props.children}</Text>
+  </TabsPrimitive.Trigger>
 );
 export const TabsContent = ({ className, ...props }) => (
   <TabsPrimitive.Content
@@ -194,7 +226,28 @@ export function Icon({ name, decorative, size = "md", className, ...props }) {
     .split("-")
     .map((s) => s[0].toUpperCase() + s.slice(1))
     .join("");
-  const Comp = icons[key] || Circle;
+  const Comp =
+    {
+      LayoutGrid,
+      Layers,
+      Bell,
+      MessageCircle,
+      Plus,
+      ArrowRight,
+      ChevronDown,
+      Menu,
+      User,
+      Search,
+      SlidersHorizontal,
+      HandHeart,
+      Gift,
+      Wrench,
+      Megaphone,
+      ClipboardList,
+      ShieldCheck,
+      Info,
+      X,
+    }[key] || Circle;
   return (
     <Comp
       aria-hidden={decorative || undefined}

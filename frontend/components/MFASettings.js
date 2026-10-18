@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import PasswordInput from "./PasswordInput";
 
 export default function MFASettings() {
+  const [attempt, setAttempt] = useState(0);
   const [enabled, setEnabled] = useState(null);
   const [password, setPassword] = useState("");
   const [secret, setSecret] = useState("");
@@ -11,10 +12,11 @@ export default function MFASettings() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   useEffect(() => {
+    setError("");
     api("/auth/mfa", { auth: true })
       .then((data) => setEnabled(data.enabled))
       .catch((e) => setError(e.message));
-  }, []);
+  }, [attempt]);
   const submit = async (event) => {
     event.preventDefault();
     setBusy(true);
@@ -73,6 +75,7 @@ export default function MFASettings() {
                 <label className="block text-xs">
                   Authenticator code
                   <input
+                    disabled={busy}
                     required
                     inputMode="numeric"
                     autoComplete="one-time-code"
@@ -117,6 +120,13 @@ export default function MFASettings() {
       {error && (
         <p role="alert" className="text-xs text-danger">
           {error}
+          <button
+            type="button"
+            className="block min-h-11 underline"
+            onClick={() => setAttempt((v) => v + 1)}
+          >
+            Retry authenticator settings
+          </button>
         </p>
       )}
     </section>

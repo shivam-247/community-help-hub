@@ -5,10 +5,13 @@ import { usePathname } from "next/navigation";
 import { Button, Icon } from "./ui";
 import { useAuth } from "../lib/auth-context";
 import { api } from "../lib/api";
+import BottomNav from "./BottomNav";
+import { LanguageSelect, useLanguage, Text } from "../lib/i18n";
 import ThemeControl from "./ThemeControl";
 import Avatar from "./Avatars";
 
 export default function Nav() {
+  const { t, language } = useLanguage();
   const auth = useAuth();
   const user = auth?.user;
   const path = usePathname();
@@ -90,6 +93,7 @@ export default function Nav() {
     }
     let active = true;
     const load = async () => {
+      if (document.hidden) return;
       try {
         const rows = await api("/notifications/unread-count", { auth: true });
         if (active) {
@@ -114,15 +118,18 @@ export default function Nav() {
       ? [
           {
             href: "/notifications",
-            name: "Updates", icon: "bell", count: unread,
+            name: "Updates",
+            icon: "bell",
+            count: unread,
           },
           {
             href: "/inbox",
-            name: "Messages", icon: "message-circle", count: pendingCount,
+            name: "Messages",
+            icon: "message-circle",
+            count: pendingCount,
           },
         ]
       : []),
-    
   ];
   const navLinks = links.map((x) => (
     <Link
@@ -136,156 +143,174 @@ export default function Nav() {
       className="primary-nav-link"
     >
       <Icon name={x.icon} decorative size="sm" />
-      {x.name}
-      {!!x.count && <span className="nav-count">{x.count > 99 ? "99+" : x.count}</span>}
+      {t(x.name)}
+      {!!x.count && (
+        <span className="nav-count">{x.count > 99 ? "99+" : x.count}</span>
+      )}
     </Link>
   ));
   return (
     <>
-    <header ref={headerRef} className="app-header sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 min-h-18 flex items-center justify-between gap-2">
-        <Link
-          href="/"
-          aria-label="Community Help Hub home"
-          className="flex items-center gap-2.5 shrink-0"
-        >
-          <span className="meadow-wordmark">Help Hub</span>
-        </Link>
-        <nav
-          aria-label="Main navigation"
-          className="hidden lg:flex items-center self-stretch gap-1"
-        >
-          {navLinks}
-        </nav>
-        <div className="flex items-center gap-2">
-          <ThemeControl />
-          {user ? (
-            <details ref={accountRef} className="relative hidden lg:block">
-              <summary className="account-trigger cursor-pointer list-none">
-                <Avatar id={user.avatar} name={user.name} size="size-8" />
-                <span className="max-w-24 truncate">
-                  {user.name.split(" ")[0]}
-                </span>
-                <Icon name="chevron-down" decorative size="sm" />
-              </summary>
-              <div className="nav-panel absolute right-0 top-full mt-2 w-64 p-2">
-                <div className="p-3 border-b border-line mb-1">
-                  <p className="text-sm font-semibold">{user.name}</p>
-                  <p className="text-xs text-ink-muted break-all mt-1">
-                    {user.email}
-                  </p>
-                  <p className="text-xs text-brand mt-2">
-                    {user.role === "super_admin"
-                      ? "Super administrator"
-                      : "Community member"}
-                  </p>
+      <header
+        lang={language}
+        ref={headerRef}
+        className="app-header sticky top-0 z-40"
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 min-h-18 flex items-center justify-between gap-2">
+          <Link
+            href="/"
+            aria-label="Community Help Hub home"
+            className="flex items-center gap-2.5 shrink-0"
+          >
+            <span className="meadow-wordmark">{t("Help Hub")}</span>
+          </Link>
+          <nav
+            aria-label="Main navigation"
+            className="hidden lg:flex items-center self-stretch gap-1"
+          >
+            {navLinks}
+          </nav>
+          <div className="flex items-center gap-2">
+            <LanguageSelect />
+            <ThemeControl />
+            {user ? (
+              <details ref={accountRef} className="relative hidden lg:block">
+                <summary className="account-trigger cursor-pointer list-none">
+                  <Avatar id={user.avatar} name={user.name} size="size-8" />
+                  <span className="max-w-24 truncate">
+                    {user.name.split(" ")[0]}
+                  </span>
+                  <Icon name="chevron-down" decorative size="sm" />
+                </summary>
+                <div className="nav-panel absolute right-0 top-full mt-2 w-64 p-2">
+                  <div className="p-3 border-b border-line mb-1">
+                    <p className="text-sm font-semibold">{user.name}</p>
+                    <p className="text-xs text-ink-muted break-all mt-1">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-brand mt-2">
+                      {user.role === "super_admin"
+                        ? "Super administrator"
+                        : "Community member"}
+                    </p>
+                  </div>
+                  <Link className="app-link w-full" href="/inbox?tab=incoming">
+                    <Text>My requests</Text>
+                  </Link>
+                  <Link className="app-link w-full" href="/inbox?tab=sent">
+                    <Text>My responses</Text>
+                  </Link>
+                  <Link className="app-link w-full" href="/pricing">
+                    <Text>Plans &amp; billing</Text>
+                  </Link>
+                  {isAdmin && (
+                    <Link className="app-link w-full" href="/admin">
+                      <Text>Administration</Text>
+                    </Link>
+                  )}
+                  <Link
+                    className="app-link w-full"
+                    href={`/profile/${user.id}`}
+                  >
+                    <Text>My profile</Text>
+                  </Link>
+                  <Link className="app-link w-full" href="/settings">
+                    <Text>Account &amp; safety</Text>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    onClick={logout}
+                    className="w-full justify-start text-danger"
+                  >
+                    <Text>Sign out</Text>
+                  </Button>
+                  {logoutError && (
+                    <p role="alert" className="text-xs text-danger px-3">
+                      {logoutError}
+                    </p>
+                  )}
                 </div>
-                <Link className="app-link w-full" href="/pricing">Plans &amp; billing</Link>
-                {isAdmin && <Link className="app-link w-full" href="/admin">Administration</Link>}
-                <Link className="app-link w-full" href={`/profile/${user.id}`}>
-                  My profile
+              </details>
+            ) : (
+              <Link href="/login" className="app-link nav-sign-in">
+                <Text>Sign in</Text>
+              </Link>
+            )}
+            <Button asChild className="hidden lg:inline-flex product-button">
+              <Link href={user ? "/create-post" : "/signup"}>
+                <Icon name={user ? "plus" : "arrow-right"} decorative />
+                {t(user ? "Create post" : "Join the hub")}
+              </Link>
+            </Button>
+            <Button
+              ref={mobileTrigger}
+              variant="ghost"
+              size="icon"
+              className="lg:hidden product-button shrink-0"
+              aria-label={t(open ? "Close navigation" : "Open navigation")}
+              aria-expanded={open}
+              aria-controls="mobile-navigation"
+              onClick={() => setOpen(!open)}
+            >
+              <Icon name={open ? "x" : "menu"} decorative />
+            </Button>
+          </div>
+        </div>
+        {user && Object.values(countErrors).some(Boolean) && (
+          <p role="status" className="px-4 py-1 text-xs text-ink-muted">
+            Update counts are temporarily unavailable. Retrying automatically.
+          </p>
+        )}
+        {open && (
+          <nav
+            id="mobile-navigation"
+            aria-label="Mobile navigation"
+            className="lg:hidden border-t border-line px-4 py-3 grid grid-cols-2 gap-1 bg-surface"
+          >
+            {navLinks}
+            <Link href="/pricing" className="app-link">
+              <Text>Plans &amp; billing</Text>
+            </Link>
+            {isAdmin && (
+              <Link href="/admin" className="app-link">
+                <Text>Administration</Text>
+              </Link>
+            )}
+            {user ? (
+              <>
+                <Link href="/create-post" className="app-link text-brand">
+                  Create post
                 </Link>
-                <Link className="app-link w-full" href="/settings">
+                <Link href="/settings" className="app-link">
                   Account &amp; safety
                 </Link>
                 <Button
-                  variant="ghost"
                   onClick={logout}
-                  className="w-full justify-start text-danger"
+                  variant="ghost"
+                  className="justify-start text-danger"
                 >
-                  Sign out
+                  <Text>Sign out</Text>
                 </Button>
-                {logoutError && (
-                  <p role="alert" className="text-xs text-danger px-3">
-                    {logoutError}
-                  </p>
-                )}
-              </div>
-            </details>
-          ) : (
-            <Link href="/login" className="app-link nav-sign-in">
-              Sign in
-            </Link>
-          )}
-          <Button asChild className="hidden lg:inline-flex product-button">
-            <Link href={user ? "/create-post" : "/signup"}>
-              <Icon name={user ? "plus" : "arrow-right"} decorative />
-              {user ? "Create post" : "Join the hub"}
-            </Link>
-          </Button>
-          <Button
-            ref={mobileTrigger}
-            variant="ghost"
-            size="icon"
-            className="lg:hidden product-button shrink-0"
-            aria-label={open ? "Close navigation" : "Open navigation"}
-            aria-expanded={open}
-            aria-controls="mobile-navigation"
-            onClick={() => setOpen(!open)}
-          >
-            <Icon name={open ? "x" : "menu"} decorative />
-          </Button>
-        </div>
-      </div>
-      {user && Object.values(countErrors).some(Boolean) && (
-        <p role="status" className="px-4 py-1 text-xs text-ink-muted">
-          Update counts are temporarily unavailable. Retrying automatically.
-        </p>
-      )}
-      {open && (
-        <nav
-          id="mobile-navigation"
-          aria-label="Mobile navigation"
-          className="lg:hidden border-t border-line px-4 py-3 grid grid-cols-2 gap-1 bg-surface"
-        >
-          {navLinks}
-          <Link href="/pricing" className="app-link">Plans &amp; billing</Link>
-          {isAdmin && <Link href="/admin" className="app-link">Administration</Link>}
-          {user ? (
-            <>
-              <Link href="/create-post" className="app-link text-brand">
-                Create post
-              </Link>
-              <Link href="/settings" className="app-link">
-                Account &amp; safety
-              </Link>
-              <Button
-                onClick={logout}
-                variant="ghost"
-                className="justify-start text-danger"
-              >
-                Sign out
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="app-link">
-                Sign in
-              </Link>
-              <Link href="/signup" className="app-link text-brand">
-                Join the hub
-              </Link>
-            </>
-          )}
-          {logoutError && (
-            <p role="alert" className="col-span-2 text-sm text-danger">
-              {logoutError}
-            </p>
-          )}
-        </nav>
-      )}
-    </header>
-    <nav aria-label="Quick navigation" className="mobile-dock lg:hidden">
-      {[
-        { href: "/noticeboard", name: "Feed", icon: "layout-grid" },
-        { href: "/inbox", name: "Messages", icon: "message-circle", count: user ? pendingCount : 0 },
-        { href: "/create-post", name: "Post", icon: "plus" },
-        { href: user ? "/settings" : "/login", name: user ? "Account" : "Sign in", icon: "user" },
-      ].map(item => <Link key={item.href} href={item.href} aria-current={path.startsWith(item.href) ? "page" : undefined} className="dock-link">
-        <span className="relative"><Icon name={item.icon} decorative />{!!item.count && <span className="dock-dot" aria-label={`${item.count} pending responses`} />}</span>
-        <span>{item.name}</span>
-      </Link>)}
-    </nav>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="app-link">
+                  <Text>Sign in</Text>
+                </Link>
+                <Link href="/signup" className="app-link text-brand">
+                  Join the hub
+                </Link>
+              </>
+            )}
+            {logoutError && (
+              <p role="alert" className="col-span-2 text-sm text-danger">
+                {logoutError}
+              </p>
+            )}
+          </nav>
+        )}
+      </header>
+      <BottomNav user={user} path={path} pendingCount={pendingCount} />
     </>
   );
 }

@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import EmptyState from "../../components/EmptyState";
 import Pagination from "../../components/Pagination";
 import { api } from "../../lib/api";
 import { Button, Card, Badge } from "../../components/ui";
-import { ErrorMessage } from "../../components/AccountPanels";
+import { ErrorMessage } from "../../components/FormFeedback";
 export default function NotificationsPage() {
   const [page, setPage] = useState(1),
     [hasMore, setHasMore] = useState(false);
@@ -81,13 +82,10 @@ export default function NotificationsPage() {
           ))}
         </ul>
       ) : (
-        <Card className="text-center p-10">
-          <Bell className="size-10 text-brand mx-auto mb-4" />
-          <h2 className="font-semibold">You’re all caught up</h2>
-          <p className="text-sm text-ink-muted mt-2">
-            Responses and exchange updates will appear here.
-          </p>
-        </Card>
+        <EmptyState
+          title="You’re all caught up"
+          description="Responses and exchange updates will appear here."
+        />
       )}
       {!loading && (
         <Pagination

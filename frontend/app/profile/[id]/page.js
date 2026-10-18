@@ -27,6 +27,7 @@ const BADGE_TIERS = [
 export default function ProfilePage({ params }) {
   const { id } = use(params);
   const auth = useAuth();
+  const [attempt, setAttempt] = useState(0);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -49,13 +50,13 @@ export default function ProfilePage({ params }) {
       }
     }
     loadProfile();
-  }, [id]);
+  }, [id, attempt]);
 
   const isMe = auth?.user && String(auth.user.id) === String(id);
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+      <div className="max-w-4xl mx-auto space-y-6 ">
         <div className="bg-surface border border-line/80 rounded-xl p-6 sm:p-8 space-y-4 shadow-xs">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 bg-surface-muted rounded-xl"></div>
@@ -75,11 +76,17 @@ export default function ProfilePage({ params }) {
       <div className="max-w-md mx-auto py-16 text-center space-y-4">
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-6 text-danger">
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
-          <h3 className="font-bold text-sm">User Not Found</h3>
+          <h3 className="font-bold text-sm">Profile unavailable</h3>
           <p className="text-xs text-danger mt-1">
             {error || "This profile could not be loaded."}
           </p>
         </div>
+        <button
+          className="min-h-11 px-4 underline"
+          onClick={() => setAttempt((v) => v + 1)}
+        >
+          Retry profile
+        </button>
         <Link
           href="/noticeboard"
           className="text-xs font-semibold text-brand hover:text-brand"
@@ -208,7 +215,7 @@ export default function ProfilePage({ params }) {
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
             <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
-              Posts Published
+              Posts on this page
             </span>
             <span className="font-bold text-ink text-sm mt-0.5 block">
               {postList.items.length}
@@ -237,7 +244,7 @@ export default function ProfilePage({ params }) {
 
           <div className="w-full h-2 bg-brand-soft rounded-full overflow-hidden">
             <div
-              className="h-full bg-brand-solid rounded-full transition-all duration-500"
+              className="h-full bg-brand-solid rounded-full transition-all duration-150"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -247,6 +254,7 @@ export default function ProfilePage({ params }) {
       {/* Tabs: Active Posts vs Neighbor Reviews */}
       <div className="flex items-center gap-2 border-b border-line/80 pb-3 select-none">
         <button
+          aria-pressed={activeTab === "posts"}
           onClick={() => setActiveTab("posts")}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             activeTab === "posts"
@@ -267,6 +275,7 @@ export default function ProfilePage({ params }) {
         </button>
 
         <button
+          aria-pressed={activeTab === "reviews"}
           onClick={() => setActiveTab("reviews")}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             activeTab === "reviews"

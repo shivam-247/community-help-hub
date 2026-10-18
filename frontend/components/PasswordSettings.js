@@ -94,6 +94,7 @@ export default function PasswordSettings() {
           <Label htmlFor="password-code">Authenticator code, if enabled</Label>
           <Input
             id="password-code"
+            disabled={busy}
             inputMode="numeric"
             autoComplete="one-time-code"
             pattern="[0-9]{6}"

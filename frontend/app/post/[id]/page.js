@@ -1,5 +1,9 @@
-﻿"use client";
+"use client";
 import { use, useEffect, useState } from "react";
+import SafetyMenu, { useSafety } from "../../../components/SafetyMenu";
+import PostImage from "../../../components/PostImage";
+import RecoveryPanel from "../../../components/RecoveryPanel";
+import { Text } from "../../../lib/i18n";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "../../../components/ToastProvider";
@@ -13,7 +17,6 @@ import {
   MapPinIcon,
   ClockIcon,
   StarIcon,
-  ShieldCheckIcon,
   AlertTriangleIcon,
   CheckIcon,
   SendIcon,
@@ -21,13 +24,21 @@ import {
 } from "../../../components/Icons";
 
 const STATUSES = ["Open", "In Progress", "Resolved"];
-const RATING_TAGS = ["Fast Response", "Generous", "Reliable Neighbor", "Skillful", "Safe & Polite"];
+const RATING_TAGS = [
+  "Fast Response",
+  "Generous",
+  "Reliable Neighbor",
+  "Skillful",
+  "Safe & Polite",
+];
 
 export default function PostDetailPage({ params }) {
   const { id } = use(params);
   const auth = useAuth();
   const router = useRouter();
   const notify = useToast();
+  const { hidden, restore } = useSafety();
+  const [responseError, setResponseError] = useState("");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({});
   const [post, setPost] = useState(null);
@@ -46,6 +57,7 @@ export default function PostDetailPage({ params }) {
   const [ratingError, setRatingError] = useState("");
 
   const load = async () => {
+    setError("");
     try {
       const data = await api(`/posts/${id}`);
       setPost(data);
@@ -58,19 +70,27 @@ export default function PostDetailPage({ params }) {
     load();
   }, [id]);
 
-  if (error) {
+  if (error)
     return (
-      <div className="max-w-md mx-auto py-12 text-center">
-        <div className="bg-danger-soft border border-danger-soft rounded-xl p-6 mb-4">
-          <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
-          <p className="text-sm font-semibold text-danger">{error}</p>
-        </div>
-        <Link href="/noticeboard" className="text-xs font-semibold text-brand hover:text-brand">
-          &larr; Back to Feed
-        </Link>
-      </div>
+      <RecoveryPanel
+        title="Notice unavailable"
+        message={error}
+        onRetry={() => {
+          setError("");
+          setPost(null);
+          load();
+        }}
+      />
     );
-  }
+  if (hidden.includes(Number(id)))
+    return (
+      <RecoveryPanel
+        title="You hid this notice"
+        retryLabel="Restore hidden posts"
+        message="It is hidden for this browser session. Hiding does not block its author."
+        onRetry={restore}
+      />
+    );
 
   if (!post) {
     return <PostDetailSkeleton />;
@@ -79,17 +99,25 @@ export default function PostDetailPage({ params }) {
   const user = auth?.user;
   const isOwner = user?.id === post.owner_id;
   const isAdminOrSuper = user?.role === "admin" || user?.role === "super_admin";
-  const authorInitial = post.owner_name ? post.owner_name.charAt(0).toUpperCase() : "U";
+  const needsVerification =
+    ["Help Requests", "Skill Offers"].includes(post.category) &&
+    user &&
+    user.verification_status !== "verified" &&
+    !isAdminOrSuper;
 
   const respond = async (e) => {
     e.preventDefault();
     setBusy(true);
-    setError("");
+    setResponseError("");
     try {
-      await api(`/posts/${id}/respond`, { method: "POST", auth: true, body: { message } });
+      await api(`/posts/${id}/respond`, {
+        method: "POST",
+        auth: true,
+        body: { message },
+      });
       setSent(true);
     } catch (err) {
-      notify(err.message, "error");
+      setResponseError(err.message);
     } finally {
       setBusy(false);
     }
@@ -98,7 +126,11 @@ export default function PostDetailPage({ params }) {
   const updateStatus = async (status) => {
     setBusy(true);
     try {
-      const updated = await api(`/posts/${id}/status`, { method: "PATCH", auth: true, body: { status } });
+      const updated = await api(`/posts/${id}/status`, {
+        method: "PATCH",
+        auth: true,
+        body: { status },
+      });
       setPost(updated);
       notify("Post status updated.");
     } catch (err) {
@@ -123,13 +155,21 @@ export default function PostDetailPage({ params }) {
 
   const submitRating = async (e) => {
     e.preventDefault();
-    if (!ratingStars) { setRatingError("Please select a star rating."); return; }
+    if (!ratingStars) {
+      setRatingError("Please select a star rating.");
+      return;
+    }
     setRatingBusy(true);
     setRatingError("");
     try {
       await api(`/posts/${id}/rate`, {
-        method: "POST", auth: true,
-        body: { stars: ratingStars, tags: ratingTags, comment: ratingComment || null },
+        method: "POST",
+        auth: true,
+        body: {
+          stars: ratingStars,
+          tags: ratingTags,
+          comment: ratingComment || null,
+        },
       });
       setRatingDone(true);
     } catch (err) {
@@ -141,26 +181,47 @@ export default function PostDetailPage({ params }) {
 
   const toggleTag = (tag) => {
     setRatingTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
   const startEdit = () => {
     const date = post.deadline ? new Date(post.deadline) : null;
-    const localDate = date ? new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
-    setDraft({ title: post.title, description: post.description, priority: post.priority, deadline: localDate });
+    const localDate = date
+      ? new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16)
+      : "";
+    setDraft({
+      title: post.title,
+      description: post.description,
+      priority: post.priority,
+      deadline: localDate,
+    });
     setEditing(true);
   };
   const saveEdit = async (event) => {
     event.preventDefault();
     setBusy(true);
     try {
-      const updated = await api(`/posts/${id}`, { method: "PATCH", auth: true, body: { ...draft, deadline: draft.deadline ? new Date(draft.deadline).toISOString() : null } });
+      const updated = await api(`/posts/${id}`, {
+        method: "PATCH",
+        auth: true,
+        body: {
+          ...draft,
+          deadline: draft.deadline
+            ? new Date(draft.deadline).toISOString()
+            : null,
+        },
+      });
       setPost(updated);
       setEditing(false);
       notify("Post updated.");
-    } catch (err) { notify(err.message, "error"); }
-    finally { setBusy(false); }
+    } catch (err) {
+      notify(err.message, "error");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -174,10 +235,11 @@ export default function PostDetailPage({ params }) {
       </Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
         {/* Main Content */}
         <div className="lg:col-span-2 bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
-          
+          <div className="flex justify-end">
+            <SafetyMenu postId={post.id} ownerId={post.owner_id} />
+          </div>
           {/* Post Header Badges */}
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
@@ -189,29 +251,103 @@ export default function PostDetailPage({ params }) {
               </span>
             </div>
 
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full border inline-flex items-center gap-1.5 ${
-              post.status === "Open"
-                ? "bg-success-soft text-success border-success-soft"
-                : post.status === "In Progress"
-                ? "bg-warning-soft text-warning border-warning-soft"
-                : "bg-surface-muted text-ink-soft border-line"
-            }`}>
-              <span className={`w-2 h-2 rounded-full ${
-                post.status === "Open" ? "bg-success" : post.status === "In Progress" ? "bg-warning" : "bg-surface-muted"
-              }`} />
+            <span
+              className={`text-xs font-semibold px-3 py-1 rounded-full border inline-flex items-center gap-1.5 ${
+                post.status === "Open"
+                  ? "bg-success-soft text-success border-success-soft"
+                  : post.status === "In Progress"
+                    ? "bg-warning-soft text-warning border-warning-soft"
+                    : "bg-surface-muted text-ink-soft border-line"
+              }`}
+            >
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  post.status === "Open"
+                    ? "bg-success"
+                    : post.status === "In Progress"
+                      ? "bg-warning"
+                      : "bg-surface-muted"
+                }`}
+              />
               {post.status}
             </span>
           </div>
 
           {/* Title */}
-          {editing && isOwner && <form onSubmit={saveEdit} className="rounded-xl border border-line bg-brand-soft p-4 space-y-4">
-            <h2 className="font-bold">Edit your post</h2>
-            <label className="block text-sm">Title<input required maxLength={200} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="mt-1 w-full rounded-lg border p-2" /></label>
-            <label className="block text-sm">Description<textarea required maxLength={10000} rows={5} value={draft.description} onChange={(e) => setDraft({ ...draft, description: e.target.value })} className="mt-1 w-full rounded-lg border p-2" /></label>
-            <label className="block text-sm">Priority<select value={draft.priority} onChange={(e) => setDraft({ ...draft, priority: e.target.value })} className="mt-1 w-full rounded-lg border p-2">{["Low", "Medium", "High"].map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label className="block text-sm">Deadline (your local time)<input type="datetime-local" value={draft.deadline} onChange={(e) => setDraft({ ...draft, deadline: e.target.value })} className="mt-1 w-full rounded-lg border p-2" /></label>
-            <div className="flex gap-3"><button disabled={busy} className="rounded-lg bg-brand-solid text-on-brand px-4 py-2 disabled:opacity-50">{busy ? "Saving…" : "Save changes"}</button><button type="button" disabled={busy} onClick={() => setEditing(false)} className="rounded-lg border px-4 py-2">Cancel</button></div>
-          </form>}
+          {editing && isOwner && (
+            <form
+              onSubmit={saveEdit}
+              className="rounded-xl border border-line bg-brand-soft p-4 space-y-4"
+            >
+              <h2 className="font-bold">Edit your post</h2>
+              <label className="block text-sm">
+                Title
+                <input
+                  required
+                  maxLength={200}
+                  value={draft.title}
+                  onChange={(e) =>
+                    setDraft({ ...draft, title: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border p-2"
+                />
+              </label>
+              <label className="block text-sm">
+                Description
+                <textarea
+                  required
+                  maxLength={10000}
+                  rows={5}
+                  value={draft.description}
+                  onChange={(e) =>
+                    setDraft({ ...draft, description: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border p-2"
+                />
+              </label>
+              <label className="block text-sm">
+                Priority
+                <select
+                  value={draft.priority}
+                  onChange={(e) =>
+                    setDraft({ ...draft, priority: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border p-2"
+                >
+                  {["Low", "Medium", "High"].map((value) => (
+                    <option key={value}>{value}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="block text-sm">
+                Deadline (your local time)
+                <input
+                  type="datetime-local"
+                  value={draft.deadline}
+                  onChange={(e) =>
+                    setDraft({ ...draft, deadline: e.target.value })
+                  }
+                  className="mt-1 w-full rounded-lg border p-2"
+                />
+              </label>
+              <div className="flex gap-3">
+                <button
+                  disabled={busy}
+                  className="rounded-lg bg-brand-solid text-on-brand px-4 py-2 disabled:opacity-50"
+                >
+                  {busy ? "Saving…" : "Save changes"}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setEditing(false)}
+                  className="rounded-lg border px-4 py-2"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-ink leading-snug">
             {post.title}
           </h1>
@@ -219,11 +355,7 @@ export default function PostDetailPage({ params }) {
           {/* Attached Photo */}
           {post.image_url && (
             <div className="rounded-xl overflow-hidden bg-surface-muted border border-line/80 max-h-96">
-              <img
-                src={`/api/backend${post.image_url}`}
-                alt={`Photo accompanying ${post.title}`}
-                className="w-full h-full object-cover"
-              />
+              <PostImage src={post.image_url} title={post.title} />
             </div>
           )}
 
@@ -256,17 +388,27 @@ export default function PostDetailPage({ params }) {
                 <div className="bg-danger-soft border border-danger-soft/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-danger">
                   <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold">Auto-flagged as potential spam (score {post.spam_score}):</span>
-                    <span className="ml-1">Please verify all details carefully before communicating or transacting.</span>
+                    <span className="font-semibold">
+                      Auto-flagged as potential spam (score {post.spam_score}):
+                    </span>
+                    <span className="ml-1">
+                      Please verify all details carefully before communicating
+                      or transacting.
+                    </span>
                   </div>
                 </div>
               )}
               {post.duplicates?.length > 0 && (
                 <div className="bg-warning-soft border border-warning-soft/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-warning">
-                  <InfoIcon className="size-4 shrink-0"/>
+                  <InfoIcon className="size-4 shrink-0" />
                   <div>
-                    <span className="font-semibold">Similar post detected:</span>
-                    <span className="ml-1">This request matches {post.duplicates.length} other open post(s) nearby.</span>
+                    <span className="font-semibold">
+                      Similar post detected:
+                    </span>
+                    <span className="ml-1">
+                      This request matches {post.duplicates.length} other open
+                      post(s) nearby.
+                    </span>
                   </div>
                 </div>
               )}
@@ -278,16 +420,24 @@ export default function PostDetailPage({ params }) {
             <div className="border-t border-line pt-6">
               <div className="bg-warning-soft border border-warning-soft/60 rounded-xl p-5 space-y-4">
                 <div>
-                  <h3 className="font-bold text-ink text-sm">Rate this Exchange</h3>
+                  <h3 className="font-bold text-ink text-sm">
+                    Rate this Exchange
+                  </h3>
                   <p className="text-xs text-ink-muted mt-0.5">
-                    This post is resolved. Share your experience with the community.
+                    This post is resolved. Share your experience with the
+                    community.
                   </p>
                 </div>
 
                 <form onSubmit={submitRating} className="space-y-4">
                   {/* Star selector */}
                   <div>
-                    <p id="rating-label" className="text-xs font-semibold text-ink-soft block mb-2">Your rating</p>
+                    <p
+                      id="rating-label"
+                      className="text-xs font-semibold text-ink-soft block mb-2"
+                    >
+                      Your rating
+                    </p>
                     <div className="flex items-center gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -311,7 +461,16 @@ export default function PostDetailPage({ params }) {
                       ))}
                       {ratingStars > 0 && (
                         <span className="text-xs text-ink-muted ml-2">
-                          {["", "Poor", "Fair", "Good", "Very Good", "Excellent"][ratingStars]}
+                          {
+                            [
+                              "",
+                              "Poor",
+                              "Fair",
+                              "Good",
+                              "Very Good",
+                              "Excellent",
+                            ][ratingStars]
+                          }
                         </span>
                       )}
                     </div>
@@ -319,7 +478,9 @@ export default function PostDetailPage({ params }) {
 
                   {/* Tag pills */}
                   <div>
-                    <p className="text-xs font-semibold text-ink-soft block mb-2">Quick tags (optional)</p>
+                    <p className="text-xs font-semibold text-ink-soft block mb-2">
+                      Quick tags (optional)
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       {RATING_TAGS.map((tag) => (
                         <button
@@ -333,7 +494,8 @@ export default function PostDetailPage({ params }) {
                               : "bg-surface text-ink-soft border-line hover:border-line"
                           }`}
                         >
-                          {ratingTags.includes(tag) ? "✓ " : ""}{tag}
+                          {ratingTags.includes(tag) ? "✓ " : ""}
+                          {tag}
                         </button>
                       ))}
                     </div>
@@ -341,7 +503,12 @@ export default function PostDetailPage({ params }) {
 
                   {/* Testimonial comment */}
                   <div>
-                    <label htmlFor="exchange-review" className="text-xs font-semibold text-ink-soft block mb-1.5">Exchange review (optional, public)</label>
+                    <label
+                      htmlFor="exchange-review"
+                      className="text-xs font-semibold text-ink-soft block mb-1.5"
+                    >
+                      Exchange review (optional, public)
+                    </label>
                     <textarea
                       id="exchange-review"
                       maxLength={2000}
@@ -354,7 +521,9 @@ export default function PostDetailPage({ params }) {
                   </div>
 
                   {ratingError && (
-                    <p role="alert" className="text-xs text-danger font-medium">{ratingError}</p>
+                    <p role="alert" className="text-xs text-danger font-medium">
+                      {ratingError}
+                    </p>
                   )}
 
                   <button
@@ -375,45 +544,51 @@ export default function PostDetailPage({ params }) {
             <div className="border-t border-line pt-5">
               <div className="bg-success-soft border border-success-soft rounded-xl p-4 text-center">
                 <CheckIcon className="w-6 h-6 text-success mx-auto mb-2" />
-                <p className="font-bold text-success text-sm">Rating Submitted!</p>
-                <p className="text-xs text-success mt-0.5">Thank you for helping build community trust. +10 credits awarded.</p>
+                <p className="font-bold text-success text-sm">
+                  Rating Submitted!
+                </p>
+                <p className="text-xs text-success mt-0.5">
+                  Thank you for helping build community trust. Your review has
+                  been saved. Exchange credits are awarded after both
+                  participants confirm completion.
+                </p>
               </div>
             </div>
           )}
-
         </div>
 
         {/* Sidebar Card (Author & Actions) */}
         <div className="space-y-5">
-          
           {/* Author Card linking to public profile */}
           <Link
             href={`/profile/${post.owner_id}`}
             className="block bg-surface border border-line/90 hover:border-line rounded-xl p-5 shadow-xs transition-all hover:-translate-y-0.5 group"
           >
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider">Posted By</p>
+              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+                Posted By
+              </p>
               <span className="text-[11px] font-semibold text-brand group-hover:underline">
                 View Profile &rarr;
               </span>
             </div>
-            
+
             <div className="flex items-center gap-3">
-              <Avatar id={post.owner_avatar || "avatar-1"} name={post.owner_name} size="w-12 h-12" className="group-hover:scale-105 transition-transform" />
+              <Avatar
+                id={post.owner_avatar || "avatar-1"}
+                name={post.owner_name}
+                size="w-12 h-12"
+                className="group-hover:scale-105 transition-transform"
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h4 className="font-bold text-ink group-hover:text-brand transition-colors truncate text-sm">
                     {post.owner_name}
                   </h4>
-                  {(post.owner_badge === "Trusted" || post.owner_badge === "Champion") && (
-                    <span title="Verified Helper" className="text-success">
-                      <ShieldCheckIcon className="w-4 h-4" />
-                    </span>
-                  )}
                 </div>
                 <div className="flex items-center gap-1.5 text-xs text-ink-muted mt-0.5">
                   <span className="bg-brand-soft text-brand px-2 py-0.5 rounded-md font-semibold text-[10px]">
-                    <BadgeTier tier={post.owner_badge}/>
+                    <BadgeTier tier={post.owner_badge} />
                   </span>
                 </div>
               </div>
@@ -425,8 +600,12 @@ export default function PostDetailPage({ params }) {
             {isOwner ? (
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-bold text-ink text-sm mb-1">Manage Post Status</h4>
-                  <p className="text-xs text-ink-muted">Update status as your help request progresses.</p>
+                  <h4 className="font-bold text-ink text-sm mb-1">
+                    Manage Post Status
+                  </h4>
+                  <p className="text-xs text-ink-muted">
+                    Update status as your help request progresses.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-1.5 bg-surface-muted p-1 rounded-xl">
@@ -455,7 +634,15 @@ export default function PostDetailPage({ params }) {
                     <span>&rarr;</span>
                   </Link>
                   {/* Admin delete */}
-                  {isOwner && <button disabled={busy} onClick={startEdit} className="w-full rounded-xl border border-line text-brand py-2 text-xs font-semibold">Edit Post</button>}
+                  {isOwner && (
+                    <button
+                      disabled={busy}
+                      onClick={startEdit}
+                      className="w-full rounded-xl border border-line text-brand py-2 text-xs font-semibold"
+                    >
+                      Edit Post
+                    </button>
+                  )}
                   {isOwner && (
                     <button
                       onClick={deletePost}
@@ -471,9 +658,11 @@ export default function PostDetailPage({ params }) {
             ) : !user ? (
               <div className="text-center py-4 space-y-3">
                 <h4 className="font-bold text-ink text-sm">Want to help?</h4>
-                <p className="text-xs text-ink-muted">Sign in to contact {post.owner_name} and offer assistance.</p>
+                <p className="text-xs text-ink-muted">
+                  Sign in to contact {post.owner_name} and offer assistance.
+                </p>
                 <Link
-                  href="/login"
+                  href={`/login?next=${encodeURIComponent(`/post/${id}`)}`}
                   className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs"
                 >
                   Log in to Respond
@@ -484,9 +673,12 @@ export default function PostDetailPage({ params }) {
                 <div className="w-8 h-8 bg-success-soft text-success rounded-full flex items-center justify-center mx-auto">
                   <CheckIcon className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-success text-sm">Response Sent!</h4>
+                <h4 className="font-bold text-success text-sm">
+                  Response Sent!
+                </h4>
                 <p className="text-xs text-success">
-                  {post.owner_name} has received your offer. You can track this in your Inbox.
+                  {post.owner_name} has received your offer. You can track this
+                  in your Inbox.
                 </p>
                 <Link
                   href="/inbox"
@@ -496,14 +688,38 @@ export default function PostDetailPage({ params }) {
                 </Link>
               </div>
             ) : (
-              <form onSubmit={respond} className="space-y-3">
+              <form onSubmit={respond} aria-busy={busy} className="space-y-3">
+                {needsVerification && (
+                  <p className="rounded-lg bg-warning-soft text-warning p-3 text-sm">
+                    Community verification is required before responding.{" "}
+                    <Link className="underline" href="/settings?tab=trust">
+                      Open Trust & Verification
+                    </Link>
+                    . Your message will stay here until you leave this page.
+                  </p>
+                )}
                 <div>
-                  <h4 className="font-bold text-ink text-sm mb-1">{post.is_demo ? "Sample notice" : "Offer help / respond"}</h4>
-                  {post.is_demo && <p className="text-sm text-warning mb-3">This sample shows how a notice looks. Create your own post to arrange a real exchange.</p>}
-                  <p className="text-xs text-ink-muted mb-2">Send a brief note introducing yourself.</p>
-                  <label htmlFor="exchange-response" className="text-sm font-medium block mb-2">Message to the post author</label>
+                  <h4 className="font-bold text-ink text-sm mb-1">
+                    {post.is_demo ? "Sample notice" : "Offer help / respond"}
+                  </h4>
+                  {post.is_demo && (
+                    <p className="text-sm text-warning mb-3">
+                      This sample shows how a notice looks. Create your own post
+                      to arrange a real exchange.
+                    </p>
+                  )}
+                  <p className="text-xs text-ink-muted mb-2">
+                    Send a brief note introducing yourself.
+                  </p>
+                  <label
+                    htmlFor="exchange-response"
+                    className="text-sm font-medium block mb-2"
+                  >
+                    Message to the post author
+                  </label>
                   <textarea
                     id="exchange-response"
+                    disabled={busy}
                     maxLength={2000}
                     required
                     rows={4}
@@ -514,11 +730,16 @@ export default function PostDetailPage({ params }) {
                   />
                 </div>
 
-                {error && (
+                {responseError && (
                   <div className="bg-danger-soft border border-danger-soft rounded-xl p-3 text-xs text-danger space-y-1">
-                    <p className="font-semibold">{error}</p>
-                    {error.toLowerCase().includes("verified") && (
-                      <Link href="/settings" className="text-brand underline font-semibold block mt-1">
+                    <p role="alert" className="font-semibold">
+                      {responseError}
+                    </p>
+                    {responseError.toLowerCase().includes("verified") && (
+                      <Link
+                        href="/settings"
+                        className="text-brand underline font-semibold block mt-1"
+                      >
                         Go to Settings &rarr; Submit Verification Proof
                       </Link>
                     )}
@@ -527,11 +748,13 @@ export default function PostDetailPage({ params }) {
 
                 <button
                   type="submit"
-                  disabled={busy || post.is_demo}
+                  disabled={busy || post.is_demo || needsVerification}
                   className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-all shadow-xs hover:shadow-line disabled:opacity-60"
                 >
                   <SendIcon className="w-4 h-4" />
-                  <span>{busy ? "Sending Response..." : "Send Response"}</span>
+                  <span>
+                    {busy ? "Sending Response..." : <Text>Send Response</Text>}
+                  </span>
                 </button>
               </form>
             )}
@@ -539,7 +762,9 @@ export default function PostDetailPage({ params }) {
             {/* Moderator Controls for Admin/Super Admin viewing someone else's post */}
             {isAdminOrSuper && !isOwner && (
               <div className="border-t border-line pt-4 mt-2 space-y-2">
-                <h4 className="text-xs font-bold text-ink-muted uppercase tracking-wide">Moderator Controls</h4>
+                <h4 className="text-xs font-bold text-ink-muted uppercase tracking-wide">
+                  Moderator Controls
+                </h4>
                 <div className="grid grid-cols-3 gap-1.5 bg-surface-muted p-1 rounded-xl">
                   {STATUSES.map((s) => (
                     <button
@@ -567,11 +792,8 @@ export default function PostDetailPage({ params }) {
               </div>
             )}
           </div>
-
         </div>
-
       </div>
     </div>
   );
 }
-

@@ -1,7 +1,10 @@
 "use client";
 import { usePagedResource } from "../lib/use-paged-resource";
 import Pagination from "./Pagination";
-import InvoiceReceipt from "./InvoiceReceipt";
+import dynamic from "next/dynamic";
+const InvoiceReceipt = dynamic(() => import("./InvoiceReceipt"), {
+  loading: () => <span role="status">Loading invoice controls…</span>,
+});
 import { Button } from "./ui";
 export default function InvoiceList() {
   const list = usePagedResource("/billing/invoices");

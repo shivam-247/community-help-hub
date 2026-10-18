@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ErrorMessage, FieldError } from "./FormFeedback";
 import Link from "next/link";
 import InvoiceList from "./InvoiceList";
 import { useForm } from "react-hook-form";
@@ -48,23 +49,6 @@ const proofSchema = z.object({
     .max(1000),
   note: z.string().max(2000),
 });
-export function ErrorMessage({ message }) {
-  return message ? (
-    <p
-      role="alert"
-      className="text-sm text-danger bg-danger-soft rounded-lg p-3"
-    >
-      {message}
-    </p>
-  ) : null;
-}
-export function FieldError({ error, id }) {
-  return error ? (
-    <p id={id} role="alert" className="text-xs text-danger mt-1">
-      {error.message}
-    </p>
-  ) : null;
-}
 export function ProfilePanel() {
   const auth = useAuth(),
     toast = useToast();
@@ -73,9 +57,9 @@ export function ProfilePanel() {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isSubmitting },
   } = useForm({
+    mode: "onBlur",
     resolver: zodResolver(profileSchema),
     defaultValues: {
       name: auth.user.name,
@@ -149,12 +133,12 @@ export function ProfilePanel() {
             className="sr-only"
             type="file"
             accept="image/png,image/jpeg,image/webp"
-            disabled={uploading}
+            disabled={uploading || isSubmitting}
             onChange={upload}
           />
           <Button
             variant="ghost"
-            disabled={uploading}
+            disabled={uploading || isSubmitting}
             onClick={async () => {
               try {
                 await api("/auth/avatar", {
@@ -176,47 +160,61 @@ export function ProfilePanel() {
           </p>
         </div>
         <form onSubmit={handleSubmit(save)} className="space-y-5">
-          {[
-            ["name", "Full name", "Shivam Parmar"],
-            ["locality", "Area / society", "Gota, Ahmedabad · 382481"],
-            ["contact_phone", "Mobile number (optional)", "9876543210"],
-          ].map(([key, label, placeholder]) => (
-            <div key={key}>
-              <Label htmlFor={`profile-${key}`}>{label}</Label>
-              <Input
-                id={`profile-${key}`}
-                {...register(key)}
-                placeholder={placeholder}
-                aria-invalid={!!errors[key]}
-                aria-describedby={errors[key] ? `error-${key}` : undefined}
+          <fieldset
+            disabled={isSubmitting || uploading}
+            className="min-w-0 space-y-5"
+          >
+            {[
+              ["name", "Full name", "Shivam Parmar"],
+              ["locality", "Area / society", "Gota, Ahmedabad · 382481"],
+              ["contact_phone", "Mobile number (optional)", "+91 9876543210"],
+            ].map(([key, label, placeholder]) => (
+              <div key={key}>
+                <Label htmlFor={`profile-${key}`}>{label}</Label>
+                <Input
+                  id={`profile-${key}`}
+                  type={key === "contact_phone" ? "tel" : "text"}
+                  inputMode={key === "contact_phone" ? "tel" : undefined}
+                  autoComplete={
+                    key === "contact_phone"
+                      ? "tel"
+                      : key === "name"
+                        ? "name"
+                        : "address-level2"
+                  }
+                  {...register(key)}
+                  placeholder={placeholder}
+                  aria-invalid={!!errors[key]}
+                  aria-describedby={errors[key] ? `error-${key}` : undefined}
+                />
+                <FieldError id={`error-${key}`} error={errors[key]} />
+              </div>
+            ))}
+            <label className="flex items-start gap-3 min-h-11 text-sm">
+              <input
+                type="checkbox"
+                {...register("contact_visible")}
+                className="mt-1 size-5"
               />
-              <FieldError id={`error-${key}`} error={errors[key]} />
-            </div>
-          ))}
-          <label className="flex items-start gap-3 min-h-11 text-sm">
-            <input
-              type="checkbox"
-              {...register("contact_visible")}
-              className="mt-1 size-5"
-            />
-            <span>
-              Share my phone number with accepted exchange participants. It
-              stays hidden from the public board.
-            </span>
-          </label>
-          <ErrorMessage message={error} />
-          {error && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => window.location.reload()}
-            >
-              Reload account section
+              <span>
+                Share my phone number with accepted exchange participants. It
+                stays hidden from the public board.
+              </span>
+            </label>
+            <ErrorMessage message={error} />
+            {error && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => window.location.reload()}
+              >
+                Reload account section
+              </Button>
+            )}
+            <Button loading={isSubmitting} type="submit">
+              Save profile
             </Button>
-          )}
-          <Button loading={isSubmitting} type="submit">
-            Save profile
-          </Button>
+          </fieldset>
         </form>
       </CardContent>
     </Card>
@@ -235,10 +233,12 @@ export function TrustPanel() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
+    mode: "onBlur",
     resolver: zodResolver(proofSchema),
     defaultValues: { proof_type: "Reference", proof_value: "", note: "" },
   });
   async function load() {
+    setError("");
     try {
       const [t, h] = await Promise.all([
         api("/account/trust", { auth: true }),
@@ -285,6 +285,24 @@ export function TrustPanel() {
       setError(e.message);
     }
   }
+  if (!data)
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Trust & Verification</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {error ? (
+            <>
+              <ErrorMessage message={error} />
+              <Button onClick={load}>Retry verification status</Button>
+            </>
+          ) : (
+            <p role="status">Loading verification checks…</p>
+          )}
+        </CardContent>
+      </Card>
+    );
   const completed = data
     ? [data.email, data.phone, data.community].filter(Boolean).length
     : 0;
@@ -514,6 +532,7 @@ export function NotificationsPanel() {
   async function save(e) {
     e.preventDefault();
     setBusy(true);
+    setError("");
     try {
       setData(
         await api("/notifications/preferences", {
@@ -551,53 +570,55 @@ export function NotificationsPanel() {
         )}
         {data ? (
           <form onSubmit={save} className="space-y-5">
-            {[
-              ["in_app", "In-app notifications"],
-              ["email_alerts", "Email alerts (Plus and Society)"],
-            ].map(([key, label]) => (
-              <label
-                key={key}
-                className="flex items-center gap-3 min-h-11 text-sm"
-              >
-                <input
-                  className="size-5"
-                  type="checkbox"
-                  checked={data[key]}
-                  disabled={key === "email_alerts" && !data.plan_allows_email}
-                  onChange={(e) =>
-                    setData({ ...data, [key]: e.target.checked })
-                  }
-                />
-                {label}
-              </label>
-            ))}
-            {!data.plan_allows_email && (
-              <p className="text-sm text-ink-muted">
-                <Link className="text-brand underline" href="/pricing">
-                  Upgrade your plan
-                </Link>{" "}
-                to enable email alerts.
-              </p>
-            )}
-            {(!data.email_verified || !data.email_available) && (
-              <p className="text-xs text-warning">
-                Email alerts are delivered after you verify your email and the
-                service’s email provider is configured. In-app notifications
-                work now.
-              </p>
-            )}
-            <Button type="submit" loading={busy}>
-              Save preferences
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/notifications">
-                View notifications
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
+            <fieldset disabled={busy} className="min-w-0 space-y-5">
+              {[
+                ["in_app", "In-app notifications"],
+                ["email_alerts", "Email alerts (Plus and Society)"],
+              ].map(([key, label]) => (
+                <label
+                  key={key}
+                  className="flex items-center gap-3 min-h-11 text-sm"
+                >
+                  <input
+                    className="size-5"
+                    type="checkbox"
+                    checked={data[key]}
+                    disabled={key === "email_alerts" && !data.plan_allows_email}
+                    onChange={(e) =>
+                      setData({ ...data, [key]: e.target.checked })
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+              {!data.plan_allows_email && (
+                <p className="text-sm text-ink-muted">
+                  <Link className="text-brand underline" href="/pricing">
+                    Upgrade your plan
+                  </Link>{" "}
+                  to enable email alerts.
+                </p>
+              )}
+              {(!data.email_verified || !data.email_available) && (
+                <p className="text-xs text-warning">
+                  Email alerts are delivered after you verify your email and the
+                  service’s email provider is configured. In-app notifications
+                  work now.
+                </p>
+              )}
+              <Button type="submit" loading={busy}>
+                Save preferences
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/notifications">
+                  View notifications
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </fieldset>
           </form>
         ) : (
-          <p role="status">Loading preferences…</p>
+          !error && <p role="status">Loading preferences…</p>
         )}
       </CardContent>
     </Card>
@@ -731,6 +752,7 @@ export function BillingPanel() {
 export function SocietyPanel() {
   const auth = useAuth(),
     toast = useToast();
+  const [loading, setLoading] = useState(true);
   const [boards, setBoards] = useState([]),
     [analytics, setAnalytics] = useState({}),
     [error, setError] = useState(""),
@@ -740,6 +762,7 @@ export function SocietyPanel() {
     [invite, setInvite] = useState("");
   async function load() {
     setError("");
+    setLoading(true);
     try {
       const b = await api("/communities", { auth: true });
       setBoards(b);
@@ -756,6 +779,8 @@ export function SocietyPanel() {
         }
     } catch (e) {
       setError(e.message);
+    } finally {
+      setLoading(false);
     }
   }
   useEffect(() => {
@@ -793,6 +818,13 @@ export function SocietyPanel() {
           >
             Reload account section
           </Button>
+        )}
+        {loading && <p role="status">Loading your society boards…</p>}
+        {!loading && !error && !boards.length && (
+          <p className="text-sm text-ink-muted">
+            No society board joined yet. Ask your society organiser for an
+            invite code.
+          </p>
         )}
         {boards.map((b) => (
           <div

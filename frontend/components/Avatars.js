@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useState } from "react";
 export const AVATAR_LABELS = {};
 export default function Avatar({
@@ -26,12 +27,16 @@ export default function Avatar({
   return (
     <span
       className={`${size} ${colors[hash % colors.length]} ${className} inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-line text-sm font-semibold`}
+      role="img"
       aria-label={name}
     >
       {photo && !failed ? (
-        <img
+        <Image
+          unoptimized
+          width={80}
+          height={80}
           src={`/api/backend${id}`}
-          alt={name}
+          alt=""
           className="h-full w-full object-cover"
           onError={() => setFailed(true)}
         />

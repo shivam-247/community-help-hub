@@ -126,7 +126,7 @@ export default function AdminVerificationsPage() {
             <div className="w-24 h-7 bg-surface-muted rounded-lg"></div>
           </div>
         </div>
-      ) : items.length === 0 ? (
+      ) : error ? null : items.length === 0 ? (
         <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-success-soft text-success flex items-center justify-center mx-auto text-xl mb-3">
             <ShieldCheckIcon className="w-6 h-6" />

@@ -25,6 +25,9 @@ export default function TrustReview({ userId, onSaved }) {
               body: { phone_verified: phone, address_verified: address, note },
             });
             onSaved?.();
+            setPhone(false);
+            setAddress(false);
+            setNote("");
             setError("");
           } catch (e) {
             setError(e.message);
@@ -64,6 +67,10 @@ export default function TrustReview({ userId, onSaved }) {
           maxLength={1000}
           required
         />
+        <label className="flex gap-2 text-sm min-h-11 items-start">
+          <input type="checkbox" required />I reviewed both checks. Unchecked
+          checks will be marked unverified; this replaces the previous review.
+        </label>
         <Button type="submit" variant="outline" loading={busy}>
           Save trust review
         </Button>

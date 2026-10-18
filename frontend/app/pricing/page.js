@@ -13,9 +13,6 @@ import {
   CardDescription,
   CardContent,
   Badge,
-  Tabs,
-  TabsList,
-  TabsTrigger,
 } from "../../components/ui";
 const descriptions = {
   free: "For everyday neighbourly help.",
@@ -68,12 +65,25 @@ export default function PricingPage() {
           between neighbours.
         </p>
         <div className="flex flex-wrap justify-center gap-3 items-center">
-          <Tabs value={cycle} onValueChange={setCycle}>
-            <TabsList aria-label="Billing interval">
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="yearly">Yearly</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <fieldset className="inline-flex gap-1 rounded-lg border border-line p-1">
+            <legend className="sr-only">Billing interval</legend>
+            <div className="flex gap-1">
+              <Button
+                variant={cycle === "monthly" ? "secondary" : "ghost"}
+                aria-pressed={cycle === "monthly"}
+                onClick={() => setCycle("monthly")}
+              >
+                Monthly
+              </Button>
+              <Button
+                variant={cycle === "yearly" ? "secondary" : "ghost"}
+                aria-pressed={cycle === "yearly"}
+                onClick={() => setCycle("yearly")}
+              >
+                Yearly
+              </Button>
+            </div>
+          </fieldset>
           <Badge>Save about 20% yearly</Badge>
           <p className="text-sm text-ink-muted">
             Priority listings are labelled. Paid membership badges show a plan,
@@ -196,7 +206,12 @@ export default function PricingPage() {
               <h2 className="text-2xl font-semibold mb-5">
                 Compare the details
               </h2>
-              <div className="overflow-x-auto rounded-xl border border-line">
+              <div
+                role="region"
+                aria-label="Compare plan features"
+                tabIndex={0}
+                className="overflow-x-auto rounded-xl border border-line"
+              >
                 <table className="w-full text-sm text-left bg-surface">
                   <caption className="sr-only">
                     Plan feature comparison in Indian rupees

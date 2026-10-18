@@ -89,6 +89,12 @@ export default function AdminDashboardPage() {
   }, [user, isAdmin, loadData]);
 
   if (auth?.loading) return <p role="status">Loading administration…</p>;
+  if (loading)
+    return (
+      <div role="status" className="p-8">
+        <h1 className="text-2xl font-semibold">Loading moderation queue…</h1>
+      </div>
+    );
   if (error && !loading)
     return <RecoveryPanel message={error} onRetry={loadData} />;
 
@@ -289,6 +295,12 @@ export default function AdminDashboardPage() {
       >
         Spam queue ({posts.filter((p) => p.spam_flag).length})
       </Button>
+      {activeTab === "spam" && (
+        <p className="text-sm text-ink-muted">
+          The filter supplies a score, not a detailed explanation. Review the
+          full notice and context before approving or removing it.
+        </p>
+      )}
       {activeTab === "spam" && !posts.some((p) => p.spam_flag) && (
         <p className="text-sm text-ink-muted p-5 border border-line rounded-lg">
           No posts awaiting spam review.
@@ -422,7 +434,7 @@ export default function AdminDashboardPage() {
                 Queue is clear
               </h3>
               <p className="text-xs text-ink-muted">
-                All identity and skill verification requests have been
+                All community reference requests on this page have been
                 processed.
               </p>
             </div>
@@ -543,7 +555,7 @@ export default function AdminDashboardPage() {
                   {p.spam_flag && (
                     <span className="text-[10px] font-bold bg-danger-soft text-danger border border-danger-soft px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                       <AlertTriangleIcon className="w-3 h-3 text-danger" />
-                      Spam (Score {p.spam_score})
+                      Flagged for review · score {p.spam_score}
                     </span>
                   )}
                 </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import { POLICY_VERSION } from "../lib/legal";
 import {
@@ -17,7 +17,7 @@ import {
   CardDescription,
   CardContent,
 } from "./ui";
-import { ErrorMessage, FieldError } from "./AccountPanels";
+import { ErrorMessage, FieldError } from "./FormFeedback";
 const loginSchema = z.object({
   email: z.email("Enter a valid email address"),
   password: z.string().min(1, "Enter your password").max(128),
@@ -51,6 +51,7 @@ export default function AuthForm({ signup = false }) {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({
+    mode: "onBlur",
     resolver: zodResolver(signup ? signupSchema : loginSchema),
     defaultValues: signup
       ? {
@@ -85,28 +86,15 @@ export default function AuthForm({ signup = false }) {
           : "/noticeboard",
       );
     } catch (e) {
-      setError(e.message);
+      setError(
+        signup && e.message.includes("already exists")
+          ? "We could not create this account. Try signing in or contact support."
+          : e.message,
+      );
     }
   }
   return (
-    <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-10 md:gap-16 items-center sm:py-10">
-      <section className="hidden md:block">
-        <p className="text-xs uppercase tracking-widest text-brand font-semibold mb-5">
-          Your neighbourhood, connected
-        </p>
-        <h2 className="text-4xl font-semibold leading-tight">
-          A familiar place.
-          <br />A helping hand.
-        </h2>
-        <p className="text-sm text-ink-muted leading-relaxed mt-5">
-          Share what you can, ask for what you need, and get to know the people
-          nearby.
-        </p>
-        <p className="flex gap-3 items-center text-sm text-ink-muted mt-8 border-t border-line pt-5">
-          <ShieldCheck className="size-5 text-brand" />
-          Your phone number stays private by default.
-        </p>
-      </section>
+    <div className="max-w-md mx-auto sm:py-6">
       <Card>
         <CardHeader>
           <h1 className="text-lg font-semibold">
