@@ -1,6 +1,7 @@
 import { SafetyProvider } from "./SafetyMenu";
 import Link from "next/link";
 import Nav from "./Nav";
+import Brand from "./Brand";
 import RouteGuard from "./RouteGuard";
 import { Text } from "../lib/i18n";
 export default function AppShell({ children }) {
@@ -11,71 +12,45 @@ export default function AppShell({ children }) {
         lang="en"
         tabIndex={-1}
         id="main-content"
-        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-7 sm:py-10"
+        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-8 sm:pt-9 sm:pb-12"
       >
         <RouteGuard>{children}</RouteGuard>
       </main>
-      <footer className="border-t border-line mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-[240px_1fr] gap-6 text-xs text-ink-muted">
-          <p>Community Help Hub · A little closer to your neighbors.</p>
-          <nav
-            aria-label="Footer"
-            className="flex flex-wrap gap-x-5 gap-y-1 lg:justify-end"
-          >
-            <Link className="min-h-11 inline-flex items-center" href="/about">
-              <Text>About the hub</Text>
-            </Link>
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div>
             <Link
-              className="min-h-11 inline-flex items-center"
-              href="/references"
+              href="/"
+              aria-label="Community Help Hub home"
+              className="inline-flex min-h-11 items-center"
             >
-              <Text>References</Text>
+              <Brand />
             </Link>
-            <Link
-              className="min-h-11 inline-flex items-center"
-              href="/settings"
-            >
-              <Text>Account &amp; safety</Text>
-            </Link>
-            <Link className="min-h-11 inline-flex items-center" href="/pricing">
-              <Text>Plans</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/privacy"
-            >
-              <Text>Privacy</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/terms"
-            >
-              <Text>Terms</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/cookies"
-            >
-              <Text>Cookies</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/refunds"
-            >
-              <Text>Refunds</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/contact"
-            >
-              <Text>Contact</Text>
-            </Link>
-            <Link
-              className="min-h-11 inline-flex items-center underline"
-              href="/accessibility"
-            >
-              <Text>Accessibility</Text>
-            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-7 text-ink-muted">
+              A little help makes a neighbourhood feel more like home.
+            </p>
+            <p className="mt-4 text-[11px] text-ink-muted">
+              An independent college project by Shivam Parmar.
+            </p>
+          </div>
+          <nav aria-label="Footer" className="footer-links">
+            {[
+              ["/about", "About the hub"],
+              ["/noticeboard", "Feed"],
+              ["/settings", "Account & safety"],
+              ["/pricing", "Plans"],
+              ["/references", "References"],
+              ["/contact", "Contact"],
+              ["/privacy", "Privacy"],
+              ["/terms", "Terms"],
+              ["/cookies", "Cookies"],
+              ["/refunds", "Refunds"],
+              ["/accessibility", "Accessibility"],
+            ].map(([href, label]) => (
+              <Link key={href} href={href}>
+                <Text>{label}</Text>
+              </Link>
+            ))}
           </nav>
         </div>
       </footer>

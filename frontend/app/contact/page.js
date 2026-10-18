@@ -1,18 +1,23 @@
+import PageHeader from "../../components/PageHeader";
+import { Mail } from "lucide-react";
 import { operator } from "../../lib/legal";
 export const metadata = { title: "Contact and operator | Community Help Hub" };
 export default function Contact() {
   return (
     <article className="max-w-3xl mx-auto space-y-6 break-anywhere">
-      <h1 className="text-3xl font-semibold">Contact and operator details</h1>
+      <PageHeader
+        eyebrow="A real person, on the other side"
+        title="Contact and operator details"
+      />
       <p>
         Community Help Hub is a college mutual-aid demonstration maintained by{" "}
         {operator.name}. No incorporated company, registration number, tax
         registration or government affiliation is claimed.
       </p>
-      <dl className="space-y-4 border border-line rounded-xl p-6">
+      <dl className="surface-card space-y-5 p-6 sm:p-8">
         <div>
-          <dt className="font-semibold">Project maintainer</dt>
-          <dd>{operator.name}</dd>
+          <dt className="eyebrow mb-2">Project maintainer</dt>
+          <dd className="text-xl font-semibold">{operator.name}</dd>
         </div>
         <div>
           <dt className="font-semibold">
@@ -20,9 +25,10 @@ export default function Contact() {
           </dt>
           <dd>
             <a
-              className="underline min-h-11 inline-flex items-center"
+              className="text-brand underline min-h-11 inline-flex items-center gap-2"
               href={`mailto:${operator.email}`}
             >
+              <Mail aria-hidden="true" className="size-4 shrink-0" />
               {operator.email}
             </a>
           </dd>

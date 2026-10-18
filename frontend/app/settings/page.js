@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../lib/auth-context";
 import Avatar from "../../components/Avatars";
+import PageHeader from "../../components/PageHeader";
 import BadgeTier from "../../components/BadgeTier";
 import PasswordSettings from "../../components/PasswordSettings";
 import MFASettings from "../../components/MFASettings";
@@ -37,15 +38,12 @@ export default function SettingsPage() {
   const next = user.credits < 5 ? 5 : user.credits < 50 ? 50 : 100;
   return (
     <div className="space-y-7">
-      <header>
-        <p className="text-xs text-brand font-semibold uppercase tracking-widest mb-3">
-          Your place in the community
-        </p>
-        <h1 className="text-3xl font-semibold">Account & Trust Center</h1>
-        <p className="text-sm text-ink-muted mt-2">
-          Manage your profile, privacy, and neighbourhood reputation.
-        </p>
-      </header>
+      <PageHeader
+        className="account-banner"
+        eyebrow="Your place in the community"
+        title="Account & Trust Center"
+        description="Make yourself at home. Your profile, privacy and neighbourhood reputation, in one place."
+      />
       <details className="account-privacy">
         <summary className="min-h-11 flex items-center text-sm text-brand cursor-pointer">
           Your information and privacy choices
@@ -81,8 +79,8 @@ export default function SettingsPage() {
       </details>
       <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
         <aside className="account-summary">
-          <Card>
-            <CardContent className="pt-6! space-y-5">
+          <Card className="account-profile-card">
+            <CardContent className="pt-0! space-y-5">
               <div className="flex lg:flex-col items-center gap-4">
                 <Avatar id={user.avatar} name={user.name} size="size-16" />
                 <div className="min-w-0 lg:text-center">

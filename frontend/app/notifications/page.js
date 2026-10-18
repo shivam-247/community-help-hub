@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import EmptyState from "../../components/EmptyState";
+import PageHeader from "../../components/PageHeader";
 import Pagination from "../../components/Pagination";
 import { api } from "../../lib/api";
 import { Button, Card, Badge } from "../../components/ui";
@@ -44,12 +45,23 @@ export default function NotificationsPage() {
   }
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <header className="flex justify-between gap-3 items-center">
-        <h1 className="text-3xl font-semibold">Notifications</h1>
+      <PageHeader
+        eyebrow="From your neighbourhood"
+        title="Notifications"
+        description="New replies, exchange updates and the things you asked to hear about."
+      >
         <Button variant="outline" disabled={loading} onClick={load}>
           Refresh
         </Button>
-      </header>
+      </PageHeader>
+      <Button
+        className="sm:hidden self-start"
+        variant="outline"
+        disabled={loading}
+        onClick={load}
+      >
+        Refresh
+      </Button>
       <ErrorMessage message={error} />
       {error && <Button onClick={load}>Try again</Button>}
       {loading ? (

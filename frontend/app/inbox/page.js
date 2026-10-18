@@ -1,4 +1,5 @@
 "use client";
+import PageHeader from "../../components/PageHeader";
 import { useEffect, useState } from "react";
 import Pagination from "../../components/Pagination";
 import RecoveryPanel from "../../components/RecoveryPanel";
@@ -109,19 +110,14 @@ export default function InboxPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">
-          Communication Center
-        </h1>
-        <p className="text-xs sm:text-sm text-ink-muted mt-1">
-          Review incoming requests for your posts, and keep track of your active
-          offers to help neighbors.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="A hello goes a long way"
+        title="Communication Center"
+        description="Follow your requests, reply to neighbours, and keep each exchange moving."
+      />
 
       {/* Modern Segmented Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b border-line/80 pb-3">
+      <div className="inline-flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface p-1.5">
         <button
           aria-pressed={tab === "incoming"}
           onClick={() => {
@@ -130,7 +126,7 @@ export default function InboxPage() {
           }}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             tab === "incoming"
-              ? "bg-surface-strong text-on-brand shadow-xs"
+              ? "bg-brand-soft text-brand"
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
@@ -145,7 +141,7 @@ export default function InboxPage() {
             {incoming.length}
           </span>
           {pendingIncomingCount > 0 && (
-            <span className="bg-danger text-on-brand text-[10px] font-bold px-1.5 py-0.5 rounded-full ">
+            <span className="bg-danger-soft text-danger text-[10px] font-bold px-1.5 py-0.5 rounded-full ">
               {pendingIncomingCount} new
             </span>
           )}
@@ -159,7 +155,7 @@ export default function InboxPage() {
           }}
           className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
             tab === "sent"
-              ? "bg-surface-strong text-on-brand shadow-xs"
+              ? "bg-brand-soft text-brand"
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
@@ -214,7 +210,7 @@ export default function InboxPage() {
               return (
                 <div
                   key={r.id}
-                  className="bg-surface border border-line/90 rounded-xl p-5 shadow-xs hover:border-line transition-all space-y-3.5"
+                  className="bg-surface border border-line rounded-3xl p-5 shadow-xs hover:border-line transition-all space-y-3.5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -334,7 +330,7 @@ export default function InboxPage() {
           {sent.map((r) => (
             <div
               key={r.id}
-              className="bg-surface border border-line/90 rounded-xl p-5 shadow-xs space-y-3"
+              className="bg-surface border border-line rounded-3xl p-5 shadow-xs space-y-3"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>

@@ -1,6 +1,6 @@
 export function PostCardSkeleton() {
   return (
-    <div className="bg-surface border border-line/80 rounded-xl p-5 shadow-sm space-y-4 animate-shimmer">
+    <div className="bg-surface border border-line/80 rounded-3xl p-5 shadow-sm space-y-4 animate-shimmer">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-24 h-5 bg-surface-muted rounded-full"></div>
@@ -37,7 +37,7 @@ export function PostCardSkeleton() {
 export function PostDetailSkeleton() {
   return (
     <div className="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-shimmer">
-      <div className="lg:col-span-2 bg-surface border border-line/80 rounded-xl p-6 sm:p-8 space-y-5 shadow-sm">
+      <div className="lg:col-span-2 bg-surface border border-line/80 rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="w-28 h-6 bg-surface-muted rounded-full"></div>
           <div className="w-20 h-6 bg-surface-muted rounded-full"></div>
@@ -54,7 +54,7 @@ export function PostDetailSkeleton() {
           <div className="w-28 h-7 bg-surface-muted rounded-lg"></div>
         </div>
       </div>
-      <div className="bg-surface border border-line/80 rounded-xl p-6 space-y-4 shadow-sm h-fit">
+      <div className="bg-surface border border-line/80 rounded-3xl p-6 space-y-4 shadow-sm h-fit">
         <div className="w-28 h-5 bg-surface-muted rounded"></div>
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-surface-muted rounded-full"></div>
@@ -72,7 +72,7 @@ export function PostDetailSkeleton() {
 
 export function InboxItemSkeleton() {
   return (
-    <div className="bg-surface border border-line/80 rounded-xl p-5 shadow-sm space-y-3 animate-shimmer">
+    <div className="bg-surface border border-line/80 rounded-3xl p-5 shadow-sm space-y-3 animate-shimmer">
       <div className="flex items-center justify-between">
         <div className="w-48 h-5 bg-surface-muted rounded-lg"></div>
         <div className="w-16 h-5 bg-surface-muted rounded-full"></div>
@@ -107,4 +107,3 @@ export function MessageSkeleton() {
     </div>
   );
 }
-

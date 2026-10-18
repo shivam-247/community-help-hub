@@ -55,9 +55,9 @@ export default function PricingPage() {
   }
   return (
     <div className="space-y-10">
-      <header className="max-w-2xl mx-auto text-center space-y-4">
+      <header className="max-w-3xl mx-auto text-center space-y-5 py-4">
         <Badge variant="outline">Community help stays free</Badge>
-        <h1 className="text-4xl sm:text-5xl font-semibold">
+        <h1 className="display-title text-4xl sm:text-6xl">
           A plan for your neighbourhood.
         </h1>
         <p className="text-ink-muted leading-relaxed">
@@ -129,12 +129,12 @@ export default function PricingPage() {
               {Object.entries(data.plans).map(([key, plan]) => (
                 <Card
                   key={key}
-                  className={key === "plus" ? "border-brand border-2" : ""}
+                  className={`plan-card ${key === "plus" ? "plan-featured" : ""}`}
                 >
-                  <CardHeader>
-                    <div className="flex justify-between gap-2 items-center">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-wrap justify-between gap-2 items-center">
                       <CardTitle>{plan.name}</CardTitle>
-                      {key === "plus" && <Badge>More posting capacity</Badge>}
+                      {key === "plus" && <Badge>For regular sharers</Badge>}
                     </div>
                     <CardDescription>{descriptions[key]}</CardDescription>
                   </CardHeader>

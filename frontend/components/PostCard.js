@@ -43,7 +43,9 @@ export default function PostCard({ post }) {
     { numeric: "auto" },
   );
   return (
-    <article className="post-card flex flex-col gap-4">
+    <article
+      className={`post-card flex flex-col gap-4 ${{ "Help Requests": "tone-help", "Donations & Giveaways": "tone-give", "Skill Offers": "tone-skill", "Community Alerts": "tone-alert" }[post.category] || "tone-help"}`}
+    >
       <div className="flex items-center gap-3">
         <Avatar id={post.owner_avatar} name={post.owner_name} size="size-10" />
         <div className="min-w-0 flex-1">
@@ -52,14 +54,14 @@ export default function PostCard({ post }) {
             <MapPin aria-hidden="true" className="size-3 shrink-0" />
             <span className="truncate">{post.locality}</span>
           </p>
-          <div className="mt-2">
+          <div className="mt-1.5">
             <BadgeTier tier={post.owner_badge} />
           </div>
         </div>
         <SafetyMenu postId={post.id} ownerId={post.owner_id} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <Badge>
+        <Badge className="category-label">
           <CategoryIcon aria-hidden="true" className="size-3.5" />
           {t(post.category)}
         </Badge>
@@ -90,7 +92,7 @@ export default function PostCard({ post }) {
         <PostImage src={post.image_url} title={post.title} className="h-40" />
       )}
       <div className="flex-1">
-        <h3 className="text-xl sm:text-2xl font-semibold leading-snug">
+        <h3 className="text-xl font-semibold leading-snug">
           <Link className="hover:text-brand" href={`/post/${post.id}`}>
             {post.title}
           </Link>
@@ -113,7 +115,7 @@ export default function PostCard({ post }) {
         </div>
         <Link
           href={`/post/${post.id}`}
-          className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold text-brand px-4 rounded-full bg-surface/70 hover:brightness-95"
+          className="inline-flex min-h-11 shrink-0 items-center gap-2 text-sm font-semibold px-4 rounded-full post-action"
           aria-label={`View ${post.title}`}
         >
           {t("View post")}

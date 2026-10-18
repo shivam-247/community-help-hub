@@ -11,8 +11,8 @@ module.exports = {
           "sans-serif",
         ],
       },
-      borderRadius: { control: "8px", card: "16px" },
-      boxShadow: { quiet: "0 1px 3px #00000008" },
+      borderRadius: { control: "14px", card: "24px" },
+      boxShadow: { quiet: "0 4px 18px hsl(var(--shadow-color) / .05)" },
       keyframes: {
         shimmer: { "0%, 100%": { opacity: "1" }, "50%": { opacity: ".55" } },
       },

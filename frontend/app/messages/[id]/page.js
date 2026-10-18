@@ -169,7 +169,7 @@ export default function MessagesPage({ params }) {
         </button>
       </div>
       {/* Header Bar */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-surface border border-line/90 rounded-xl p-4 shadow-xs">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-surface border border-line rounded-3xl p-4 shadow-xs">
         <div className="flex min-w-0 items-center gap-3">
           <Link
             href="/inbox"
@@ -214,7 +214,7 @@ export default function MessagesPage({ params }) {
         aria-label="Conversation messages"
         aria-live="polite"
         tabIndex={0}
-        className="bg-surface border border-line/90 rounded-xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs"
+        className="chat-thread border border-line rounded-3xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs"
       >
         {loading ? (
           <MessageSkeleton />
@@ -260,7 +260,7 @@ export default function MessagesPage({ params }) {
         <div ref={bottomRef} />
       </div>
 
-      <div className="rounded-lg border border-line bg-surface p-4 space-y-3">
+      <div className="rounded-3xl border border-line bg-surface p-4 space-y-3">
         <p className="text-sm text-ink-muted">
           Finished helping? Both participants must confirm to close the exchange
           and earn 10 credits each.

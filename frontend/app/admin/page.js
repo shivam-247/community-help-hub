@@ -208,11 +208,11 @@ export default function AdminDashboardPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="account-banner flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <h1 className="text-2xl font-bold tracking-tight text-ink">
-              {isSuperAdmin ? "Super Admin Command Center" : "Admin Portal"}
+              {isSuperAdmin ? "Community moderation" : "Moderation dashboard"}
             </h1>
             <span
               className={`text-xs font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
@@ -225,8 +225,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <p className="text-xs sm:text-sm text-ink-muted">
-            Platform governance: manage identity verifications, moderate
-            notices, and assign roles.
+            Review reports, check verifications and keep the noticeboard useful.
           </p>
         </div>
 

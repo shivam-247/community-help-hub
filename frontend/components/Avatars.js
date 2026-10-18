@@ -19,9 +19,10 @@ export default function Avatar({
   const photo =
     typeof id === "string" && /^\/uploads\/u\d+_[a-f0-9]{32}\.png$/.test(id);
   const colors = [
-    "bg-brand-soft text-brand",
-    "bg-success-soft text-success",
-    "bg-surface-muted text-ink-soft",
+    "tone-skill avatar-colour",
+    "tone-give avatar-colour",
+    "tone-help avatar-colour",
+    "tone-alert avatar-colour",
   ];
   const hash = Array.from(name).reduce((a, c) => a + c.codePointAt(0), 0);
   return (

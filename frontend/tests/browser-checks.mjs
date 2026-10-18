@@ -131,7 +131,7 @@ try {
   phase = "signed-out mobile landing";
   await page.setViewportSize({ width: 360, height: 900 });
   await page.goto(base + "/");
-  await page.getByRole("heading", { name: /Find a helping hand/ }).waitFor();
+  await page.getByRole("heading", { name: /A little help/ }).waitFor();
   await page.getByRole("link", { name: "Offer help", exact: true }).waitFor();
   assert.ok(
     await page.evaluate(
@@ -823,11 +823,6 @@ try {
   features.push(
     "five failed-request states keep retry visible without false empty/loading copy",
   );
-  console.log(`FEATURE CHECKS PASSED: ${features.join("; ")}`);
-  writeFileSync(
-    join(temporary, "features.json"),
-    JSON.stringify({ features }, null, 2),
-  );
 
   phase = "password controls";
   await page.goto(base + "/settings?tab=security");
@@ -847,6 +842,120 @@ try {
   assert.equal(
     await page.evaluate(() => localStorage.getItem("chh-theme")),
     "dark",
+  );
+  phase = "final landing and sign-in layout";
+  for (const width of [360, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const route of ["/", "/login"]) {
+      await page.goto(base + route);
+      await page.locator("main h1").waitFor();
+      for (const theme of ["light", "dark"]) {
+        await page
+          .getByRole("button", { name: `Use ${theme} theme`, exact: true })
+          .click();
+        await page.waitForTimeout(250);
+        assert.ok(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth + 1,
+          ),
+          `${route}: ${width}px overflow`,
+        );
+        if (route === "/") {
+          assert.equal(
+            await page.evaluate(() => {
+              const walker = document.createTreeWalker(
+                document.querySelector("main h1"),
+                NodeFilter.SHOW_TEXT,
+              );
+              while (walker.nextNode()) {
+                const node = walker.currentNode;
+                const start = node.textContent.indexOf("neighbourhood");
+                if (start < 0) continue;
+                const range = document.createRange();
+                range.setStart(node, start);
+                range.setEnd(node, start + "neighbourhood".length);
+                return range.getClientRects().length;
+              }
+              return 0;
+            }),
+            1,
+            `Keep the word neighbourhood together at ${width}px`,
+          );
+        }
+        await accessible(`final ${width} ${theme} ${route}`);
+        await page.screenshot({
+          path: join(
+            temporary,
+            `final-${route === "/" ? "home" : "login"}-${width}-${theme}.png`,
+          ),
+          fullPage: false,
+          caret: "initial",
+        });
+      }
+    }
+  }
+  features.push(
+    "16 final landing/sign-in layout and accessibility checks; headline stays readable at every width",
+  );
+
+  phase = "authenticator sign-in";
+  const mfaEmail = `authenticator-${randomBytes(5).toString("hex")}@example.com`;
+  const mfaAccount = await request("/auth/signup", null, "POST", {
+    name: "Authenticator Neighbour",
+    email: mfaEmail,
+    password,
+    locality: "Satellite, Ahmedabad",
+    privacy_consent: true,
+    terms_accepted: true,
+    adult_confirmed: true,
+    policy_version: "2026-10-10",
+  });
+  const enrollment = await request(
+    "/auth/mfa/setup",
+    mfaAccount.access_token,
+    "POST",
+    { password },
+  );
+  const codes = JSON.parse(
+    execFileSync(
+      python,
+      [
+        "-c",
+        "import json,sys,time,pyotp; t=pyotp.TOTP(json.load(sys.stdin)['secret']); n=int(time.time()); print(json.dumps([t.at(n),t.at(n+30)]))",
+      ],
+      {
+        input: JSON.stringify({ secret: enrollment.secret }),
+        encoding: "utf8",
+      },
+    ),
+  );
+  await request("/auth/mfa/confirm", mfaAccount.access_token, "POST", {
+    code: codes[0],
+  });
+  await context.clearCookies();
+  await page.goto(base + "/login?next=%2Fsettings%3Ftab%3Dsecurity");
+  await page.locator("#auth-email").fill(mfaEmail);
+  await page.locator("#auth-password").fill(password);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page
+    .getByRole("alert")
+    .filter({ hasText: "We couldn’t sign you in" })
+    .waitFor();
+  await page.locator(".auth-code-details summary").focus();
+  await page.keyboard.press("Enter");
+  await page.getByLabel("6-digit code", { exact: true }).fill(codes[1]);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.waitForURL("**/settings?tab=security");
+  await page
+    .getByRole("heading", { name: "Account & Trust Center", exact: true })
+    .waitFor();
+  features.push(
+    "real authenticator enrollment and login; missing code is rejected; requested return page preserved",
+  );
+  console.log(`FEATURE CHECKS PASSED: ${features.join("; ")}`);
+  writeFileSync(
+    join(temporary, "features.json"),
+    JSON.stringify({ features }, null, 2),
   );
   assert.equal(errors.length, 0, errors.join("\n"));
   writeFileSync(

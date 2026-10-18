@@ -236,7 +236,7 @@ export default function PostDetailPage({ params }) {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Main Content */}
-        <div className="lg:col-span-2 bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
+        <div className="lg:col-span-2 bg-surface border border-line rounded-3xl p-5 sm:p-8 shadow-xs space-y-6">
           <div className="flex justify-end">
             <SafetyMenu postId={post.id} ownerId={post.owner_id} />
           </div>

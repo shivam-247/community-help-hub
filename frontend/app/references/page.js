@@ -1,3 +1,4 @@
+import PageHeader from "../../components/PageHeader";
 import { references } from "../../lib/references";
 export const metadata = {
   title: "References & Bibliography | Community Help Hub",
@@ -7,15 +8,11 @@ export const metadata = {
 export default function References() {
   return (
     <article className="max-w-3xl mx-auto space-y-7">
-      <header className="space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-semibold">
-          References & bibliography
-        </h1>
-        <p className="text-ink-muted leading-relaxed">
-          Sources for the platform’s implementation, security and accessibility,
-          formatted as numbered references.
-        </p>
-      </header>
+      <PageHeader
+        eyebrow="Behind the project"
+        title="References & bibliography"
+        description="Sources for the platform’s implementation, security and accessibility, formatted as numbered references."
+      />
       <section className="rounded-xl border border-line bg-surface p-5 space-y-3">
         <h2 className="text-lg font-semibold">Research paper references</h2>
         <p className="text-sm text-ink-muted leading-relaxed">
@@ -28,7 +25,7 @@ export default function References() {
         {references.map((r, i) => (
           <li
             key={r.url}
-            className="flex gap-3 text-sm leading-relaxed break-anywhere"
+            className="surface-card p-5 flex gap-4 text-sm leading-7 break-anywhere"
           >
             <span className="text-brand font-semibold shrink-0">[{i + 1}]</span>
             <div>

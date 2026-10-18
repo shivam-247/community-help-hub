@@ -47,9 +47,9 @@ export const Button = forwardRef(function Button(
 ) {
   const Comp = asChild ? Slot : "button";
   const variants = {
-    primary: "bg-brand-solid text-on-brand hover:brightness-110",
+    primary: "bg-brand-solid text-on-brand hover:brightness-95",
     danger: "bg-danger-soft text-danger border border-danger",
-    default: "bg-brand-solid text-on-brand hover:brightness-110",
+    default: "bg-brand-solid text-on-brand hover:brightness-95",
     outline: "border border-line bg-surface hover:bg-surface-muted",
     secondary: "bg-brand-soft text-brand hover:brightness-95",
     ghost: "hover:bg-surface-muted",
@@ -58,9 +58,10 @@ export const Button = forwardRef(function Button(
   return (
     <Comp
       ref={ref}
+      data-variant={variant}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
+        "ui-button inline-flex min-h-11 items-center justify-center gap-2 rounded-[14px] px-4 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:pointer-events-none disabled:opacity-50 active:translate-y-px",
         variants[variant] || variants.default,
         size === "icon" && "w-11 p-2",
         size === "sm" && "px-3 text-xs",
@@ -87,7 +88,7 @@ export const Input = forwardRef(function Input({ className, ...props }, ref) {
     <input
       ref={ref}
       className={cn(
-        "flex h-11 w-full min-w-0 rounded-lg border border-line bg-surface px-3 py-2 text-sm placeholder:text-ink-muted disabled:opacity-50",
+        "ui-input flex h-12 w-full min-w-0 rounded-xl border border-line bg-surface px-3 py-2 text-sm placeholder:text-ink-muted disabled:opacity-50",
         className,
       )}
       {...props}
@@ -103,7 +104,7 @@ export const Label = ({ className, ...props }) => (
 export const Badge = ({ className, variant = "secondary", ...props }) => (
   <span
     className={cn(
-      "inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium",
+      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
       {
         secondary: "border-transparent bg-brand-soft text-brand",
         outline: "border-line text-ink-soft",
@@ -119,13 +120,7 @@ export const Badge = ({ className, variant = "secondary", ...props }) => (
   </span>
 );
 export const Card = ({ className, ...props }) => (
-  <div
-    className={cn(
-      "meadow-glass rounded-2xl border border-line text-ink",
-      className,
-    )}
-    {...props}
-  />
+  <div className={cn("surface-card text-ink", className)} {...props} />
 );
 export const CardHeader = ({ className, ...props }) => (
   <div className={cn("p-5 sm:p-6 space-y-2", className)} {...props} />
@@ -147,17 +142,14 @@ export const CardContent = ({ className, ...props }) => (
 export const Tabs = TabsPrimitive.Root;
 export const TabsList = ({ className, ...props }) => (
   <TabsPrimitive.List
-    className={cn(
-      "inline-flex min-h-11 gap-1 p-1 rounded-lg bg-surface-muted",
-      className,
-    )}
+    className={cn("ui-tabs inline-flex min-h-11 gap-1 p-1", className)}
     {...props}
   />
 );
 export const TabsTrigger = ({ className, ...props }) => (
   <TabsPrimitive.Trigger
     className={cn(
-      "min-h-11 whitespace-nowrap rounded-md px-3 py-2 text-sm text-ink-muted data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-sm",
+      "ui-tab min-h-11 whitespace-nowrap rounded-xl px-3 py-2 text-sm text-ink-muted data-[state=active]:bg-surface data-[state=active]:text-ink data-[state=active]:shadow-sm",
       className,
     )}
     {...props}
@@ -206,7 +198,7 @@ export const SheetContent = ({ children, className, ...props }) => (
     <Dialog.Overlay className="fixed inset-0 z-50 bg-black/45" />
     <Dialog.Content
       className={cn(
-        "fixed z-50 inset-y-0 right-0 w-full max-w-sm overflow-y-auto border-l border-line bg-surface p-6 shadow-xl",
+        "ui-sheet fixed z-50 inset-y-0 right-0 w-full max-w-sm overflow-y-auto border-l border-line bg-surface p-6 shadow-xl",
         className,
       )}
       {...props}

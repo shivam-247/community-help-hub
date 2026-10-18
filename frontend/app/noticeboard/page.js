@@ -17,6 +17,7 @@ import { api } from "../../lib/api";
 import { useSafety } from "../../components/SafetyMenu";
 import Pagination from "../../components/Pagination";
 import PostCard from "../../components/PostCard";
+import PageHeader from "../../components/PageHeader";
 import { PostCardSkeleton } from "../../components/Skeleton";
 const TYPES = [
   "All",
@@ -181,17 +182,12 @@ export default function FeedPage() {
     verified;
   return (
     <div className="compact-feed flex flex-col gap-6 meadow-enter">
-      <section className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl sm:text-4xl italic tracking-tight">
-            Neighbourhood noticeboard
-          </h1>
-          <p className="hidden sm:block text-sm text-ink-muted mt-2">
-            Ask for a hand, or offer one. Find your neighbourhood’s next small
-            kindness.
-          </p>
-        </div>
-        <Button asChild className="hidden sm:inline-flex shrink-0 rounded-full">
+      <PageHeader
+        eyebrow="Around your corner"
+        title="Neighbourhood noticeboard"
+        description="A helping hand, a useful thing, a skill to share. Find your next local connection."
+      >
+        <Button asChild>
           <Link
             href={
               community ? `/create-post?community=${community}` : "/create-post"
@@ -201,7 +197,7 @@ export default function FeedPage() {
             Create a post
           </Link>
         </Button>
-      </section>
+      </PageHeader>
       {community && (
         <p className="text-sm rounded-lg bg-brand-soft text-brand p-4">
           Private society board · visible to members only
@@ -209,7 +205,7 @@ export default function FeedPage() {
       )}
       <div className="feed-layout">
         <aside
-          className="hidden lg:block feed-aside"
+          className="hidden lg:block feed-aside feed-left"
           aria-label="Explore the neighbourhood"
         >
           <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3">
@@ -562,7 +558,7 @@ export default function FeedPage() {
           )}
         </section>
         <aside className="feed-aside space-y-6">
-          <div className="bg-surface border border-line rounded-2xl p-5">
+          <div className="tone-skill rounded-3xl p-5 bg-brand-soft border border-line">
             <Icon name="hand-heart" decorative className="text-brand mb-3" />
             <h2 className="font-semibold text-sm">Make yourself at home</h2>
             <p className="text-sm text-ink-soft leading-relaxed mt-2">

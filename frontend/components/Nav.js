@@ -9,6 +9,7 @@ import BottomNav from "./BottomNav";
 import { LanguageSelect, useLanguage, Text } from "../lib/i18n";
 import ThemeControl from "./ThemeControl";
 import Avatar from "./Avatars";
+import Brand from "./Brand";
 
 export default function Nav() {
   const { t, language } = useLanguage();
@@ -23,6 +24,18 @@ export default function Nav() {
   const mobileTrigger = useRef(null);
   const headerRef = useRef(null);
   const isAdmin = ["admin", "super_admin"].includes(user?.role);
+  useEffect(() => {
+    const header = headerRef.current;
+    const resize = new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        "--app-header-height",
+        `${header.getBoundingClientRect().height}px`,
+      );
+    });
+    resize.observe(header);
+    return () => resize.disconnect();
+  }, []);
+
   useEffect(() => {
     setOpen(false);
     if (accountRef.current) accountRef.current.open = false;
@@ -156,13 +169,13 @@ export default function Nav() {
         ref={headerRef}
         className="app-header sticky top-0 z-40"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 min-h-18 flex items-center justify-between gap-2">
+        <div className="header-inner">
           <Link
             href="/"
             aria-label="Community Help Hub home"
             className="flex items-center gap-2.5 shrink-0"
           >
-            <span className="meadow-wordmark">{t("Help Hub")}</span>
+            <Brand />
           </Link>
           <nav
             aria-label="Main navigation"
@@ -170,7 +183,7 @@ export default function Nav() {
           >
             {navLinks}
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-2">
             <LanguageSelect />
             <ThemeControl />
             {user ? (
@@ -265,7 +278,7 @@ export default function Nav() {
           <nav
             id="mobile-navigation"
             aria-label="Mobile navigation"
-            className="lg:hidden border-t border-line px-4 py-3 grid grid-cols-2 gap-1 bg-surface"
+            className="mobile-navigation nav-panel lg:hidden"
           >
             {navLinks}
             <Link href="/pricing" className="app-link">

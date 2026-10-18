@@ -119,14 +119,14 @@ export default function ProfilePage({ params }) {
       </Link>
 
       {/* Hero Profile Card */}
-      <div className="bg-surface border border-line/90 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
+      <div className="profile-hero bg-surface border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div className="flex items-center gap-4 sm:gap-5">
             <Avatar
               id={profile.avatar || "avatar-1"}
               name={profile.name}
               size="w-20 h-20"
-              className="shadow-lg ring-4 ring-brand shrink-0"
+              className="ring-4 ring-brand-soft shrink-0"
             />
 
             <div>

@@ -159,9 +159,20 @@ export default function CreatePostPage() {
           Back to the board
         </Link>
       </Button>
+      <ol aria-label="Notice publishing steps" className="compose-steps">
+        <li aria-current="step">
+          <span>1</span>Write your notice
+        </li>
+        <li>
+          <span>2</span>Preview
+        </li>
+        <li>
+          <span>3</span>Publish
+        </li>
+      </ol>
       <Card>
         <CardHeader>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-2xl sm:text-3xl font-semibold">
             <Text>Create a neighbourhood notice</Text>
           </h1>
           <CardDescription>
@@ -195,9 +206,7 @@ export default function CreatePostPage() {
             aria-busy={publishing}
             className="space-y-5"
           >
-            <p className="text-sm font-semibold text-brand">
-              1. What are you sharing?
-            </p>
+            <h2 className="compose-section-title">1. What are you sharing?</h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="create-type">I want to</Label>
@@ -273,7 +282,7 @@ export default function CreatePostPage() {
               <FieldError id="error-description" error={errors.description} />
             </div>
             <div className="border-t border-line pt-5 space-y-4">
-              <h2 className="text-base font-semibold">2. Where and when?</h2>
+              <h2 className="compose-section-title">2. Where and when?</h2>
               <Field
                 id="create-landmark"
                 label="Landmark (optional)"
