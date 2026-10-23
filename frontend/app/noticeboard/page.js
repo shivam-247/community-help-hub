@@ -331,7 +331,7 @@ export default function FeedPage() {
                     type="search"
                     value={locality}
                     onChange={(e) => setLocality(e.target.value)}
-                    placeholder="Gota or 382481"
+                    placeholder="Your area or PIN code"
                   />
                 </div>
               </div>
@@ -359,7 +359,7 @@ export default function FeedPage() {
                           type="search"
                           value={locality}
                           onChange={(e) => setLocality(e.target.value)}
-                          placeholder="Gota or 382481"
+                          placeholder="Your area or PIN code"
                         />
                       </div>
                       <div>

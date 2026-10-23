@@ -177,12 +177,12 @@ export default function AuthForm({ signup = false }) {
                 <fieldset disabled={isSubmitting} className="space-y-5 min-w-0">
                   {(signup
                     ? [
-                        ["name", "Display name", "Shivam"],
+                        ["name", "Display name", "Enter your name"],
                         ["email", "Email address", "you@example.com"],
                         [
                           "locality",
                           "Area / society",
-                          "Gota, Ahmedabad · 382481",
+                          "e.g. Alkapuri, Vadodara",
                         ],
                       ]
                     : [["email", "Email address", "you@example.com"]]
@@ -279,10 +279,10 @@ export default function AuthForm({ signup = false }) {
                     </details>
                   )}
                   {signup && (
-                    <fieldset className="auth-consent space-y-3">
-                      <legend className="font-semibold text-sm">
+                    <fieldset className="auth-consent space-y-3" aria-labelledby="signup-consent-heading">
+                      <p id="signup-consent-heading" className="font-semibold text-sm">
                         Before creating your account
-                      </legend>
+                      </p>
                       <p className="text-sm text-ink-muted">
                         We use your display name, email, password and area to
                         run your account and nearby exchanges. Name and area

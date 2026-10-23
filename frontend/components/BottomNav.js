@@ -20,7 +20,10 @@ export default function BottomNav({ user, path, pendingCount = 0 }) {
         <Link
           key={href}
           href={href}
-          aria-current={path.startsWith(href) ? "page" : undefined}
+          aria-current={
+            (path === href || path.startsWith(`${href}/`) ||
+              (href === "/login" && path === "/signup")) ? "page" : undefined
+          }
           className={`dock-link ${href === "/create-post" ? "dock-compose" : ""}`}
         >
           <span className="relative">

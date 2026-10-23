@@ -249,7 +249,7 @@ export default function CreatePostPage() {
             </div>
             {[
               ["title", "Title", "Can someone lend a folding ladder?"],
-              ["locality", "Area / society", "Gota, Ahmedabad · 382481"],
+              ["locality", "Area / society", "e.g. Satellite, Ahmedabad"],
             ].map(([key, label, placeholder]) => (
               <div key={key}>
                 <Label htmlFor={`create-${key}`}>{label}</Label>

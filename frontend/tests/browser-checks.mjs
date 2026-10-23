@@ -117,6 +117,7 @@ try {
   });
   const context = await browser.newContext({
       viewport: { width: 1024, height: 900 },
+      hasTouch: true,
     }),
     page = await context.newPage();
   page.on("pageerror", (e) => errors.push(`${phase}: ${e.message}`));

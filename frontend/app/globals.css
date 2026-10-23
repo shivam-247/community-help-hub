@@ -60,7 +60,7 @@ html[data-theme="light"] {
   --shadow-color: 255 24% 26%;
   --ui-radius: 0.875rem;
   --ui-radius-lg: 1.5rem;
-  --toast-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  --toast-bottom: 1.25rem;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -381,11 +381,11 @@ main a[href^="/profile/"] {
   gap: 4px;
 }
 .mobile-dock {
+  display: none;
   position: fixed;
   z-index: 35;
   inset-inline: 12px;
   bottom: calc(10px + env(safe-area-inset-bottom));
-  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid hsl(var(--glass-line));
   border-radius: 22px;
@@ -410,7 +410,7 @@ main a[href^="/profile/"] {
   color: hsl(var(--brand));
   background: hsl(var(--brand-soft));
 }
-.dock-link.dock-compose {
+.dock-link.dock-compose[aria-current="page"] {
   background: hsl(var(--brand-solid));
   color: hsl(var(--on-brand));
   margin-inline: 5px;
@@ -980,6 +980,7 @@ main a[href^="/profile/"] {
   font-weight: 600;
 }
 .auth-consent {
+  min-width: 0;
   background: hsl(var(--surface-muted) / 0.5);
   border: 1px solid hsl(var(--line));
   border-radius: 16px;
@@ -1191,9 +1192,6 @@ label[for="profile-photo"]:has(+ input:focus-visible) {
   .theme-switch button {
     width: 44px;
   }
-  .theme-switch button:nth-child(2) {
-    display: none;
-  }
   .language-select {
     width: 51px;
   }
@@ -1252,7 +1250,14 @@ label[for="profile-photo"]:has(+ input:focus-visible) {
     border-radius: 24px 0 0 24px;
   }
 }
-@media (max-width: 1023px) {
+/* A narrow desktop window keeps header navigation; the dock is for touch layouts. */
+@media (max-width: 1023px) and (hover: none) and (pointer: coarse) {
+  :root {
+    --toast-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  }
+  .mobile-dock {
+    display: grid;
+  }
   .app-body {
     padding-bottom: calc(96px + env(safe-area-inset-bottom));
   }

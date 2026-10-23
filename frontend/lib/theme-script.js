@@ -1,1 +1,2 @@
-export const themeScript = `(function(){try{var p=localStorage.getItem('chh-theme')||'system';if(!['light','dark','system'].includes(p))p='system';document.documentElement.dataset.theme=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p;}catch(e){document.documentElement.dataset.theme='light';}})();`;
+// Resolve an old system preference once, then keep an explicit light/dark choice.
+export const themeScript = `(function(){var p='light';try{p=localStorage.getItem('chh-theme')||'light';if(p==='system')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';if(p!=='dark'&&p!=='light')p='light';localStorage.setItem('chh-theme',p);}catch(e){}document.documentElement.dataset.theme=p==='dark'?'dark':'light';})();`;

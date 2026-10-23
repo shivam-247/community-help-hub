@@ -97,7 +97,7 @@ export const policies = {
       ],
       [
         "Theme preference",
-        "chh-theme in your browser's local storage remembers light, dark or system theme on this device. It persists until changed or cleared in your browser. It contains no authentication token and is not sent to an analytics service.",
+        "chh-theme in your browser's local storage remembers your light or dark theme on this device. It persists until changed or cleared in your browser. It contains no authentication token and is not sent to an analytics service.",
       ],
       [
         "Optional tracking and consent",

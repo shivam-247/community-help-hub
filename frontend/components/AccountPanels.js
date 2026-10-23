@@ -165,8 +165,8 @@ export function ProfilePanel() {
             className="min-w-0 space-y-5"
           >
             {[
-              ["name", "Full name", "Shivam Parmar"],
-              ["locality", "Area / society", "Gota, Ahmedabad · 382481"],
+              ["name", "Full name", "Enter your name"],
+              ["locality", "Area / society", "e.g. Satellite, Ahmedabad"],
               ["contact_phone", "Mobile number (optional)", "+91 9876543210"],
             ].map(([key, label, placeholder]) => (
               <div key={key}>
