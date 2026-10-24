@@ -30,6 +30,8 @@ try{
   serve(process.execPath,["node_modules/next/dist/bin/next","dev","--webpack","--hostname","127.0.0.1","--port","3110"],join(root,"frontend"));await ready(base);
   const moderator=(await request("/auth/login",null,"POST",{email,password})).access_token;
   const asha=await account("Asha"),ravi=await account("Ravi");
+  const verification=await request("/verification/submit",asha.token,"POST",{proof_type:"Reference",proof_value:"The society secretary agreed to confirm my residency at reception."});
+  await request(`/admin/verifications/${verification.id}`,moderator,"PATCH",{approve:true,reviewer_comment:"Residency independently checked with the society secretary."});
   const post=await request("/posts",asha.token,"POST",{type:"Offer help",title:"Books for our neighbours this weekend",description:"School books are available to collect at our society reception this weekend.",locality:"Satellite, Ahmedabad",category:"Donations & Giveaways"});
   const response=await request(`/posts/${post.id}/respond`,ravi.token,"POST",{message:"I can collect these books on Sunday."});await request(`/requests/${response.id}`,asha.token,"PATCH",{action:"accept"});
   browser=await chromium.launch({headless:true,args:["--no-sandbox","--disable-dev-shm-usage"]});
@@ -46,8 +48,6 @@ try{
   for(const page of [a,b]){await page.getByRole("heading",{name:"Conversation closed",exact:true}).waitFor();assert.equal(await page.getByRole("log").count(),0);assert.equal(await page.getByLabel("Message to your neighbour",{exact:true}).count(),0);await page.reload();await page.getByRole("heading",{name:"Conversation closed",exact:true}).waitFor();}
   phase="verification progress";
   await request("/account/profile",asha.token,"PATCH",{name:"Asha",locality:"Satellite, Ahmedabad",contact_phone:"9876543210"});
-  const verification=await request("/verification/submit",asha.token,"POST",{proof_type:"Reference",proof_value:"The society secretary agreed to confirm my residency at reception."});
-  await request(`/admin/verifications/${verification.id}`,moderator,"PATCH",{approve:true,reviewer_comment:"Residency independently checked with the society secretary."});
   await request(`/admin/users/${asha.user.id}/trust`,moderator,"PATCH",{phone_verified:true,address_verified:true,note:"Called the saved phone and independently checked the society reference."});
   await a.goto(base+"/settings?tab=trust");await a.getByText("2 of 3 checks complete",{exact:true}).waitFor();
   phase="moderator case and plan tools";

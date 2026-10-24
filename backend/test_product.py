@@ -2,7 +2,7 @@ import secrets
 from unittest.mock import patch
 import pytest
 from sqlmodel import Session, select
-from test_security import setup, auth
+from test_security import setup, auth, verify_publisher
 from app.models import User, Post, PostStatus
 from app.product_models import PostUsage, CreditEvent, Invoice, TrustRecord, CommunityPost
 from app.product import period, PLANS, drain_outbox
@@ -14,6 +14,7 @@ def valid_post():
 
 def test_free_quota_and_deleted_posts_do_not_refund(setup):
     client, engine, ids, post_id, _ = setup
+    verify_publisher(client, ids, ids[0])
     # Existing post this month is included before the first quota reservation.
     for _ in range(4):
         assert client.post('/posts', headers=auth(ids[0]), json=valid_post()).status_code == 200
@@ -61,6 +62,8 @@ def test_notifications_are_private(setup):
 
 def test_society_scope_and_analytics(setup):
     client,engine,ids,*_=setup
+    verify_publisher(client, ids, ids[0])
+    verify_publisher(client, ids, ids[1])
     with patch.dict('os.environ',{'MOCK_CHECKOUT_ENABLED':'true'}):
         assert client.post('/communities',headers=auth(ids[0]),json={'name':'Gota residents','pin_code':'382481'}).status_code==403
         client.post('/billing/checkout',headers=auth(ids[0]),json={'plan':'society','checkout_key':secrets.token_hex(16)})

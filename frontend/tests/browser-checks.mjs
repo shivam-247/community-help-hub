@@ -97,6 +97,7 @@ try {
     join(root, "backend"),
   );
   await ready(backend + "/health");
+  execFileSync(python, ["-c", "from sqlmodel import Session,select;from app.database import engine;from app.models import User;from app.product_models import TrustRecord;import os;\nwith Session(engine) as s:\n u=s.exec(select(User).where(User.email==os.environ['ADMIN_BOOTSTRAP_EMAIL'])).one();u.verification_status='verified';s.add(u);s.add(TrustRecord(user_id=u.id,address_verified=True));s.commit()"], { cwd: join(root, "backend"), env });
   serve(
     process.execPath,
     [
@@ -181,7 +182,10 @@ try {
   await page
     .getByRole("button", { name: "Create account", exact: true })
     .click();
-  await page.waitForURL("**/noticeboard");
+  await page.getByRole("heading", { name: "Verify your email", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Continue to community verification", exact: true }).click();
+  await page.waitForURL("**/settings?tab=trust");
+  await page.goto(base + "/noticeboard");
   const neighbour = (await context.cookies()).find(
     (c) => c.name === "chh_session",
   ).value;

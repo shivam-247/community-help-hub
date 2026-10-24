@@ -746,5 +746,21 @@
   "Privacy policy": "गोपनीयता नीति",
   "Cookie policy": "कुकी नीति",
   "Connecting": "जुड़ रहे हैं",
-  "You": "आप"
+  "You": "आप",
+  "Checking publishing permission…": "पोस्ट करने की अनुमति जाँची जा रही है…",
+  "Verify your community before posting": "पोस्ट करने से पहले समुदाय का सत्यापन कराएँ",
+  "Submit a society reference and wait for administrator approval. Email OTP confirms your email only. Every plan requires community approval before publishing.": "सोसायटी का संदर्भ भेजें और व्यवस्थापक की स्वीकृति की प्रतीक्षा करें। ईमेल OTP केवल ईमेल की पुष्टि करता है। हर प्लान में पोस्ट करने के लिए समुदाय की स्वीकृति आवश्यक है।",
+  "Check approval again": "स्वीकृति फिर जाँचें",
+  "Account created": "खाता बन गया",
+  "Verify your email": "अपना ईमेल सत्यापित करें",
+  "Email OTP confirms your inbox. Community approval is still required before you can publish a notice.": "ईमेल OTP आपके इनबॉक्स की पुष्टि करता है। सूचना प्रकाशित करने से पहले समुदाय की स्वीकृति भी आवश्यक है।",
+  "Checking email delivery…": "ईमेल भेजने की सुविधा जाँची जा रही है…",
+  "A six-digit code is queued for your email. Check your inbox and spam folder. It expires in 10 minutes.": "आपके ईमेल पर छह अंकों का कोड भेजने के लिए कतार में है। इनबॉक्स और स्पैम फ़ोल्डर देखें। यह 10 मिनट में समाप्त हो जाता है।",
+  "Never share this code with anyone.": "यह कोड किसी के साथ साझा न करें।",
+  "Verify email code": "ईमेल कोड सत्यापित करें",
+  "Resend in {count}s": "{count} सेकंड में फिर भेजें",
+  "Send another code": "दूसरा कोड भेजें",
+  "Email delivery is not configured yet. You can request community review now; publishing stays locked until approval.": "ईमेल भेजने की सुविधा अभी कॉन्फ़िगर नहीं है। आप अभी समुदाय की समीक्षा का अनुरोध कर सकते हैं; स्वीकृति मिलने तक पोस्ट नहीं कर सकेंगे।",
+  "Continue to community verification": "समुदाय के सत्यापन के लिए आगे बढ़ें",
+  "Community verification is required before publishing. Submit a society reference in Settings → Trust & Verification and wait for administrator approval.": "पोस्ट करने से पहले समुदाय का सत्यापन आवश्यक है। सेटिंग्स → विश्वास और सत्यापन में सोसायटी का संदर्भ भेजें और व्यवस्थापक की स्वीकृति की प्रतीक्षा करें।"
 }

@@ -327,7 +327,7 @@ export function TrustPanel() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-between text-sm">
-            <span>{t(staff ? "{count} of 3 optional identity checks complete" : "{count} of 3 checks complete", { count: completed })}</span>
+            <span>{t("{count} of 3 checks complete", { count: completed })}</span>
             <Badge variant="outline">{data?.status || "Loading"}</Badge>
           </div>
           <Progress
@@ -437,7 +437,7 @@ export function TrustPanel() {
           )}
         </CardContent>
       </Card>
-      {!staff && <Card>
+      <Card>
         <CardHeader>
           <CardTitle><UIMessage>Request community review</UIMessage></CardTitle>
           <CardDescription><UIMessage>
@@ -523,7 +523,7 @@ export function TrustPanel() {
             </div>
           )}
         </CardContent>
-      </Card>}
+      </Card>
     </>
   );
 }

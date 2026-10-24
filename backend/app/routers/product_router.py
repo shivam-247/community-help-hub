@@ -194,10 +194,11 @@ def profile(data: ProfileIn, user: User = Depends(get_current_user), session: Se
 
 @router.get("/account/trust")
 def trust_status(user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from ..verification import can_publish
     trust = session.get(TrustRecord, user.id)
     return {"email": bool(trust and trust.email_verified), "phone": bool(trust and trust.phone_verified),
             "community": bool(trust and trust.address_verified), "status": user.verification_status,
-            "email_delivery_available": smtp_available(),
+            "email_delivery_available": smtp_available(), "can_post": can_publish(session, user),
             "email_saved": user.email, "phone_saved": bool(user.contact_phone),
             "community_saved": bool(user.locality_id), "staff_access": is_admin_or_super(user),
             "phone_method": "Administrator review of your society reference; no SMS service is configured."}
@@ -421,9 +422,11 @@ def review_trust(user_id: int, data: TrustReviewIn, user: User = Depends(get_cur
     trust = session.get(TrustRecord, user_id) or TrustRecord(user_id=user_id)
     trust.phone_verified = data.phone_verified
     trust.address_verified = data.address_verified
+    target.verification_status = VerificationStatus.verified if data.address_verified else VerificationStatus.unverified
+    session.add(target)
     audit(session, user, user_id, "trust_review", data.note)
     session.add(trust)
-    session.add(Verification(user_id=user_id, proof_type="Trust review", proof_value=data.note, status=VerificationStatus.verified, reviewer_id=user.id, reviewed_at=datetime.now(timezone.utc)))
+    session.add(Verification(user_id=user_id, proof_type="Trust review", proof_value=data.note, status=VerificationStatus.verified if data.address_verified else VerificationStatus.rejected, reviewer_id=user.id, reviewed_at=datetime.now(timezone.utc)))
     notify(session, user_id, "Trust steps updated", "A community administrator has reviewed your society reference.", "/settings?tab=trust")
     session.commit()
     return {"ok": True}

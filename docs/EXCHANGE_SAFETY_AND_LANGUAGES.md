@@ -14,11 +14,13 @@ Existing mutually confirmed exchanges are backfilled at startup. That cleanup do
 ## Trust checks
 
 - Saving a name, email, phone or area does not independently verify it.
+- Publishing now requires approved community status AND a completed community/address check. This applies to all plans and staff accounts, with no role or paid-plan bypass. Unverified, pending, rejected or revoked checks return HTTP 403 before reserving posting quota. Existing notices are retained.
+- Signup opens an email-code step with resend timing, accessible code entry and incorrect-code feedback. If SMTP is unavailable, onboarding explicitly says so and continues to community review without marking email verified. Email OTP alone never grants community approval or publishing permission.
 - Email: request and confirm a six-digit code. Delivery needs a configured SMTP provider; the UI states when setup is unavailable. Codes expire and are single-use.
 - Community: submit a society reference with that person's permission. An independent moderator reviews it; approval updates both member status and the community progress check.
 - Phone: save it in Profile; after approving the reference, the moderator independently confirms it under Users → Review phone & address. No SMS verification is claimed.
 - Changing a phone resets its check. Changing area resets community status and invalidates old pending/approved references.
-- Staff permission is separate from identity verification. Moderators do not need to request community review to use their dashboard, and cannot approve their own evidence.
+- Staff permission is separate from identity verification. Moderators do not need community approval to use their dashboard; publishing their own notices requires independent community approval. Staff can submit a reference and cannot approve their own evidence.
 - Government-ID documents, Aadhaar numbers and banking details are not requested. Reports refer to internal member and case IDs.
 
 ## Moderator and Super Admin
@@ -47,7 +49,10 @@ Checkout remains an explicitly labelled simulation. Real Razorpay/Stripe chargin
 From backend: `.venv/bin/python -m pytest -q`.
 From frontend: `npm test`, `npm run build`, then `PYTHON_BIN=../backend/.venv/bin/python npm run test:browser` (use an absolute Python path if needed).
 The focused real-browser/API flow is `PYTHON_BIN=<absolute-python-path> node tests/exchange-browser.mjs`.
+Signup and publishing authorization checks: `PYTHON_BIN=<absolute-python-path> node tests/verification-browser.mjs`. Its mail capture replaces SMTP only inside the isolated test server; it does not establish delivery to real inboxes.
 
 Tests use isolated SQLite databases and fictional members. No production member is suspended, deleted, charged or given a plan during testing.
 
 Release verification on 24 October 2026: 80 backend tests and 11 subtests; 24 frontend unit tests; 104 browser page/viewport checks at 360, 390, 768 and 1280 pixels; 13 additional dark-theme accessibility scans and keyboard/error-recovery flows. A separate two-member browser flow verifies mutual completion clearing both chat windows, trust approvals, safety reports, staff plan grants and Gujarati/Hindi forms without translating member-written posts.
+
+Publishing-verification follow-up: 84 backend tests plus 11 subtests, 24 frontend unit tests and the production build. The signup browser test covers a captured test-mail OTP, wrong-code rejection, four responsive/accessibility widths, pending/unverified/staff publishing denial, approved publishing, area-change revocation and the unconfigured-mail fallback. No real inbox delivery is claimed by that test.

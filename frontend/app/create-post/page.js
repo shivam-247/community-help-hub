@@ -68,7 +68,14 @@ export default function CreatePostPage() {
   const [error, setError] = useState(""),
     [file, setFile] = useState(null),
     [community, setCommunity] = useState(null),
-    [billing, setBilling] = useState(null);
+    [billing, setBilling] = useState(null),
+    [trust, setTrust] = useState(null),
+    [trustError, setTrustError] = useState("");
+  async function loadTrust() {
+    setTrustError("");
+    try { setTrust(await api("/account/trust", { auth: true })); }
+    catch (e) { setTrustError(e.message); }
+  }
   const {
     register,
     watch,
@@ -89,6 +96,7 @@ export default function CreatePostPage() {
     },
   });
   useEffect(() => {
+    loadTrust();
     const params = new URLSearchParams(window.location.search);
     setCommunity(params.get("community"));
     const presetType = params.get("type");
@@ -106,6 +114,7 @@ export default function CreatePostPage() {
       .catch((e) => setError(e.message));
   }, []);
   async function submit(values) {
+    if (!trust?.can_post) return;
     setError("");
     setPublishing(true);
     try {
@@ -200,6 +209,14 @@ export default function CreatePostPage() {
           )}
         </CardHeader>
         <CardContent>
+          {!trust ? <div className="space-y-4" role="status">
+            {trustError ? <><ErrorMessage message={trustError} /><Button onClick={loadTrust}><UIMessage>Retry verification status</UIMessage></Button></> : <UIMessage>Checking publishing permission…</UIMessage>}
+          </div> : !trust.can_post ? <div className="space-y-4">
+            <h2 className="text-xl font-semibold"><UIMessage>Verify your community before posting</UIMessage></h2>
+            <p className="text-sm leading-7 text-ink-muted"><UIMessage>Submit a society reference and wait for administrator approval. Email OTP confirms your email only. Every plan requires community approval before publishing.</UIMessage></p>
+            <Button asChild><Link href="/settings?tab=trust"><UIMessage>Open Trust & Verification</UIMessage></Link></Button>
+            <Button variant="outline" onClick={loadTrust}><UIMessage>Check approval again</UIMessage></Button>
+          </div> : <>
           <form
             onSubmit={handleSubmit((values) => {
               setError("");
@@ -395,6 +412,7 @@ export default function CreatePostPage() {
                 </UIMessage></p>
               )}
           </form>
+          </>}
           <Sheet
             open={!!preview}
             onOpenChange={(open) => {

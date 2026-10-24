@@ -111,6 +111,8 @@ def create_post(
     user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
+    from ..verification import require_publishing_verification
+    require_publishing_verification(session, user)
     if data.image_url and (not data.image_url.startswith(f"/uploads/u{user.id}_") or not os.path.isfile(os.path.join(UPLOAD_DIR, os.path.basename(data.image_url)))):
         raise HTTPException(status_code=403, detail="Use an image uploaded by your own account.")
     # Quality & Anti-Gibberish validation for new posts

@@ -746,5 +746,21 @@
   "Privacy policy": "Privacy policy",
   "Cookie policy": "Cookie policy",
   "Connecting": "Connecting",
-  "You": "You"
+  "You": "You",
+  "Checking publishing permission…": "Checking publishing permission…",
+  "Verify your community before posting": "Verify your community before posting",
+  "Submit a society reference and wait for administrator approval. Email OTP confirms your email only. Every plan requires community approval before publishing.": "Submit a society reference and wait for administrator approval. Email OTP confirms your email only. Every plan requires community approval before publishing.",
+  "Check approval again": "Check approval again",
+  "Account created": "Account created",
+  "Verify your email": "Verify your email",
+  "Email OTP confirms your inbox. Community approval is still required before you can publish a notice.": "Email OTP confirms your inbox. Community approval is still required before you can publish a notice.",
+  "Checking email delivery…": "Checking email delivery…",
+  "A six-digit code is queued for your email. Check your inbox and spam folder. It expires in 10 minutes.": "A six-digit code is queued for your email. Check your inbox and spam folder. It expires in 10 minutes.",
+  "Never share this code with anyone.": "Never share this code with anyone.",
+  "Verify email code": "Verify email code",
+  "Resend in {count}s": "Resend in {count}s",
+  "Send another code": "Send another code",
+  "Email delivery is not configured yet. You can request community review now; publishing stays locked until approval.": "Email delivery is not configured yet. You can request community review now; publishing stays locked until approval.",
+  "Continue to community verification": "Continue to community verification",
+  "Community verification is required before publishing. Submit a society reference in Settings → Trust & Verification and wait for administrator approval.": "Community verification is required before publishing. Submit a society reference in Settings → Trust & Verification and wait for administrator approval."
 }

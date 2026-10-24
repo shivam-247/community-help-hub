@@ -20,6 +20,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import NeighbourhoodScene from "./NeighbourhoodScene";
+import SignupVerification from "./SignupVerification";
 import { useAuth } from "../lib/auth-context";
 import { POLICY_VERSION } from "../lib/legal";
 import {
@@ -56,7 +57,8 @@ export default function AuthForm({ signup = false }) {
   const [error, setError] = useState(""),
     [show, setShow] = useState(false),
     [returnQuery, setReturnQuery] = useState(""),
-    [complete, setComplete] = useState(false);
+    [complete, setComplete] = useState(false),
+    [signupCreated, setSignupCreated] = useState(false);
   useEffect(() => {
     const next = new URLSearchParams(window.location.search).get("next");
     setReturnQuery(next ? `?${new URLSearchParams({ next })}` : "");
@@ -91,6 +93,10 @@ export default function AuthForm({ signup = false }) {
           policy_version: POLICY_VERSION,
         });
       else await auth.login(v.email, v.password, v.totp_code);
+      if (signup) {
+        setSignupCreated(true);
+        return;
+      }
       const next = new URLSearchParams(window.location.search).get("next");
       setComplete(true);
       router.replace(
@@ -111,6 +117,7 @@ export default function AuthForm({ signup = false }) {
       );
     }
   }
+  if (signupCreated) return <SignupVerification />;
   return (
     <div className="auth-layout meadow-enter">
       <UIElement as="aside" className="auth-story" aria-label="Your neighbourhood starts here">

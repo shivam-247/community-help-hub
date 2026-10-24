@@ -57,6 +57,17 @@ def auth(user_id):
     return {"Authorization": "Bearer " + create_access_token({"sub": str(user_id)})}
 
 
+def verify_publisher(client, ids, user_id):
+    evidence = client.post("/verification/submit", headers=auth(user_id), json={
+        "proof_type": "Reference", "proof_value": "Society secretary agreed to independently confirm residency."
+    })
+    assert evidence.status_code == 200, evidence.text
+    reviewer = ids[2] if user_id != ids[2] else ids[1]
+    reviewed = client.patch(f"/admin/verifications/{evidence.json()['id']}", headers=auth(reviewer),
+                            json={"approve": True, "reviewer_comment": "Independently confirmed the society reference."})
+    assert reviewed.status_code == 200, reviewed.text
+
+
 def test_argon2_preserves_long_passwords():
     password = "a" * 80 + "b"
     hashed = hash_password(password)
@@ -166,6 +177,8 @@ def test_fake_images_rejected(setup, content, tmp_path):
 
 def test_image_reencoding_size_and_ownership(setup, tmp_path):
     client, _, ids, *_ = setup
+    verify_publisher(client, ids, ids[0])
+    verify_publisher(client, ids, ids[1])
     from app.routers import posts_router
     assert client.post("/posts/upload-image", files={"file": ("image.png", png())}).status_code == 401
     with patch.object(posts_router, "UPLOAD_DIR", str(tmp_path)):

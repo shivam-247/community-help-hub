@@ -746,5 +746,21 @@
   "Privacy policy": "ગોપનીયતા નીતિ",
   "Cookie policy": "કૂકી નીતિ",
   "Connecting": "જોડાઈ રહ્યા છીએ",
-  "You": "તમે"
+  "You": "તમે",
+  "Checking publishing permission…": "પોસ્ટ કરવાની પરવાનગી તપાસી રહ્યા છીએ…",
+  "Verify your community before posting": "પોસ્ટ કરતાં પહેલાં સમુદાયની ચકાસણી કરાવો",
+  "Submit a society reference and wait for administrator approval. Email OTP confirms your email only. Every plan requires community approval before publishing.": "સોસાયટીનો સંદર્ભ મોકલો અને સંચાલકની મંજૂરીની રાહ જુઓ. ઇમેઇલ OTP ફક્ત ઇમેઇલ ચકાસે છે. દરેક પ્લાનમાં પોસ્ટ કરવા માટે સમુદાયની મંજૂરી જરૂરી છે.",
+  "Check approval again": "મંજૂરી ફરી તપાસો",
+  "Account created": "ખાતું બનાવાયું",
+  "Verify your email": "તમારું ઇમેઇલ ચકાસો",
+  "Email OTP confirms your inbox. Community approval is still required before you can publish a notice.": "ઇમેઇલ OTP તમારું ઇનબોક્સ ચકાસે છે. સૂચના પ્રકાશિત કરવા માટે સમુદાયની મંજૂરી પણ જરૂરી છે.",
+  "Checking email delivery…": "ઇમેઇલ મોકલવાની સુવિધા તપાસી રહ્યા છીએ…",
+  "A six-digit code is queued for your email. Check your inbox and spam folder. It expires in 10 minutes.": "તમારા ઇમેઇલ માટે છ અંકનો કોડ મોકલવાની કતારમાં છે. ઇનબોક્સ અને સ્પામ ફોલ્ડર તપાસો. તે 10 મિનિટમાં સમાપ્ત થાય છે.",
+  "Never share this code with anyone.": "આ કોડ કોઈની સાથે શેર કરશો નહીં.",
+  "Verify email code": "ઇમેઇલ કોડ ચકાસો",
+  "Resend in {count}s": "{count} સેકન્ડમાં ફરી મોકલો",
+  "Send another code": "બીજો કોડ મોકલો",
+  "Email delivery is not configured yet. You can request community review now; publishing stays locked until approval.": "ઇમેઇલ મોકલવાની સુવિધા હજી ગોઠવાઈ નથી. તમે હવે સમુદાયની સમીક્ષા માટે વિનંતી કરી શકો છો; મંજૂરી સુધી પોસ્ટ કરી શકશો નહીં.",
+  "Continue to community verification": "સમુદાયની ચકાસણી માટે આગળ વધો",
+  "Community verification is required before publishing. Submit a society reference in Settings → Trust & Verification and wait for administrator approval.": "પોસ્ટ કરતાં પહેલાં સમુદાયની ચકાસણી જરૂરી છે. સેટિંગ્સ → વિશ્વાસ અને ચકાસણીમાં સોસાયટીનો સંદર્ભ મોકલો અને સંચાલકની મંજૂરીની રાહ જુઓ."
 }

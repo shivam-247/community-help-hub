@@ -4,7 +4,7 @@ import secrets
 import pytest
 from sqlmodel import Session, select
 from sqlalchemy.exc import OperationalError
-from test_security import setup, auth
+from test_security import setup, auth, verify_publisher
 from test_product import valid_post
 from app.models import Post, User, Message
 from app.product_models import Subscription, PostUsage, PaymentReference
@@ -41,9 +41,11 @@ def test_paid_unlimited_expiry_quota_and_no_purchase_verification(setup):
         row=s.exec(select(PaymentReference)).one()
         assert row.provider=='mock' and row.state=='simulated'
         s.add(PostUsage(user_id=ids[0],period=period(),count=500));s.commit()
+    assert client.post('/posts',headers=auth(ids[0]),json=valid_post()).status_code==403
+    assert client.get('/auth/me',headers=auth(ids[0])).json()['verification_status']!='verified'
+    verify_publisher(client, ids, ids[0])
     assert client.post('/posts',headers=auth(ids[0]),json=valid_post()).status_code==200
     assert client.get('/billing',headers=auth(ids[0])).json()['limit'] is None
-    assert client.get('/auth/me',headers=auth(ids[0])).json()['verification_status']!='verified'
     with Session(engine) as s:
         sub=s.get(Subscription,ids[0]);sub.expires_at=datetime.now(timezone.utc)-timedelta(days=1);s.add(sub);s.commit()
     assert client.get('/billing',headers=auth(ids[0])).json()['plan']=='free'
@@ -72,6 +74,7 @@ def test_plain_text_normalisation_preserves_passwords_and_indian_text():
 
 def test_global_error_handler_masks_errors_and_database_failures(setup):
     client,_,ids,*_=setup
+    verify_publisher(client, ids, ids[0])
     with patch('app.routers.posts_router.ml_engine.validate_post_quality',side_effect=RuntimeError('private-password-and-stack-secret')):
         error=client.post('/posts',headers=auth(ids[0]),json=valid_post())
     assert error.status_code==500 and 'private-password' not in error.text
