@@ -45,6 +45,7 @@ export const Button = forwardRef(function Button(
   },
   ref,
 ) {
+  const { t } = useLanguage();
   const Comp = asChild ? Slot : "button";
   const variants = {
     primary: "bg-brand-solid text-on-brand hover:brightness-95",
@@ -68,6 +69,8 @@ export const Button = forwardRef(function Button(
         className,
       )}
       {...props}
+      aria-label={props["aria-label"] ? t(props["aria-label"]) : undefined}
+      title={props.title ? t(props.title) : undefined}
     >
       {asChild ? (
         children

@@ -1,6 +1,8 @@
 "use client";
 import {
   Children,
+  createElement,
+  forwardRef,
   createContext,
   useContext,
   useEffect,
@@ -32,10 +34,13 @@ export function LanguageProvider({ children }) {
     setLanguage(value);
     document.cookie = `chh-language=${value}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
   }
-  const t = (value) =>
-    typeof value === "string"
-      ? catalogues[language][value.trim().replace(/\s+/g, " ")] || value
-      : value;
+  const t = (value, parameters = {}) => {
+    if (typeof value !== "string") return value;
+    const translated = catalogues[language][value.trim().replace(/\s+/g, " ")];
+    if (translated === undefined) return value;
+    const message = translated.replace(/\{(\w+)\}/g, (match, key) => String(parameters[key] ?? match));
+    return `${/^\s/.test(value) ? " " : ""}${message}${/\s$/.test(value) ? " " : ""}`;
+  };
   return (
     <LanguageContext.Provider value={{ language, setLanguage: choose, t }}>
       {children}
@@ -44,22 +49,18 @@ export function LanguageProvider({ children }) {
 }
 export const useLanguage = () => useContext(LanguageContext);
 export function Text({ children }) {
-  const { t, language } = useLanguage();
-  return Children.map(children, (child) => {
-    if (typeof child !== "string") return child;
-    const translated = t(child);
-    const translatedLanguage = /[\u0a80-\u0aff]/.test(translated)
-      ? "gu"
-      : /[\u0900-\u097f]/.test(translated)
-        ? "hi"
-        : "en";
-    return language === "en" ? (
-      translated
-    ) : (
-      <span lang={translatedLanguage}>{translated}</span>
-    );
-  });
+  const { t } = useLanguage();
+  return Children.map(children, child => typeof child === "string" ? t(child) : child);
 }
+// Localize only fixed interface attributes; input values and user content stay untouched.
+export const LocalizedElement = forwardRef(function LocalizedElement({ as, ...props }, ref) {
+  const { t } = useLanguage();
+  const translated = { ...props, ref };
+  for (const key of ["placeholder", "title", "alt", "aria-label"]) {
+    if (typeof props[key] === "string") translated[key] = t(props[key]);
+  }
+  return createElement(as, translated);
+});
 export function LanguageSelect() {
   const { language, setLanguage } = useLanguage();
   return (

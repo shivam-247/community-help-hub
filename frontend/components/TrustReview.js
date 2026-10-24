@@ -1,18 +1,21 @@
 "use client";
-import { useState } from "react";
+import { Text as UIMessage } from "../lib/i18n";
+
+import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { Button, Input, Label } from "./ui";
-export default function TrustReview({ userId, onSaved }) {
+export default function TrustReview({ userId, onSaved, phoneVerified = false, addressVerified = false, contactPhone }) {
   const [note, setNote] = useState(""),
     [phone, setPhone] = useState(false),
     [address, setAddress] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  useEffect(() => { setPhone(phoneVerified); setAddress(addressVerified); }, [phoneVerified, addressVerified]);
   return (
     <details>
-      <summary className="text-brand text-xs cursor-pointer">
+      <summary className="text-brand text-xs cursor-pointer"><UIMessage>
         Review phone & address
-      </summary>
+      </UIMessage></summary>
       <form
         className="space-y-3 mt-3 text-left max-w-sm"
         onSubmit={async (e) => {
@@ -25,8 +28,6 @@ export default function TrustReview({ userId, onSaved }) {
               body: { phone_verified: phone, address_verified: address, note },
             });
             onSaved?.();
-            setPhone(false);
-            setAddress(false);
             setNote("");
             setError("");
           } catch (e) {
@@ -36,29 +37,30 @@ export default function TrustReview({ userId, onSaved }) {
           }
         }}
       >
-        <p className="text-xs text-ink-muted">
+        <p className="text-xs text-ink-muted"><UIMessage>
           Approve evidence first. Confirm only details checked with the society
           reference.
-        </p>
+        </UIMessage></p>
+        <p className="text-xs">{contactPhone ? `Saved phone: ${contactPhone}` : "No phone saved; the phone check cannot be confirmed."}</p>
         <label className="flex min-h-11 gap-2 items-center text-xs">
           <input
             type="checkbox"
             checked={phone}
             onChange={(e) => setPhone(e.target.checked)}
-          />
+          /><UIMessage>
           Phone confirmed
-        </label>
+        </UIMessage></label>
         <label className="flex min-h-11 gap-2 items-center text-xs">
           <input
             type="checkbox"
             checked={address}
             onChange={(e) => setAddress(e.target.checked)}
-          />
+          /><UIMessage>
           Address / society confirmed
-        </label>
-        <Label htmlFor={`trust-note-${userId}`} className="text-xs">
+        </UIMessage></label>
+        <Label htmlFor={`trust-note-${userId}`} className="text-xs"><UIMessage>
           Review note
-        </Label>
+        </UIMessage></Label>
         <Input
           id={`trust-note-${userId}`}
           value={note}
@@ -68,12 +70,12 @@ export default function TrustReview({ userId, onSaved }) {
           required
         />
         <label className="flex gap-2 text-sm min-h-11 items-start">
-          <input type="checkbox" required />I reviewed both checks. Unchecked
+          <input type="checkbox" required /><UIMessage>I reviewed both checks. Unchecked
           checks will be marked unverified; this replaces the previous review.
-        </label>
-        <Button type="submit" variant="outline" loading={busy}>
+        </UIMessage></label>
+        <Button type="submit" variant="outline" loading={busy}><UIMessage>
           Save trust review
-        </Button>
+        </UIMessage></Button>
         {error && (
           <p role="alert" className="text-xs text-danger">
             {error}

@@ -1,4 +1,6 @@
 "use client";
+import { LocalizedElement as UIElement, Text as UIMessage } from "../lib/i18n";
+
 import { X } from "lucide-react";
 import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
 
@@ -31,8 +33,8 @@ export function ToastProvider({ children }) {
     {children}
     <div aria-live="polite" aria-atomic="false" className="toast-stack space-y-2">
       {toasts.map((toast) => <div key={toast.id} role={toast.kind === "error" ? "alert" : "status"} className={`flex items-start gap-3 rounded-xl border p-4 shadow-lg bg-surface text-sm ${toast.kind === "error" ? "border-danger-soft text-danger" : toast.kind === "info" ? "border-line text-ink-soft" : "border-success-soft text-success"}`}>
-        <p className="flex-1">{toast.message}</p>
-        <button aria-label="Dismiss notification" onClick={() => setToasts((items) => items.filter((item) => item.id !== toast.id))} className="min-h-11 min-w-11 flex items-center justify-center"> <X className="size-4" aria-hidden="true"/> </button>
+        <p className="flex-1"><UIMessage>{toast.message}</UIMessage></p>
+        <UIElement as="button" aria-label="Dismiss notification" onClick={() => setToasts((items) => items.filter((item) => item.id !== toast.id))} className="min-h-11 min-w-11 flex items-center justify-center"> <X className="size-4" aria-hidden="true"/> </UIElement>
       </div>)}
     </div>
   </ToastContext.Provider>;

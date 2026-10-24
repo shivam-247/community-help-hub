@@ -1,4 +1,6 @@
 "use client";
+import { LocalizedElement as UIElement } from "../lib/i18n";
+
 import Link from "next/link";
 import { LayoutGrid, MessageCircle, Plus, User } from "lucide-react";
 import { useLanguage } from "../lib/i18n";
@@ -11,7 +13,7 @@ export default function BottomNav({ user, path, pendingCount = 0 }) {
     [user ? "/settings" : "/login", user ? "Account" : "Sign in", User],
   ];
   return (
-    <nav
+    <UIElement as="nav"
       lang={language}
       aria-label="Quick navigation"
       className="mobile-dock lg:hidden"
@@ -35,6 +37,6 @@ export default function BottomNav({ user, path, pendingCount = 0 }) {
           <span>{t(label)}</span>
         </Link>
       ))}
-    </nav>
+    </UIElement>
   );
 }

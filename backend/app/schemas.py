@@ -18,7 +18,7 @@ class SignupIn(InputModel):
     privacy_consent: Literal[True]
     terms_accepted: Literal[True]
     adult_confirmed: Literal[True]
-    policy_version: Literal["2026-10-10"]
+    policy_version: Literal["2026-10-10", "2026-10-24"]
 
 
 class LoginIn(InputModel):
@@ -162,6 +162,7 @@ class ResponseRequestIn(InputModel):
 
 
 class ResponseRequestOut(BaseModel):
+    chat_closed: bool = False
     id: int
     post_id: int
     post_title: str

@@ -1,4 +1,4 @@
-export const POLICY_VERSION = "2026-10-10";
+export const POLICY_VERSION = "2026-10-24";
 export const operator = {
   name: "Shivam Parmar",
   email: "parmarshivam247@gmail.com",
@@ -19,11 +19,11 @@ export const policies = {
       ],
       [
         "Information you choose to share",
-        "Notices, responses, reviews and optional photos support exchanges. Public notices and associated images can be seen by visitors; private society notices and their attached photos are restricted to members, the uploader and authorised administrators. Profile photos and images attached to public notices are public. Unattached uploads require owner or administrator access. Do not upload confidential documents. Private chat is available to exchange participants and is stored on our server; it is not end-to-end encrypted. Authorised administrators may access records for moderation, support or a lawful request.",
+        "Notices, responses, reviews and optional photos support exchanges. Public notices and associated images can be seen by visitors; private society notices and their attached photos are restricted to members, the uploader and authorised administrators. Profile photos and images attached to public notices are public. Unattached uploads require owner or administrator access. Do not upload confidential documents. Private chat is available to accepted exchange participants. When both confirm completion, the conversation closes and message text is removed. Minimal exchange and credit records remain. Chat is not end-to-end encrypted. Authorised administrators may access records for moderation, support or a lawful request. Safety cases store reporter, reported member, reason, relevant record IDs and review outcome. Staff plan grants, restrictions, deletions and verification reviews are recorded in an audit trail. Account deletion removes personal profile data and public posts while retaining minimal billing, exchange and moderation records.",
       ],
       [
         "Optional phone and verification",
-        "A phone number and profile photo are optional. Your phone is hidden from exchange participants unless you enable sharing. Community verification uses a society reference, not government-ID documents. Obtain permission before sharing another person's contact details. Email challenges, MFA settings and consent records support security and verification. A badge or verification mark does not guarantee identity, safety or professional qualifications.",
+        "A phone number and profile photo are optional. Your phone is hidden from exchange participants unless you enable sharing. Community verification uses a society reference, not government-ID documents. Moderator approval confirms that reference; phone checks are independently reviewed and email checks require a verification code. Obtain permission before sharing another person's contact details. Email challenges, MFA settings and consent records support security and verification. A badge or verification mark does not guarantee identity, safety or professional qualifications.",
       ],
       [
         "Alerts, billing and technical data",
@@ -78,7 +78,7 @@ export const policies = {
       ],
       [
         "Contact and complaints",
-        "For privacy, copyright, moderation or service complaints, email parmarshivam247@gmail.com with the relevant URL and a short description. Do not include unnecessary identity documents. Contact and operator details are available on the Contact page. These terms were updated on 10 October 2026.",
+        "For privacy, copyright, moderation or service complaints, email parmarshivam247@gmail.com with the relevant URL and a short description. Do not include unnecessary identity documents. Contact and operator details are available on the Contact page. These terms were updated on 24 October 2026.",
       ],
     ],
   },

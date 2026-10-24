@@ -1,323 +1,148 @@
 "use client";
-import { use, useEffect, useState, useRef } from "react";
-import SafetyMenu from "../../../components/SafetyMenu";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../../../lib/i18n";
+
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import SafetyMenu from "../../../components/SafetyMenu";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
-import { MessageSkeleton } from "../../../components/Skeleton";
-import { SendIcon, AlertTriangleIcon } from "../../../components/Icons";
+import { Button, Input } from "../../../components/ui";
 
 export default function MessagesPage({ params }) {
-  const { id } = use(params);
-  const auth = useAuth();
-  const [messages, setMessages] = useState([]);
-  const [text, setText] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [sending, setSending] = useState(false);
-  const [connectionAttempt, setConnectionAttempt] = useState(0);
-  const bottomRef = useRef(null),
-    messageListRef = useRef(null),
-    followEnd = useRef(true);
-
-  const [hasOlder, setHasOlder] = useState(false),
-    [historyBusy, setHistoryBusy] = useState(false),
-    [completionBusy, setCompletionBusy] = useState(false);
-  const history = useRef(false),
-    lastSessionCheck = useRef(0);
-  const [connection, setConnection] = useState("Connecting…"),
-    [completion, setCompletion] = useState("");
-  const merge = (rows, m) =>
-    [...new Map([...rows, m].map((x) => [x.id, x])).values()]
-      .sort((a, b) => a.id - b.id)
-      .slice(-50);
-  const load = async (isInitial = false) => {
-    if (isInitial) setLoading(true);
+  const { id } = use(params), auth = useAuth();
+  const [messages, setMessages] = useState([]), [text, setText] = useState("");
+  const [state, setState] = useState(null), [error, setError] = useState("");
+  const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false);
+  const [hasOlder, setHasOlder] = useState(false), [attempt, setAttempt] = useState(0);
+  const [connection, setConnection] = useState("Connecting…");
+  const closed = useRef(false), stream = useRef(null), end = useRef(null);
+  const historyView = useRef(false), followEnd = useRef(true);
+  function closeConversation(next = {}) {
+    closed.current = true;
+    stream.current?.close();
+    setState(current => ({ ...current, ...next, closed: true }));
+    setMessages([]);
+    setText("");
+    setHasOlder(false);
     setError("");
-    try {
-      const data = await api(`/requests/${id}/messages?page_size=20`, {
-        auth: true,
-        pagination: true,
-      });
-      setMessages(data.items);
-      setHasOlder(data.has_more);
-      history.current = false;
-      return data.items;
-    } catch (e) {
-      setError(e.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-  async function older() {
-    if (!messages.length || historyBusy) return;
-    setHistoryBusy(true);
-    setError("");
-    try {
-      const data = await api(
-        `/requests/${id}/messages?before_id=${messages[0].id}&page_size=20`,
-        { auth: true, pagination: true },
-      );
-      if (data.items.length) {
-        history.current = true;
-        setMessages(data.items);
-      }
-      setHasOlder(data.has_more);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setHistoryBusy(false);
-    }
+    setConnection("Closed");
   }
   useEffect(() => {
     if (!auth?.user) return;
-    let cancelled = false,
-      source;
+    let cancelled = false;
+    closed.current = false;
+    historyView.current = false;
+    followEnd.current = true;
+    setState(null);
+    setMessages([]);
+    setLoading(true);
+    setError("");
+    async function checkState() {
+      try {
+        const next = await api(`/requests/${id}/state`, { auth: true });
+        if (cancelled) return null;
+        if (next.closed) closeConversation(next);
+        else setState(next);
+        return next;
+      } catch (e) {
+        if (!cancelled) {
+          if ([403, 410].includes(e.status)) closeConversation();
+          else setError(e.message);
+        }
+        return null;
+      }
+    }
     async function connect() {
-      const rows = await load(true);
-      if (cancelled || !rows) return;
-      source = new EventSource(
-        `/api/backend/requests/${id}/events?after=${rows.at(-1)?.id || 0}`,
-      );
-      source.onopen = () => setConnection("Live");
-      source.onmessage = (e) => {
-        try {
-          const m = JSON.parse(e.data);
-          if (!history.current) setMessages((rows) => merge(rows, m));
-        } catch {
-          setError("A message could not be loaded. Refresh the conversation.");
-        }
-      };
-      source.onerror = () => {
-        setConnection("Reconnecting…");
-        if (Date.now() - lastSessionCheck.current > 30000) {
-          lastSessionCheck.current = Date.now();
-          api("/auth/me", { auth: true }).catch(() => {});
-        }
-      };
+      const next = await checkState();
+      if (!next || next.closed || cancelled) { if (!cancelled) setLoading(false); return; }
+      try {
+        const data = await api(`/requests/${id}/messages?page_size=20`, { auth: true, pagination: true });
+        if (cancelled || closed.current) return;
+        setMessages(data.items);
+        setHasOlder(data.has_more);
+        const source = new EventSource(`/api/backend/requests/${id}/events?after=${data.items.at(-1)?.id || 0}`);
+        stream.current = source;
+        source.onopen = () => { if (!cancelled && !closed.current) setConnection("Live"); };
+        source.addEventListener("exchange_closed", () => { if (!cancelled) closeConversation(); });
+        source.onmessage = event => {
+          if (cancelled || closed.current || historyView.current) return;
+          try {
+            const message = JSON.parse(event.data);
+            setMessages(rows => [...new Map([...rows, message].map(m => [m.id, m])).values()].sort((a,b) => a.id-b.id).slice(-50));
+          } catch { setError("A message could not be loaded. Refresh this conversation."); }
+        };
+        source.onerror = () => { if (!cancelled && !closed.current) { setConnection("Reconnecting…"); checkState(); } };
+      } catch (e) {
+        if (!cancelled) { if (e.status === 410) closeConversation(); else setError(e.message); }
+      } finally { if (!cancelled) setLoading(false); }
     }
     connect();
-    return () => {
-      cancelled = true;
-      source?.close();
-    };
-  }, [auth?.user?.id, id, connectionAttempt]);
+    // Polling also closes the other tab when a proxy buffers or interrupts SSE.
+    const timer = setInterval(() => { if (!document.hidden && !closed.current) checkState(); }, 3000);
+    const focus = () => { if (!closed.current) checkState(); };
+    window.addEventListener("focus", focus);
+    return () => { cancelled = true; clearInterval(timer); stream.current?.close(); window.removeEventListener("focus", focus); };
+  }, [id, auth?.user?.id, attempt]);
+  useEffect(() => { if (!historyView.current && followEnd.current) end.current?.scrollIntoView({ block: "nearest" }); }, [messages]);
 
-  useEffect(() => {
-    if (!history.current && followEnd.current) {
-      const list = messageListRef.current;
-      list?.scrollTo({
-        top: list.scrollHeight,
-        behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "auto"
-          : "smooth",
-      });
-    }
-  }, [messages]);
-
-  if (auth?.loading) return <p role="status">Loading your conversation…</p>;
-
-  if (!auth?.user) {
-    return (
-      <div className="max-w-md mx-auto py-16 text-center">
-        <p className="text-ink-muted text-sm">
-          Please log in to view conversation.
-        </p>
-      </div>
-    );
-  }
-
-  const send = async (e) => {
-    e.preventDefault();
-    if (!text.trim() || sending) return;
-    setSending(true);
+  async function send(event) {
+    event.preventDefault();
+    if (busy || closed.current || !text.trim()) return;
+    setBusy(true);
     try {
-      const message = await api(`/requests/${id}/messages`, {
-        method: "POST",
-        auth: true,
-        body: { text },
-      });
-      followEnd.current = true;
-      setText("");
-      setError("");
-      if (history.current) await load(false);
-      else setMessages((rows) => merge(rows, message));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      <div className="flex flex-wrap gap-3">
-        <button
-          className="min-h-11 px-3 border border-line rounded-lg text-sm disabled:opacity-50"
-          disabled={historyBusy || !hasOlder || loading}
-          onClick={older}
-        >
-          {historyBusy ? "Loading history…" : "Older messages"}
-        </button>
-        <button
-          className="min-h-11 px-3 border border-line rounded-lg text-sm"
-          disabled={loading}
-          onClick={() => setConnectionAttempt((n) => n + 1)}
-        >
-          Latest messages / retry
-        </button>
-      </div>
-      {/* Header Bar */}
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 bg-surface border border-line rounded-3xl p-4 shadow-xs">
-        <div className="flex min-w-0 items-center gap-3">
-          <Link
-            href="/inbox"
-            aria-label="Back to inbox"
-            className="chat-back w-11 h-11 rounded-lg bg-surface-muted hover:bg-surface-muted text-ink-soft flex items-center justify-center text-xs font-semibold transition-colors"
-          >
-            &larr;
-          </Link>
-          <div>
-            <h1 className="font-bold text-ink text-sm">Direct exchange chat</h1>
-            <p className="text-[11px] text-ink-muted">
-              Private conversation between exchange participants
-            </p>
-          </div>
-        </div>
-        <SafetyMenu conversationId={id} />
-        <span
-          role="status"
-          className="col-span-2 justify-self-start shrink-0 whitespace-nowrap inline-flex items-center gap-1 text-[11px] font-semibold text-success bg-success-soft border border-success-soft px-2.5 py-0.5 rounded-full"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-success " />
-          {connection}
-        </span>
-      </div>
-
-      {error && (
-        <div className="bg-danger-soft border border-danger-soft rounded-xl p-3 flex items-center gap-2 text-xs text-danger">
-          <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0" />
-          <p role="alert">{error}</p>
-        </div>
-      )}
-
-      {/* Message Stream Box */}
-      <div
-        ref={messageListRef}
-        onScroll={(e) => {
-          const list = e.currentTarget;
-          followEnd.current =
-            list.scrollTop + list.clientHeight >= list.scrollHeight - 48;
-        }}
-        role="log"
-        aria-label="Conversation messages"
-        aria-live="polite"
-        tabIndex={0}
-        className="chat-thread border border-line rounded-3xl p-4 sm:p-5 h-[420px] overflow-y-auto flex flex-col gap-3 shadow-xs"
-      >
-        {loading ? (
-          <MessageSkeleton />
-        ) : error && messages.length === 0 ? (
-          <p role="status">
-            Messages are unavailable. Use Latest messages / retry above.
-          </p>
-        ) : messages.length === 0 ? (
-          <div className="m-auto text-center p-6 text-ink-muted">
-            <p className="font-medium text-ink-soft text-sm">
-              Start the conversation
-            </p>
-            <p className="text-xs text-ink-muted mt-0.5">
-              Introduce yourself and coordinate details.
-            </p>
-          </div>
-        ) : (
-          messages.map((m) => {
-            const isMe = m.sender_id === auth.user.id;
-            return (
-              <div
-                key={m.id}
-                className={`flex flex-col max-w-[80%] sm:max-w-[70%] ${
-                  isMe ? "self-end items-end" : "self-start items-start"
-                }`}
-              >
-                <div
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm leading-relaxed ${
-                    isMe
-                      ? "bg-brand-solid text-on-brand rounded-tr-xs shadow-xs"
-                      : "bg-surface-muted text-ink rounded-tl-xs"
-                  }`}
-                >
-                  <p className="break-anywhere">{m.text}</p>
-                </div>
-                <span className="text-[10px] text-ink-muted mt-1 px-1">
-                  {isMe ? "You" : m.sender_name}
-                </span>
-              </div>
-            );
-          })
-        )}
-        <div ref={bottomRef} />
-      </div>
-
-      <div className="rounded-3xl border border-line bg-surface p-4 space-y-3">
-        <p className="text-sm text-ink-muted">
-          Finished helping? Both participants must confirm to close the exchange
-          and earn 10 credits each.
-        </p>
-        <button
-          className="min-h-11 rounded-lg border border-line px-4 text-sm hover:bg-brand-soft"
-          disabled={completionBusy}
-          onClick={async () => {
-            setCompletionBusy(true);
-            try {
-              const result = await api(`/requests/${id}/complete`, {
-                method: "POST",
-                auth: true,
-                body: {},
-              });
-              setCompletion(
-                result.completed
-                  ? "Exchange completed. Credits awarded once to both participants."
-                  : "Your confirmation is saved. Waiting for your neighbour.",
-              );
-              await auth.refresh();
-            } catch (e) {
-              setError(e.message);
-            } finally {
-              setCompletionBusy(false);
-            }
-          }}
-        >
-          Confirm exchange completed
-        </button>
-        {completion && (
-          <p role="status" className="text-sm text-success">
-            {completion}
-          </p>
-        )}
-      </div>
-      {/* Input row */}
-      <form onSubmit={send} className="flex gap-2">
-        <input
-          aria-label="Message to your neighbour"
-          disabled={sending}
-          maxLength={4000}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Type a message to your neighbor..."
-          className="flex-1 px-4 py-2.5 text-xs sm:text-sm bg-surface border border-line rounded-xl focus-visible:outline-brand focus:ring-2 focus:ring-brand focus:border-transparent transition-all shadow-xs"
-        />
-        <button
-          type="submit"
-          aria-label="Send message"
-          disabled={sending || !text.trim()}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs disabled:opacity-60"
-        >
-          <SendIcon className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Send</span>
-        </button>
-      </form>
+      const message = await api(`/requests/${id}/messages`, { method: "POST", auth: true, body: { text } });
+      if (!closed.current) { followEnd.current = true; if (historyView.current) setAttempt(n=>n+1); else setMessages(rows => [...new Map([...rows, message].map(m => [m.id,m])).values()]); setText(""); setError(""); }
+    } catch (e) { if (e.status === 410) closeConversation(); else setError(e.message); }
+    finally { setBusy(false); }
+  }
+  async function complete() {
+    setBusy(true);
+    try {
+      const result = await api(`/requests/${id}/complete`, { method: "POST", auth: true, body: {} });
+      if (result.completed) closeConversation();
+      else setState(current => ({ ...current, confirmed: true }));
+      await auth.refresh();
+    } catch (e) { setError(e.message); }
+    finally { setBusy(false); }
+  }
+  async function older() {
+    if (!messages.length || closed.current) return;
+    setBusy(true);
+    try {
+      const data = await api(`/requests/${id}/messages?before_id=${messages[0].id}&page_size=20`, { auth: true, pagination: true });
+      if (!closed.current) { historyView.current = true; followEnd.current = false; setMessages(data.items); setHasOlder(data.has_more); }
+    } catch (e) { if (e.status === 410) closeConversation(); else setError(e.message); }
+    finally { setBusy(false); }
+  }
+  if (auth?.loading) return <p role="status"><UIMessage>Loading your conversation…</UIMessage></p>;
+  if (!auth?.user) return <p><Link href="/login"><UIMessage>Sign in</UIMessage></Link><UIMessage> to view your conversation.</UIMessage></p>;
+  return <section className="max-w-2xl mx-auto space-y-5">
+    <div className="flex items-center justify-between gap-3">
+      <div><Link href="/inbox" className="inline-flex min-h-11 items-center text-brand underline"><UIMessage>Back to inbox</UIMessage></Link>
+        <h1 className="text-2xl font-semibold"><UIMessage>Direct exchange chat</UIMessage></h1>
+        <p role="status" className="text-sm text-ink-muted"><UIMessage>{connection}</UIMessage></p></div>
+      {state?.peer_id && <SafetyMenu conversationId={id} ownerId={state.peer_id} />}
     </div>
-  );
+    {state?.closed ? <div className="rounded-3xl border border-line bg-surface p-6 space-y-4" role="status">
+      <h2 className="text-lg font-semibold"><UIMessage>Conversation closed</UIMessage></h2>
+      <p><UIMessage>This chat is no longer available. When both neighbours confirm completion, messages are removed and sending is disabled for both people.</UIMessage></p>
+      {state.post_id && <Link href={`/post/${state.post_id}`} className="inline-flex min-h-11 items-center text-brand underline"><UIMessage>View exchange and review your neighbour</UIMessage></Link>}
+    </div> : <>
+      {error && <div role="alert" className="text-danger rounded-xl bg-danger-soft p-4">{error}</div>}
+      {!loading && state && <Button variant="outline" disabled={busy} onClick={() => setAttempt(n=>n+1)}><UIMessage>Latest messages / retry</UIMessage></Button>}
+      {loading ? <p role="status"><UIMessage>Loading your conversation…</UIMessage></p> : !state ? <Button onClick={() => setAttempt(n=>n+1)}><UIMessage>Retry conversation</UIMessage></Button> : <>
+        {hasOlder && <Button variant="outline" disabled={busy} onClick={older}><UIMessage>Older messages</UIMessage></Button>}
+        <UIElement as="div" onScroll={event => { const el = event.currentTarget; followEnd.current = el.scrollTop + el.clientHeight >= el.scrollHeight - 48; }} role="log" aria-label="Conversation messages" aria-live="polite" tabIndex={0} className="chat-thread h-[380px] overflow-y-auto rounded-3xl border border-line p-4 space-y-3">
+          {!messages.length && <p className="text-ink-muted"><UIMessage>Introduce yourself and coordinate your exchange here.</UIMessage></p>}
+          {messages.map(m => <div key={m.id} className={`rounded-xl p-3 max-w-[85%] break-anywhere ${m.sender_id === auth.user.id ? "ml-auto bg-brand-soft text-brand" : "bg-surface-muted text-ink"}`}><p className="text-xs mb-1">{m.sender_id === auth.user.id ? "You" : m.sender_name}</p><p>{m.text}</p></div>)}
+          <div ref={end} />
+        </UIElement>
+        <form onSubmit={send} className="flex gap-2"><Input aria-label="Message to your neighbour" value={text} onChange={e=>setText(e.target.value)} disabled={busy} maxLength={4000} placeholder="Type a message…" /><Button type="submit" disabled={busy || !text.trim()}><UIMessage>Send message</UIMessage></Button></form>
+        <div className="rounded-3xl border border-line bg-surface p-5 space-y-3">
+          <p className="text-sm"><UIMessage>Both neighbours must confirm completion. Then this chat closes, its messages are removed, and each person earns 10 credits once.</UIMessage></p>
+          {state.confirmed ? <p role="status" className="text-success"><UIMessage>Your confirmation is saved. Waiting for your neighbour.</UIMessage></p> : <Button variant="outline" loading={busy} onClick={complete}><UIMessage>Confirm exchange completed</UIMessage></Button>}
+        </div>
+      </>}
+    </>}
+  </section>;
 }

@@ -4,7 +4,7 @@ from ..pagination import PageParams, paginate
 from sqlmodel import Session, select
 
 from ..database import get_session
-from ..models import ResponseRequest, Post, User, RequestStatus, badge_for_credits
+from ..models import ResponseRequest, Post, User, RequestStatus, PostStatus, badge_for_credits
 from ..schemas import ResponseRequestIn, ResponseRequestOut, RequestActionIn
 from ..auth import get_current_user
 
@@ -20,13 +20,15 @@ def _to_out(session: Session, rr: ResponseRequest) -> ResponseRequestOut:
     owner = session.get(User, post.owner_id)
     owner_contact = None
     requester_contact = None
-    if rr.status == RequestStatus.accepted:
+    from ..safety import exchange_closed
+    closed = exchange_closed(session, rr)
+    if rr.status == RequestStatus.accepted and not closed:
         if owner.contact_visible and owner.contact_phone:
             owner_contact = owner.contact_phone
         if requester.contact_visible and requester.contact_phone:
             requester_contact = requester.contact_phone
     return ResponseRequestOut(
-        id=rr.id, post_id=rr.post_id, post_title=post.title, post_type=post.type,
+        chat_closed=closed, id=rr.id, post_id=rr.post_id, post_title=post.title, post_type=post.type,
         requester_id=rr.requester_id, requester_name=requester.name,
         requester_rating=requester.rating_avg, requester_badge=badge_for_credits(requester.credits),
         owner_id=post.owner_id, owner_name=owner.name,
@@ -100,10 +102,15 @@ def act_on_request(
     if rr.status != RequestStatus.pending:
         raise HTTPException(409, "This response has already been reviewed.")
     if data.action == "accept":
+        from ..safety import restriction
+        if restriction(session, rr.requester_id) != "active" or post.status == PostStatus.resolved:
+            raise HTTPException(409, "This response is no longer available. Use a new notice for a new exchange.")
         other = session.exec(select(ResponseRequest).where(ResponseRequest.post_id == post.id, ResponseRequest.status == RequestStatus.accepted, ResponseRequest.id != rr.id)).first()
         if other:
             raise HTTPException(409, "This post already has an accepted exchange.")
         rr.status = RequestStatus.accepted
+        post.status = PostStatus.in_progress
+        session.add(post)
     elif data.action == "reject":
         rr.status = RequestStatus.rejected
     else:

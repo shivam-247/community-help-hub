@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../../lib/i18n";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
@@ -50,22 +52,22 @@ export default function NotificationsPage() {
         title="Notifications"
         description="New replies, exchange updates and the things you asked to hear about."
       >
-        <Button variant="outline" disabled={loading} onClick={load}>
+        <Button variant="outline" disabled={loading} onClick={load}><UIMessage>
           Refresh
-        </Button>
+        </UIMessage></Button>
       </PageHeader>
       <Button
         className="sm:hidden self-start"
         variant="outline"
         disabled={loading}
         onClick={load}
-      >
+      ><UIMessage>
         Refresh
-      </Button>
+      </UIMessage></Button>
       <ErrorMessage message={error} />
-      {error && <Button onClick={load}>Try again</Button>}
+      {error && <Button onClick={load}><UIMessage>Try again</UIMessage></Button>}
       {loading ? (
-        <p role="status">Loading updates…</p>
+        <p role="status"><UIMessage>Loading updates…</UIMessage></p>
       ) : error ? null : rows.length ? (
         <ul className="space-y-3">
           {rows.map((n) => (
@@ -75,17 +77,17 @@ export default function NotificationsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between gap-3">
                     <h2 className="font-semibold">{n.title}</h2>
-                    {!n.read && <Badge>New</Badge>}
+                    {!n.read && <Badge><UIMessage>New</UIMessage></Badge>}
                   </div>
                   <p className="text-sm text-ink-muted mt-2">{n.body}</p>
                   <div className="flex gap-3 items-center mt-3">
                     <Button asChild variant="ghost" onClick={() => read(n.id)}>
-                      <Link href={n.href}>View update</Link>
+                      <Link href={n.href}><UIMessage>View update</UIMessage></Link>
                     </Button>
                     {!n.read && (
-                      <Button variant="ghost" onClick={() => read(n.id)}>
+                      <Button variant="ghost" onClick={() => read(n.id)}><UIMessage>
                         Mark read
-                      </Button>
+                      </UIMessage></Button>
                     )}
                   </div>
                 </div>

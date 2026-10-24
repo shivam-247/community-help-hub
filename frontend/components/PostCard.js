@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import Link from "next/link";
 import SafetyMenu, { useSafety } from "./SafetyMenu";
 import PostImage from "./PostImage";
@@ -77,9 +79,9 @@ export default function PostCard({ post }) {
         >
           {post.priority}
         </Badge>
-        {post.is_demo && <Badge variant="outline">Sample</Badge>}
+        {post.is_demo && <Badge variant="outline"><UIMessage>Sample</UIMessage></Badge>}
         {post.priority_listing && (
-          <Badge variant="outline">Priority listing</Badge>
+          <Badge variant="outline"><UIMessage>Priority listing</UIMessage></Badge>
         )}
         <span className="text-xs text-ink-muted ml-auto flex items-center gap-1.5">
           <span

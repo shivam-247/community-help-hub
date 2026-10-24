@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
+
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -177,12 +179,12 @@ export default function Nav() {
           >
             <Brand />
           </Link>
-          <nav
+          <UIElement as="nav"
             aria-label="Main navigation"
             className="hidden lg:flex items-center self-stretch gap-1"
           >
             {navLinks}
-          </nav>
+          </UIElement>
           <div className="flex items-center gap-0.5 sm:gap-2">
             <LanguageSelect />
             <ThemeControl />
@@ -202,9 +204,9 @@ export default function Nav() {
                       {user.email}
                     </p>
                     <p className="text-xs text-brand mt-2">
-                      {user.role === "super_admin"
+                      <UIMessage>{user.role === "super_admin"
                         ? "Super administrator"
-                        : "Community member"}
+                        : "Community member"}</UIMessage>
                     </p>
                   </div>
                   <Link className="app-link w-full" href="/inbox?tab=incoming">
@@ -270,12 +272,12 @@ export default function Nav() {
           </div>
         </div>
         {user && Object.values(countErrors).some(Boolean) && (
-          <p role="status" className="px-4 py-1 text-xs text-ink-muted">
+          <p role="status" className="px-4 py-1 text-xs text-ink-muted"><UIMessage>
             Update counts are temporarily unavailable. Retrying automatically.
-          </p>
+          </UIMessage></p>
         )}
         {open && (
-          <nav
+          <UIElement as="nav"
             id="mobile-navigation"
             aria-label="Mobile navigation"
             className="mobile-navigation nav-panel lg:hidden"
@@ -291,12 +293,12 @@ export default function Nav() {
             )}
             {user ? (
               <>
-                <Link href="/create-post" className="app-link text-brand">
+                <Link href="/create-post" className="app-link text-brand"><UIMessage>
                   Create post
-                </Link>
-                <Link href="/settings" className="app-link">
-                  Account &amp; safety
-                </Link>
+                </UIMessage></Link>
+                <Link href="/settings" className="app-link"><UIMessage>
+                  Account & safety
+                </UIMessage></Link>
                 <Button
                   onClick={logout}
                   variant="ghost"
@@ -310,9 +312,9 @@ export default function Nav() {
                 <Link href="/login" className="app-link">
                   <Text>Sign in</Text>
                 </Link>
-                <Link href="/signup" className="app-link text-brand">
+                <Link href="/signup" className="app-link text-brand"><UIMessage>
                   Join the hub
-                </Link>
+                </UIMessage></Link>
               </>
             )}
             {logoutError && (
@@ -320,7 +322,7 @@ export default function Nav() {
                 {logoutError}
               </p>
             )}
-          </nav>
+          </UIElement>
         )}
       </header>
       <BottomNav user={user} path={path} pendingCount={pendingCount} />

@@ -177,6 +177,9 @@ def update_status(
     board = session.get(CommunityPost, post.id)
     if board and not session.get(CommunityMember, (board.community_id, user.id)):
         raise HTTPException(404, "Post not found.")
+    from ..safety import ExchangeClosure
+    if data.status != PostStatus.resolved and session.exec(select(ExchangeClosure).where(ExchangeClosure.post_id == post.id)).first():
+        raise HTTPException(409, "This exchange is complete. Create a new notice for another exchange.")
     post.status = data.status
     session.add(post)
     session.commit()
@@ -201,6 +204,9 @@ def edit_post(
     if post.owner_id != user.id:
         if not is_admin_or_super(user) or set(changes) - {"status"}:
             raise HTTPException(status_code=403, detail="Only the owner can edit post content; admins can update status.")
+    from ..safety import ExchangeClosure
+    if "status" in changes and changes["status"] != PostStatus.resolved and session.exec(select(ExchangeClosure).where(ExchangeClosure.post_id == post.id)).first():
+        raise HTTPException(409, "This exchange is complete. Create a new notice for another exchange.")
     for field, value in changes.items():
         if value is None and field != "deadline":
             raise HTTPException(status_code=422, detail=f"{field} cannot be null.")

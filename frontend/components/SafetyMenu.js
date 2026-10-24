@@ -1,6 +1,8 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import { createContext, useContext, useEffect, useState } from "react";
-import { Ellipsis, Flag, EyeOff, ShieldOff } from "lucide-react";
+import { Ellipsis, Flag, EyeOff } from "lucide-react";
 import { useAuth } from "../lib/auth-context";
 import { useLanguage } from "../lib/i18n";
 import { api } from "../lib/api";
@@ -51,162 +53,37 @@ export function SafetyProvider({ children }) {
 }
 export const useSafety = () => useContext(SafetyContext);
 export default function SafetyMenu({ postId, conversationId, ownerId }) {
-  const { user } = useAuth(),
-    { hide } = useSafety(),
-    { t } = useLanguage();
-  const [open, setOpen] = useState(false),
-    [reason, setReason] = useState(""),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState(""),
-    [sent, setSent] = useState(false);
-  async function report(e) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
+  const { user } = useAuth(), { hide } = useSafety(), { t } = useLanguage();
+  const [open, setOpen] = useState(false), [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false), [error, setError] = useState(""), [caseId, setCaseId] = useState("");
+  const reportKey = `${postId || "member"}-${conversationId || ownerId || "report"}`;
+  async function report(event) {
+    event.preventDefault(); setBusy(true); setError("");
     try {
-      await api(`/posts/${postId}/report`, {
-        method: "POST",
-        auth: true,
-        body: { reason: reason.trim() },
+      const result = await api(postId ? `/posts/${postId}/report` : `/users/${ownerId}/report`, {
+        method: "POST", auth: true, body: { reason: reason.trim(),
+
+          ...(conversationId ? { request_id: Number(conversationId) } : {}) },
       });
-      setSent(true);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
+      setCaseId(result.case_id || "Report received");
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
   }
-  const subject = `Community Help Hub conversation ${conversationId} safety report`;
-  return (
-    <>
-      <Button
-        className="safety-trigger"
-        variant="ghost"
-        size="icon"
-        aria-label="Post and conversation safety options"
-        onClick={() => {
-          setOpen(true);
-          setSent(false);
-          setError("");
-        }}
-      >
-        <Ellipsis aria-hidden="true" className="size-5" />
-      </Button>
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent>
-          <SheetTitle>Safety options</SheetTitle>
-          <SheetDescription>
-            Tell the moderator about a concern. For emergencies, contact local
-            emergency services.
-          </SheetDescription>
-          <div className="mt-6 space-y-5">
-            {postId && (
-              <>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => {
-                    hide(postId);
-                    setOpen(false);
-                  }}
-                >
-                  <EyeOff aria-hidden="true" className="size-4" />
-                  Hide on this device
-                </Button>
-                <p className="text-sm text-ink-muted">
-                  Hidden in this browser session only. Restore hidden posts from
-                  the noticeboard. This does not prevent contact.
-                </p>
-              </>
-            )}
-            <div>
-              <Button
-                disabled
-                variant="outline"
-                className="w-full justify-start"
-              >
-                <ShieldOff aria-hidden="true" className="size-4" />
-                Block member · unavailable
-              </Button>
-              <p className="mt-2 text-sm text-ink-muted">
-                Account blocking is not supported yet. Report unwanted contact
-                to the maintainer; hiding a post does not block its author.
-              </p>
-            </div>
-            {postId ? (
-              user && user.id !== ownerId ? (
-                sent ? (
-                  <p role="status" className="text-success">
-                    {t("Report sent")}. The moderator can review it in the
-                    reports queue.
-                  </p>
-                ) : (
-                  <form onSubmit={report} className="space-y-3">
-                    <Label htmlFor={`report-${postId}`}>Report reason</Label>
-                    <textarea
-                      id={`report-${postId}`}
-                      required
-                      minLength={5}
-                      maxLength={1000}
-                      rows={4}
-                      className="filter-control"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      aria-describedby={`report-hint-${postId}`}
-                    />
-                    <p
-                      id={`report-hint-${postId}`}
-                      className="text-sm text-ink-muted"
-                    >
-                      Explain the concern. Do not include passwords, OTPs or
-                      identity documents.
-                    </p>
-                    {error && (
-                      <p role="alert" className="text-danger text-sm">
-                        {error}
-                      </p>
-                    )}
-                    <Button type="submit" loading={busy}>
-                      <Flag aria-hidden="true" className="size-4" />
-                      Submit report
-                    </Button>
-                  </form>
-                )
-              ) : (
-                <p className="text-sm text-ink-muted">
-                  {user
-                    ? "For a concern about your own notice, contact the maintainer."
-                    : "Sign in to report this notice."}{" "}
-                  <a
-                    className="underline"
-                    href={
-                      user
-                        ? "mailto:parmarshivam247@gmail.com"
-                        : `/login?next=${encodeURIComponent(`/post/${postId}`)}`
-                    }
-                  >
-                    {user ? "Email maintainer" : t("Sign in")}
-                  </a>
-                </p>
-              )
-            ) : (
-              <div className="space-y-3">
-                <p className="text-sm">
-                  Conversation reports are reviewed by the project maintainer.
-                  Your email app opens a draft; review it before sending.
-                </p>
-                <a
-                  className="min-h-11 inline-flex items-center gap-2 text-brand underline"
-                  href={`mailto:parmarshivam247@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`Conversation URL: /messages/${conversationId}\n\nDescribe your concern (omit private credentials):\n`)}`}
-                >
-                  <Flag aria-hidden="true" className="size-4" />
-                  Report conversation by email
-                </a>
-              </div>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
-  );
+  return <>
+    <Button className="safety-trigger" variant="ghost" size="icon" aria-label={t("Safety options")} onClick={() => setOpen(true)}><Ellipsis aria-hidden="true" /></Button>
+    <Sheet open={open} onOpenChange={setOpen}><SheetContent>
+      <SheetTitle><UIMessage>Report a safety concern</UIMessage></SheetTitle>
+      <SheetDescription><UIMessage>Tell the moderation team about spam, harassment, impersonation or an unsafe exchange. Reports are reviewed; they do not automatically ban a member.</UIMessage></SheetDescription>
+      <div className="space-y-5 pt-6">
+        {postId && <Button variant="outline" onClick={() => { hide(postId); setOpen(false); }}><EyeOff aria-hidden="true" className="size-4" /><UIMessage>Hide on this device</UIMessage></Button>}
+        {caseId ? <p role="status" className="text-success"><UIMessage>Report sent. Case reference: </UIMessage>{caseId}<UIMessage>. A moderator can review it in User reports.</UIMessage></p> : user && user.id !== ownerId ?
+          <form onSubmit={report} className="space-y-4">
+            <Label htmlFor={`report-${reportKey}`}><UIMessage>Report reason</UIMessage></Label>
+            <textarea id={`report-${reportKey}`} className="filter-control" rows={4} required minLength={10} maxLength={2000} value={reason} onChange={e=>setReason(e.target.value)} />
+            <p className="text-sm text-ink-muted"><UIMessage>Describe what happened and when. Do not include passwords, OTPs, Aadhaar numbers or bank details. Message logs are removed when both people complete an exchange, so report a concern while the conversation is active.</UIMessage></p>
+            {error && <p role="alert" className="text-danger">{error}</p>}
+            <Button type="submit" loading={busy}><Flag aria-hidden="true" className="size-4" /><UIMessage>Submit report</UIMessage></Button>
+          </form> : <p className="text-sm"><UIMessage>{user ? "You cannot report yourself. Contact support for help with your own account." : "Sign in to report a safety concern."}</UIMessage></p>}
+      </div>
+    </SheetContent></Sheet>
+  </>;
 }

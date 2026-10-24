@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../../lib/i18n";
+
 import { useEffect, useState } from "react";
 import { useLanguage, Text } from "../../lib/i18n";
 import Link from "next/link";
@@ -193,24 +195,24 @@ export default function FeedPage() {
               community ? `/create-post?community=${community}` : "/create-post"
             }
           >
-            <Icon name="plus" decorative />
+            <Icon name="plus" decorative /><UIMessage>
             Create a post
-          </Link>
+          </UIMessage></Link>
         </Button>
       </PageHeader>
       {community && (
-        <p className="text-sm rounded-lg bg-brand-soft text-brand p-4">
+        <p className="text-sm rounded-lg bg-brand-soft text-brand p-4"><UIMessage>
           Private society board · visible to members only
-        </p>
+        </UIMessage></p>
       )}
       <div className="feed-layout">
-        <aside
+        <UIElement as="aside"
           className="hidden lg:block feed-aside feed-left"
           aria-label="Explore the neighbourhood"
         >
-          <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3">
+          <p className="text-xs text-ink-muted font-semibold uppercase tracking-wider mb-4 px-3"><UIMessage>
             Explore
-          </p>
+          </UIMessage></p>
           <div className="space-y-1">
             {CATEGORIES.map((cat, i) => (
               <Button
@@ -234,34 +236,34 @@ export default function FeedPage() {
             ))}
           </div>
           <div className="border-t border-line mt-6 pt-5 px-3 space-y-1">
-            <p className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-2">
+            <p className="text-xs uppercase tracking-wider text-ink-muted font-semibold mb-2"><UIMessage>
               Your hub
-            </p>
+            </UIMessage></p>
             <Link className="app-link" href="/inbox">
-              <Icon name="message-circle" decorative size="sm" />
+              <Icon name="message-circle" decorative size="sm" /><UIMessage>
               Messages
-            </Link>
+            </UIMessage></Link>
             <Link className="app-link" href="/settings?tab=trust">
-              <Icon name="shield-check" decorative size="sm" />
+              <Icon name="shield-check" decorative size="sm" /><UIMessage>
               Trust Center
-            </Link>
+            </UIMessage></Link>
             <Link className="app-link" href="/settings?tab=billing">
-              <Icon name="layers" decorative size="sm" />
+              <Icon name="layers" decorative size="sm" /><UIMessage>
               Your plan
-            </Link>
+            </UIMessage></Link>
           </div>
-          <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7">
+          <p className="text-xs text-ink-muted leading-relaxed px-3 mt-7"><UIMessage>
             No buying or selling.
-            <br />
+            </UIMessage><br /><UIMessage>
             Just neighbours helping neighbours.
-          </p>
-        </aside>
-        <section
+          </UIMessage></p>
+        </UIElement>
+        <UIElement as="section"
           className="min-w-0 flex flex-col gap-3"
           aria-label="Neighborhood posts"
         >
           <div className="flex items-center justify-end gap-3">
-            <h2 className="sr-only">Neighbourhood notices</h2>
+            <h2 className="sr-only"><UIMessage>Neighbourhood notices</UIMessage></h2>
             <p aria-live="polite" className="text-xs text-ink-muted">
               {loading
                 ? "Loading posts…"
@@ -271,7 +273,7 @@ export default function FeedPage() {
             </p>
           </div>
           <div className="feed-mobile-sticky">
-            <div
+            <UIElement as="div"
               className="chip-row flex gap-1.5 overflow-x-auto pb-2 lg:hidden"
               aria-label="Post categories"
             >
@@ -296,12 +298,12 @@ export default function FeedPage() {
                           : "Alerts"}
                 </Button>
               ))}
-            </div>
+            </UIElement>
             <div className="feed-controls space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px] lg:grid-cols-1 xl:grid-cols-[minmax(0,1fr)_150px] gap-3">
+              <div className="feed-search-fields">
                 <div>
                   <label
-                    className="sr-only sm:not-sr-only sm:mb-2 sm:block sm:text-xs sm:font-medium sm:text-ink-soft"
+                    className="filter-label"
                     htmlFor="post-search"
                   >
                     <Text>Search the noticeboard</Text>
@@ -322,7 +324,7 @@ export default function FeedPage() {
                     />
                   </div>
                 </div>
-                <div className="hidden sm:block lg:hidden xl:block">
+                <div className="min-w-0">
                   <label className="filter-label" htmlFor="post-area">
                     <Text>Area / PIN code</Text>
                   </label>
@@ -335,22 +337,22 @@ export default function FeedPage() {
                   />
                 </div>
               </div>
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="feed-filter-toolbar">
                 <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline">
-                      <Icon name="sliders-horizontal" decorative size="sm" />
+                      <Icon name="sliders-horizontal" decorative size="sm" /><UIMessage>
                       More filters
-                    </Button>
+                    </UIMessage></Button>
                   </SheetTrigger>
                   <SheetContent>
-                    <SheetTitle>Refine your noticeboard</SheetTitle>
-                    <SheetDescription>
+                    <SheetTitle><UIMessage>Refine your noticeboard</UIMessage></SheetTitle>
+                    <SheetDescription><UIMessage>
                       Choose an area and the kind of help you’re looking for.
                       Filters update the board as you change them.
-                    </SheetDescription>
+                    </UIMessage></SheetDescription>
                     <div className="grid grid-cols-1 gap-4 pt-6">
-                      <div className="sm:hidden lg:block xl:hidden">
+                      <div className="hidden">
                         <label className="filter-label" htmlFor="filter-area">
                           <Text>Area / PIN code</Text>
                         </label>
@@ -402,11 +404,11 @@ export default function FeedPage() {
                         type="checkbox"
                         checked={verified}
                         onChange={(e) => setVerified(e.target.checked)}
-                      />
+                      /><UIMessage>
                       Verified members only · Plus / Society
-                    </label>
+                    </UIMessage></label>
                     <SheetClose asChild>
-                      <Button className="w-full mt-6">Close filters</Button>
+                      <Button className="w-full mt-6"><UIMessage>Close filters</UIMessage></Button>
                     </SheetClose>
                   </SheetContent>
                 </Sheet>
@@ -414,7 +416,7 @@ export default function FeedPage() {
                   <div className="flex items-center gap-2">
                     <label
                       htmlFor="post-sort"
-                      className="text-xs text-ink-muted"
+                      className="sr-only sm:not-sr-only text-xs text-ink-muted"
                     >
                       <Text>Sort</Text>
                     </label>
@@ -422,16 +424,16 @@ export default function FeedPage() {
                       id="post-sort"
                       value={sort}
                       onChange={(e) => setSort(e.target.value)}
-                      className="border border-line rounded-lg px-2 text-sm!"
+                      className="filter-control min-w-0 w-full sm:min-w-36"
                     >
                       <option value="newest">{t("Newest first")}</option>
                       <option value="deadline">{t("By deadline")}</option>
                     </select>
                   </div>
                   {filtered && (
-                    <Button variant="ghost" size="sm" onClick={clear}>
+                    <Button variant="ghost" size="sm" onClick={clear}><UIMessage>
                       Clear filters
-                    </Button>
+                    </UIMessage></Button>
                   )}
                 </div>
               </div>
@@ -442,36 +444,36 @@ export default function FeedPage() {
               variant="ghost"
               disabled={loading}
               onClick={() => setRetry((v) => v + 1)}
-            >
+            ><UIMessage>
               Refresh
-            </Button>
+            </UIMessage></Button>
             {hidden.length > 0 && (
-              <Button variant="outline" onClick={restore}>
-                Restore hidden posts ({hidden.length})
+              <Button variant="outline" onClick={restore}><UIMessage>
+                Restore hidden posts (</UIMessage>{hidden.length})
               </Button>
             )}
           </div>
           {posts.some((p) => p.is_demo) && (
             <p className="text-xs text-ink-muted flex items-start gap-2">
-              <Icon name="info" decorative size="sm" className="shrink-0" />{" "}
+              <Icon name="info" decorative size="sm" className="shrink-0" />{" "}<UIMessage>
               Sample posts are labelled and cannot receive responses.
-            </p>
+            </UIMessage></p>
           )}
           {error ? (
             <div
               role="alert"
               className="border border-danger/30 bg-danger-soft rounded-xl p-6 space-y-3"
             >
-              <h3 className="font-semibold">
+              <h3 className="font-semibold"><UIMessage>
                 We couldn’t load the noticeboard.
-              </h3>
+              </UIMessage></h3>
               <p className="text-sm text-ink-soft">{error}</p>
-              <Button variant="outline" onClick={() => setRetry((x) => x + 1)}>
+              <Button variant="outline" onClick={() => setRetry((x) => x + 1)}><UIMessage>
                 Try again
-              </Button>
+              </UIMessage></Button>
             </div>
           ) : loading ? (
-            <div
+            <UIElement as="div"
               role="status"
               aria-label="Loading posts"
               className="feed-list grid gap-4"
@@ -479,7 +481,7 @@ export default function FeedPage() {
               {[0, 1, 2, 3].map((i) => (
                 <PostCardSkeleton key={i} />
               ))}
-            </div>
+            </UIElement>
           ) : posts.some((p) => !hidden.includes(p.id)) ? (
             <div className="space-y-5">
               <div className="feed-list grid gap-4">
@@ -514,9 +516,9 @@ export default function FeedPage() {
                 <div className="h-2 w-2/3 rounded bg-line" />
               </div>
               {page > 1 && (
-                <Button variant="outline" onClick={() => setPage(page - 1)}>
+                <Button variant="outline" onClick={() => setPage(page - 1)}><UIMessage>
                   Return to previous page
-                </Button>
+                </UIMessage></Button>
               )}
               <h3 className="font-semibold text-lg">
                 {posts.length
@@ -549,33 +551,33 @@ export default function FeedPage() {
                         : "/create-post"
                     }
                   >
-                    <Icon name="plus" decorative />
+                    <Icon name="plus" decorative /><UIMessage>
                     Create the first post
-                  </Link>
+                  </UIMessage></Link>
                 )}
               </Button>
             </div>
           )}
-        </section>
+        </UIElement>
         <aside className="feed-aside space-y-6">
           <div className="tone-skill rounded-3xl p-5 bg-brand-soft border border-line">
             <Icon name="hand-heart" decorative className="text-brand mb-3" />
-            <h2 className="font-semibold text-sm">Make yourself at home</h2>
-            <p className="text-sm text-ink-soft leading-relaxed mt-2">
+            <h2 className="font-semibold text-sm"><UIMessage>Make yourself at home</UIMessage></h2>
+            <p className="text-sm text-ink-soft leading-relaxed mt-2"><UIMessage>
               Complete your profile and verification steps before arranging your
               first exchange.
-            </p>
+            </UIMessage></p>
             <Link
               href="/settings?tab=trust"
               className="inline-flex items-center gap-2 text-xs font-semibold text-brand mt-4 min-h-8"
-            >
-              Open Trust Center <Icon name="arrow-right" decorative size="sm" />
+            ><UIMessage>
+              Open Trust Center </UIMessage><Icon name="arrow-right" decorative size="sm" />
             </Link>
           </div>
           <div className="px-1">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-4">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-ink-muted mb-4"><UIMessage>
               Before you post
-            </h2>
+            </UIMessage></h2>
             <ol className="space-y-4">
               {[
                 ["Be specific", "Say what you need and when."],
@@ -600,10 +602,10 @@ export default function FeedPage() {
             </ol>
           </div>
           <div className="border-t border-line pt-5 px-1">
-            <p className="text-xs text-ink-muted leading-relaxed">
+            <p className="text-xs text-ink-muted leading-relaxed"><UIMessage>
               For emergencies, contact your local emergency services. Posts here
               are for community support.
-            </p>
+            </UIMessage></p>
           </div>
         </aside>
       </div>

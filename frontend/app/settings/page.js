@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../../lib/i18n";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "../../lib/auth-context";
@@ -32,7 +34,7 @@ export default function SettingsPage() {
     )
       setTab(t);
   }, []);
-  if (auth?.loading) return <p role="status">Loading your account…</p>;
+  if (auth?.loading) return <p role="status"><UIMessage>Loading your account…</UIMessage></p>;
   if (!auth?.user) return null;
   const user = auth.user;
   const next = user.credits < 5 ? 5 : user.credits < 50 ? 50 : 100;
@@ -45,36 +47,36 @@ export default function SettingsPage() {
         description="Make yourself at home. Your profile, privacy and neighbourhood reputation, in one place."
       />
       <details className="account-privacy">
-        <summary className="min-h-11 flex items-center text-sm text-brand cursor-pointer">
+        <summary className="min-h-11 flex items-center text-sm text-brand cursor-pointer"><UIMessage>
           Your information and privacy choices
-        </summary>
+        </UIMessage></summary>
         <section
           aria-labelledby="privacy-options"
           className="border border-line rounded-xl p-5 space-y-3"
         >
-          <h2 id="privacy-options" className="text-lg font-semibold">
+          <h2 id="privacy-options" className="text-lg font-semibold"><UIMessage>
             Your information and choices
-          </h2>
-          <p className="text-sm text-ink-muted">
+          </UIMessage></h2>
+          <p className="text-sm text-ink-muted"><UIMessage>
             Phone and photo are optional. Edit your profile or turn off phone
             sharing here; optional email alerts can be disabled under
             Notifications. To request a copy, correction, deletion, consent
-            withdrawal or nomination assistance,{" "}
+            withdrawal or nomination assistance,</UIMessage>{" "}
             <a
               className="underline"
               href="mailto:parmarshivam247@gmail.com?subject=Community%20Help%20Hub%20privacy%20request"
-            >
+            ><UIMessage>
               email the project maintainer
-            </a>{" "}
+            </UIMessage></a>{" "}<UIMessage>
             from your account email. Requests are handled manually. Do not send
             passwords or identity documents.
-          </p>
+          </UIMessage></p>
           <Link
             className="underline min-h-11 inline-flex items-center"
             href="/privacy"
-          >
+          ><UIMessage>
             Read how we use your information
-          </Link>
+          </UIMessage></Link>
         </section>
       </details>
       <div className="grid lg:grid-cols-[240px_minmax(0,1fr)] gap-6">
@@ -94,8 +96,8 @@ export default function SettingsPage() {
               <div className="border-t border-line pt-5 space-y-4">
                 <BadgeTier tier={user.badge} />
                 <p className="text-sm">
-                  <strong>{user.credits}</strong> community credits
-                </p>
+                  <strong>{user.credits}</strong><UIMessage> community credits
+                </UIMessage></p>
                 <Progress
                   label="Progress to next badge"
                   value={Math.min(100, (user.credits / next) * 100)}
@@ -103,34 +105,34 @@ export default function SettingsPage() {
                 <p className="text-xs text-ink-muted leading-relaxed">
                   {user.credits >= 100
                     ? "You’ve reached Champion. Thank you for showing up."
-                    : `${next - user.credits} credits to the next tier.`}{" "}
+                    : `${next - user.credits} credits to the next tier.`}{" "}<UIMessage>
                   Both people earn 10 credits after confirming an exchange.
-                </p>
-                <p className="text-xs text-ink-muted">
+                </UIMessage></p>
+                <p className="text-xs text-ink-muted"><UIMessage>
                   Newcomer 0 · Helper 5 · Trusted 50 · Champion 100
-                </p>
+                </UIMessage></p>
               </div>
             </CardContent>
           </Card>
         </aside>
         <div className="min-w-0">
           <p className="lg:hidden text-sm text-ink-muted mb-4">
-            {user.name} · {user.credits} community credits.{" "}
+            {user.name} · {user.credits}<UIMessage> community credits.</UIMessage>{" "}
             <Link
               className="inline-flex min-h-11 items-center underline text-brand"
               href={`/profile/${user.id}`}
-            >
+            ><UIMessage>
               View my profile
-            </Link>
+            </UIMessage></Link>
           </p>
           <Tabs value={tab} onValueChange={setTab}>
             <div className="overflow-x-auto chip-row pb-1">
               <TabsList aria-label="Account sections">
-                <TabsTrigger value="profile">Profile</TabsTrigger>
-                <TabsTrigger value="security">Security</TabsTrigger>
-                <TabsTrigger value="trust">Trust & Verification</TabsTrigger>
-                <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                <TabsTrigger value="billing">Billing</TabsTrigger>
+                <TabsTrigger value="profile"><UIMessage>Profile</UIMessage></TabsTrigger>
+                <TabsTrigger value="security"><UIMessage>Security</UIMessage></TabsTrigger>
+                <TabsTrigger value="trust"><UIMessage>Trust & Verification</UIMessage></TabsTrigger>
+                <TabsTrigger value="notifications"><UIMessage>Notifications</UIMessage></TabsTrigger>
+                <TabsTrigger value="billing"><UIMessage>Billing</UIMessage></TabsTrigger>
               </TabsList>
             </div>
             <TabsContent value="profile">

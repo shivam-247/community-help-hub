@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
+
 import { useEffect, useState } from "react";
 import { ErrorMessage, FieldError } from "./FormFeedback";
 import Link from "next/link";
@@ -16,6 +18,7 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/auth-context";
+import { useLanguage } from "../lib/i18n";
 import { useToast } from "./ToastProvider";
 import {
   Button,
@@ -114,10 +117,10 @@ export function ProfilePanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your neighbourhood profile</CardTitle>
-        <CardDescription>
+        <CardTitle><UIMessage>Your neighbourhood profile</UIMessage></CardTitle>
+        <CardDescription><UIMessage>
           Use your name and area so neighbours know who they’re meeting.
-        </CardDescription>
+        </UIMessage></CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex flex-wrap gap-3 items-center">
@@ -126,7 +129,7 @@ export function ProfilePanel() {
             className="inline-flex min-h-11 cursor-pointer items-center gap-2 border border-line px-4 py-2 rounded-lg text-sm mb-0"
           >
             <Camera className="size-4" />
-            {uploading ? "Uploading…" : "Upload a photo"}
+            <UIMessage>{uploading ? "Uploading…" : "Upload a photo"}</UIMessage>
           </Label>
           <input
             id="profile-photo"
@@ -152,12 +155,12 @@ export function ProfilePanel() {
                 setError(e.message);
               }
             }}
-          >
+          ><UIMessage>
             Use initials
-          </Button>
-          <p className="text-xs text-ink-muted">
+          </UIMessage></Button>
+          <p className="text-xs text-ink-muted"><UIMessage>
             PNG, JPEG or WebP · up to 5 MB
-          </p>
+          </UIMessage></p>
         </div>
         <form onSubmit={handleSubmit(save)} className="space-y-5">
           <fieldset
@@ -170,7 +173,7 @@ export function ProfilePanel() {
               ["contact_phone", "Mobile number (optional)", "+91 9876543210"],
             ].map(([key, label, placeholder]) => (
               <div key={key}>
-                <Label htmlFor={`profile-${key}`}>{label}</Label>
+                <Label htmlFor={`profile-${key}`}><UIMessage>{label}</UIMessage></Label>
                 <Input
                   id={`profile-${key}`}
                   type={key === "contact_phone" ? "tel" : "text"}
@@ -196,10 +199,10 @@ export function ProfilePanel() {
                 {...register("contact_visible")}
                 className="mt-1 size-5"
               />
-              <span>
+              <span><UIMessage>
                 Share my phone number with accepted exchange participants. It
                 stays hidden from the public board.
-              </span>
+              </UIMessage></span>
             </label>
             <ErrorMessage message={error} />
             {error && (
@@ -207,13 +210,13 @@ export function ProfilePanel() {
                 type="button"
                 variant="outline"
                 onClick={() => window.location.reload()}
-              >
+              ><UIMessage>
                 Reload account section
-              </Button>
+              </UIMessage></Button>
             )}
-            <Button loading={isSubmitting} type="submit">
+            <Button loading={isSubmitting} type="submit"><UIMessage>
               Save profile
-            </Button>
+            </UIMessage></Button>
           </fieldset>
         </form>
       </CardContent>
@@ -221,6 +224,7 @@ export function ProfilePanel() {
   );
 }
 export function TrustPanel() {
+  const { t } = useLanguage();
   const auth = useAuth(),
     toast = useToast();
   const [data, setData] = useState(null),
@@ -252,6 +256,10 @@ export function TrustPanel() {
   }
   useEffect(() => {
     load();
+    const refresh = () => { if (!document.hidden) load(); };
+    window.addEventListener("focus", refresh);
+    const timer = setInterval(refresh, 15000);
+    return () => { window.removeEventListener("focus", refresh); clearInterval(timer); };
   }, []);
   async function action(path, body) {
     setBusy(true);
@@ -289,20 +297,21 @@ export function TrustPanel() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Trust & Verification</CardTitle>
+          <CardTitle><UIMessage>Trust & Verification</UIMessage></CardTitle>
         </CardHeader>
         <CardContent>
           {error ? (
             <>
               <ErrorMessage message={error} />
-              <Button onClick={load}>Retry verification status</Button>
+              <Button onClick={load}><UIMessage>Retry verification status</UIMessage></Button>
             </>
           ) : (
-            <p role="status">Loading verification checks…</p>
+            <p role="status"><UIMessage>Loading verification checks…</UIMessage></p>
           )}
         </CardContent>
       </Card>
     );
+  const staff = !!data.staff_access;
   const completed = data
     ? [data.email, data.phone, data.community].filter(Boolean).length
     : 0;
@@ -310,15 +319,15 @@ export function TrustPanel() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Build trust, one step at a time</CardTitle>
-          <CardDescription>
+          <CardTitle><UIMessage>Build trust, one step at a time</UIMessage></CardTitle>
+          <CardDescription><UIMessage>
             Each check shows what has actually been reviewed. No step is marked
             complete just because you entered a detail.
-          </CardDescription>
+          </UIMessage></CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-between text-sm">
-            <span>{completed} of 3 checks complete</span>
+            <span>{t(staff ? "{count} of 3 optional identity checks complete" : "{count} of 3 checks complete", { count: completed })}</span>
             <Badge variant="outline">{data?.status || "Loading"}</Badge>
           </div>
           <Progress
@@ -358,30 +367,32 @@ export function TrustPanel() {
                 </span>
                 <div className="flex-1">
                   <p className="text-sm font-semibold">
-                    {i + 1}. {title}{" "}
+                    {i + 1}. <UIMessage>{title}</UIMessage>{" "}
                     <span className="text-xs text-ink-muted font-normal">
-                      {data?.[key] ? "Confirmed" : "Next step"}
+                      <UIMessage>{data?.[key] ? "Confirmed" : key === "phone" && data.phone_saved ? "Saved · needs review" : key === "community" && data.status === "pending" ? "Awaiting review" : "Next step"}</UIMessage>
                     </span>
                   </p>
                   <p className="text-sm text-ink-muted leading-relaxed mt-1">
-                    {description}
+                    <UIMessage>{description}</UIMessage>
                   </p>
+                  {key === "phone" && !data.phone && <p className="text-xs mt-2 text-ink-muted"><UIMessage>{data.phone_saved ? "Your number is saved. Ask the moderator to review your phone check after approving your society reference." : "Save an optional phone number in the Profile tab first."}</UIMessage></p>}
+                  {key === "community" && staff && <p className="text-xs mt-2 text-brand"><UIMessage>Your staff role already grants moderation access. Community review is not required to use your dashboard; identity checks remain separate.</UIMessage></p>}
                   {key === "email" && !data?.email && (
                     <div className="mt-3 space-y-3">
                       {data && !data.email_delivery_available ? (
-                        <p className="text-xs text-warning">
+                        <p className="text-xs text-warning"><UIMessage>
                           Email delivery is awaiting provider setup. You can
                           submit your community reference below.
-                        </p>
+                        </UIMessage></p>
                       ) : (
                         <>
                           <Button
                             variant="outline"
                             loading={busy}
                             onClick={() => action("/account/email/send", {})}
-                          >
+                          ><UIMessage>
                             Send verification code
-                          </Button>
+                          </UIMessage></Button>
                           <form
                             onSubmit={(e) => {
                               e.preventDefault();
@@ -402,9 +413,9 @@ export function TrustPanel() {
                             <Button
                               type="submit"
                               disabled={busy || code.length !== 6}
-                            >
+                            ><UIMessage>
                               Verify
-                            </Button>
+                            </UIMessage></Button>
                           </form>
                         </>
                       )}
@@ -420,48 +431,48 @@ export function TrustPanel() {
               type="button"
               variant="outline"
               onClick={() => window.location.reload()}
-            >
+            ><UIMessage>
               Reload account section
-            </Button>
+            </UIMessage></Button>
           )}
         </CardContent>
       </Card>
-      <Card>
+      {!staff && <Card>
         <CardHeader>
-          <CardTitle>Request community review</CardTitle>
-          <CardDescription>
+          <CardTitle><UIMessage>Request community review</UIMessage></CardTitle>
+          <CardDescription><UIMessage>
             Prefer a society reference. Do not enter a full Aadhaar number,
             banking details, passwords, or OTPs.
-          </CardDescription>
+          </UIMessage></CardDescription>
         </CardHeader>
         <CardContent>
           {data?.status === "pending" ? (
-            <p className="text-sm text-warning">
+            <p className="text-sm text-warning"><UIMessage>
               Your evidence is awaiting review. The administrator will update
               the result here.
-            </p>
+            </UIMessage></p>
           ) : data?.status === "verified" ? (
-            <p className="text-sm text-success">
+            <p className="text-sm text-success"><UIMessage>
               Your community evidence has been reviewed. Phone and address
               checks may still need confirmation by an administrator.
-            </p>
+            </UIMessage></p>
           ) : (
             <form onSubmit={handleSubmit(submit)} className="space-y-4">
               <div>
-                <Label htmlFor="proof-type">Evidence type</Label>
+                <Label htmlFor="proof-type"><UIMessage>Evidence type</UIMessage></Label>
                 <select
                   id="proof-type"
                   className="filter-control"
                   {...register("proof_type")}
                 >
-                  <option>Reference</option>
+                  <option value="Reference"><UIMessage>Reference</UIMessage></option>
                 </select>
               </div>
               <div>
-                <Label htmlFor="proof-value">
+                <Label htmlFor="proof-value"><UIMessage>
                   Society reference or evidence details
-                </Label>
-                <textarea
+                </UIMessage></Label>
+                <UIElement as="textarea"
                   id="proof-value"
                   aria-invalid={!!errors.proof_value}
                   aria-describedby={
@@ -475,26 +486,26 @@ export function TrustPanel() {
                 <FieldError id="error-proof_value" error={errors.proof_value} />
               </div>
               <div>
-                <Label htmlFor="proof-note">Note to reviewer (optional)</Label>
+                <Label htmlFor="proof-note"><UIMessage>Note to reviewer (optional)</UIMessage></Label>
                 <Input id="proof-note" {...register("note")} />
               </div>
-              <p className="text-sm text-ink-muted">
+              <p className="text-sm text-ink-muted"><UIMessage>
                 Submitting shares this reference with authorised reviewers for
                 community verification. Get the reference person’s permission
-                first.{" "}
-                <Link className="underline" href="/privacy">
+                first.</UIMessage>{" "}
+                <Link className="underline" href="/privacy"><UIMessage>
                   How we use this information
-                </Link>
+                </UIMessage></Link>
                 .
               </p>
-              <Button type="submit" loading={isSubmitting}>
+              <Button type="submit" loading={isSubmitting}><UIMessage>
                 Submit reference for review
-              </Button>
+              </UIMessage></Button>
             </form>
           )}
           {history.length > 0 && (
             <div className="border-t border-line mt-6 pt-4 space-y-3">
-              <h3 className="text-sm font-semibold">Review history</h3>
+              <h3 className="text-sm font-semibold"><UIMessage>Review history</UIMessage></h3>
               {history.map((h) => (
                 <div
                   key={h.id}
@@ -512,7 +523,7 @@ export function TrustPanel() {
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card>}
     </>
   );
 }
@@ -551,11 +562,11 @@ export function NotificationsPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Stay in the loop</CardTitle>
-        <CardDescription>
+        <CardTitle><UIMessage>Stay in the loop</UIMessage></CardTitle>
+        <CardDescription><UIMessage>
           Get updates when someone responds, accepts an exchange, or sends a
           message.
-        </CardDescription>
+        </UIMessage></CardDescription>
       </CardHeader>
       <CardContent>
         <ErrorMessage message={error} />
@@ -564,9 +575,9 @@ export function NotificationsPanel() {
             type="button"
             variant="outline"
             onClick={() => window.location.reload()}
-          >
+          ><UIMessage>
             Reload account section
-          </Button>
+          </UIMessage></Button>
         )}
         {data ? (
           <form onSubmit={save} className="space-y-5">
@@ -588,37 +599,37 @@ export function NotificationsPanel() {
                       setData({ ...data, [key]: e.target.checked })
                     }
                   />
-                  {label}
+                  <UIMessage>{label}</UIMessage>
                 </label>
               ))}
               {!data.plan_allows_email && (
                 <p className="text-sm text-ink-muted">
-                  <Link className="text-brand underline" href="/pricing">
+                  <Link className="text-brand underline" href="/pricing"><UIMessage>
                     Upgrade your plan
-                  </Link>{" "}
+                  </UIMessage></Link>{" "}<UIMessage>
                   to enable email alerts.
-                </p>
+                </UIMessage></p>
               )}
               {(!data.email_verified || !data.email_available) && (
-                <p className="text-xs text-warning">
+                <p className="text-xs text-warning"><UIMessage>
                   Email alerts are delivered after you verify your email and the
                   service’s email provider is configured. In-app notifications
                   work now.
-                </p>
+                </UIMessage></p>
               )}
-              <Button type="submit" loading={busy}>
+              <Button type="submit" loading={busy}><UIMessage>
                 Save preferences
-              </Button>
+              </UIMessage></Button>
               <Button asChild variant="ghost">
-                <Link href="/notifications">
+                <Link href="/notifications"><UIMessage>
                   View notifications
-                  <ArrowRight className="size-4" />
+                  </UIMessage><ArrowRight className="size-4" />
                 </Link>
               </Button>
             </fieldset>
           </form>
         ) : (
-          !error && <p role="status">Loading preferences…</p>
+          !error && <p role="status"><UIMessage>Loading preferences…</UIMessage></p>
         )}
       </CardContent>
     </Card>
@@ -663,11 +674,11 @@ export function BillingPanel() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Your plan & usage</CardTitle>
-          <CardDescription>
+          <CardTitle><UIMessage>Your plan & usage</UIMessage></CardTitle>
+          <CardDescription><UIMessage>
             Your allowance resets on the first of each calendar month. Deleted
             posts still count.
-          </CardDescription>
+          </UIMessage></CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
           <ErrorMessage message={error} />
@@ -676,9 +687,9 @@ export function BillingPanel() {
               type="button"
               variant="outline"
               onClick={() => window.location.reload()}
-            >
+            ><UIMessage>
               Reload account section
-            </Button>
+            </UIMessage></Button>
           )}
           {data ? (
             <>
@@ -691,8 +702,8 @@ export function BillingPanel() {
                       : "Free"}
                 </Badge>
                 <span className="text-sm text-ink-muted">
-                  {data.used} posts this month
-                  {data.limit == null
+                  {data.used}<UIMessage> posts this month
+                  </UIMessage>{data.limit == null
                     ? " · Unlimited allowance"
                     : ` · ${data.limit} allowed`}
                 </span>
@@ -706,40 +717,40 @@ export function BillingPanel() {
                 }
               />
               {data.expires_at && (
-                <p className="text-xs text-ink-muted">
-                  Test entitlement ends{" "}
-                  {new Date(data.expires_at).toLocaleDateString("en-IN")}. This
+                <p className="text-xs text-ink-muted"><UIMessage>
+                  Test entitlement ends</UIMessage>{" "}
+                  {new Date(data.expires_at).toLocaleDateString("en-IN")}<UIMessage>. This
                   is not an auto-renewing charge.
-                </p>
+                </UIMessage></p>
               )}
               <div className="flex flex-wrap gap-3">
                 <Button asChild>
-                  <Link href="/pricing">Compare / upgrade plans</Link>
+                  <Link href="/pricing"><UIMessage>Compare / upgrade plans</UIMessage></Link>
                 </Button>
                 {data.plan !== "free" && (
-                  <Button variant="outline" loading={busy} onClick={downgrade}>
+                  <Button variant="outline" loading={busy} onClick={downgrade}><UIMessage>
                     Switch to Free now
-                  </Button>
+                  </UIMessage></Button>
                 )}
               </div>
               <p className="text-xs text-warning">
-                {data.mock_checkout
+                <UIMessage>{data.mock_checkout
                   ? "Test mode: no real payments are collected."
-                  : "Paid checkout is not configured."}
+                  : "Paid checkout is not configured."}</UIMessage>
               </p>
             </>
           ) : (
-            !error && <p role="status">Loading billing…</p>
+            !error && <p role="status"><UIMessage>Loading billing…</UIMessage></p>
           )}
         </CardContent>
       </Card>
       <Card>
         <CardHeader>
-          <CardTitle>Invoices</CardTitle>
-          <CardDescription>
+          <CardTitle><UIMessage>Invoices</UIMessage></CardTitle>
+          <CardDescription><UIMessage>
             INR amounts are set by the server. Test invoices are not tax
             invoices.
-          </CardDescription>
+          </UIMessage></CardDescription>
         </CardHeader>
         <CardContent>
           <InvoiceList />
@@ -802,11 +813,11 @@ export function SocietyPanel() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your society board</CardTitle>
-        <CardDescription>
+        <CardTitle><UIMessage>Your society board</UIMessage></CardTitle>
+        <CardDescription><UIMessage>
           Create a board with the Society plan, or join as a resident with an
           invite code.
-        </CardDescription>
+        </UIMessage></CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <ErrorMessage message={error} />
@@ -815,16 +826,16 @@ export function SocietyPanel() {
             type="button"
             variant="outline"
             onClick={() => window.location.reload()}
-          >
+          ><UIMessage>
             Reload account section
-          </Button>
+          </UIMessage></Button>
         )}
-        {loading && <p role="status">Loading your society boards…</p>}
+        {loading && <p role="status"><UIMessage>Loading your society boards…</UIMessage></p>}
         {!loading && !error && !boards.length && (
-          <p className="text-sm text-ink-muted">
+          <p className="text-sm text-ink-muted"><UIMessage>
             No society board joined yet. Ask your society organiser for an
             invite code.
-          </p>
+          </UIMessage></p>
         )}
         {boards.map((b) => (
           <div
@@ -835,27 +846,27 @@ export function SocietyPanel() {
               {b.name} · {b.pin_code}
             </p>
             <Button asChild variant="outline">
-              <Link href={`/noticeboard?community=${b.id}`}>
+              <Link href={`/noticeboard?community=${b.id}`}><UIMessage>
                 Open private board
-              </Link>
+              </UIMessage></Link>
             </Button>
             {b.invite_code && (
               <>
-                <Label>Resident invite code</Label>
+                <Label><UIMessage>Resident invite code</UIMessage></Label>
                 <p className="text-xs break-all select-all bg-surface-muted rounded p-3">
                   {b.invite_code}
                 </p>
-                <p className="text-xs text-ink-muted">
+                <p className="text-xs text-ink-muted"><UIMessage>
                   Share this code only with residents. Members enter it below to
                   join.
-                </p>
+                </UIMessage></p>
               </>
             )}
             {analytics[b.id] && (
               <p className="text-sm text-ink-muted">
-                {analytics[b.id].members} members · {analytics[b.id].posts}{" "}
-                posts · {analytics[b.id].completed} completed
-              </p>
+                {analytics[b.id].members}<UIMessage> members · </UIMessage>{analytics[b.id].posts}{" "}<UIMessage>
+                posts · </UIMessage>{analytics[b.id].completed}<UIMessage> completed
+              </UIMessage></p>
             )}
           </div>
         ))}
@@ -866,7 +877,7 @@ export function SocietyPanel() {
           }}
           className="space-y-3"
         >
-          <Label htmlFor="society-invite">Join a society</Label>
+          <Label htmlFor="society-invite"><UIMessage>Join a society</UIMessage></Label>
           <Input
             id="society-invite"
             value={invite}
@@ -876,14 +887,14 @@ export function SocietyPanel() {
             placeholder="Resident invite code"
             required
           />
-          <Button type="submit" variant="outline" disabled={busy}>
+          <Button type="submit" variant="outline" disabled={busy}><UIMessage>
             Join board
-          </Button>
+          </UIMessage></Button>
         </form>
         <details className="border-t border-line pt-3">
-          <summary className="text-sm font-medium cursor-pointer">
+          <summary className="text-sm font-medium cursor-pointer"><UIMessage>
             Create a board · Society plan required
-          </summary>
+          </UIMessage></summary>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -891,7 +902,7 @@ export function SocietyPanel() {
             }}
             className="space-y-3 mt-4"
           >
-            <Label htmlFor="society-name">Society name</Label>
+            <Label htmlFor="society-name"><UIMessage>Society name</UIMessage></Label>
             <Input
               id="society-name"
               value={name}
@@ -901,7 +912,7 @@ export function SocietyPanel() {
               placeholder="Your society name"
               required
             />
-            <Label htmlFor="society-pin">PIN code</Label>
+            <Label htmlFor="society-pin"><UIMessage>PIN code</UIMessage></Label>
             <Input
               id="society-pin"
               value={pin}
@@ -912,9 +923,9 @@ export function SocietyPanel() {
               placeholder="382481"
               required
             />
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" disabled={busy}><UIMessage>
               Create board
-            </Button>
+            </UIMessage></Button>
           </form>
         </details>
       </CardContent>

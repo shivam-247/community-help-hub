@@ -44,6 +44,9 @@ def rate_post(
             raise HTTPException(status_code=403, detail="Only the post owner or accepted responder can rate.")
         rated_user_id = post.owner_id
 
+    if rated_user_id == user.id:
+        raise HTTPException(400, "You cannot rate yourself.")
+
     if not (1 <= data.stars <= 5):
         raise HTTPException(status_code=400, detail="Stars must be between 1 and 5.")
 
@@ -73,3 +76,20 @@ def rate_post(
     session.commit()
     return {"ok": True}
 
+
+
+@router.get("/{post_id}/rating-eligibility")
+def rating_eligibility(post_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    post = session.get(Post, post_id)
+    if not post:
+        raise HTTPException(404, "Post not found.")
+    from .posts_router import get_post
+    get_post(post_id, session=session, user=user)
+    accepted = session.exec(select(ResponseRequest).where(ResponseRequest.post_id == post_id, ResponseRequest.status == RequestStatus.accepted)).first()
+    peer_id = None
+    if accepted and user.id in (post.owner_id, accepted.requester_id):
+        peer_id = accepted.requester_id if user.id == post.owner_id else post.owner_id
+    peer = session.get(User, peer_id) if peer_id and peer_id != user.id else None
+    rated = session.exec(select(Rating).where(Rating.post_id == post_id, Rating.rater_id == user.id)).first()
+    return {"can_rate": bool(peer and post.status == PostStatus.resolved and not rated),
+            "target_name": peer.name if peer else None, "already_rated": bool(rated)}

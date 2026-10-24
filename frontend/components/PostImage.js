@@ -1,14 +1,16 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import Image from "next/image";
 import { useState } from "react";
 export default function PostImage({ src, title, className = "" }) {
   const [failed, setFailed] = useState(false);
   if (failed)
     return (
-      <p className="rounded-lg bg-surface-muted p-4 text-sm text-ink-muted">
+      <p className="rounded-lg bg-surface-muted p-4 text-sm text-ink-muted"><UIMessage>
         The attached photo could not load. Read the notice details or ask its
         author.
-      </p>
+      </UIMessage></p>
     );
   // Browser loading preserves cookies on private society attachments.
   return (

@@ -1,3 +1,4 @@
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
 import { SafetyProvider } from "./SafetyMenu";
 import Link from "next/link";
 import Nav from "./Nav";
@@ -9,7 +10,6 @@ export default function AppShell({ children }) {
     <SafetyProvider>
       <Nav />
       <main
-        lang="en"
         tabIndex={-1}
         id="main-content"
         className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 pt-6 pb-8 sm:pt-9 sm:pb-12"
@@ -26,14 +26,14 @@ export default function AppShell({ children }) {
             >
               <Brand />
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-7 text-ink-muted">
+            <p className="mt-4 max-w-xs text-sm leading-7 text-ink-muted"><UIMessage>
               A little help makes a neighbourhood feel more like home.
-            </p>
-            <p className="mt-4 text-[11px] text-ink-muted">
+            </UIMessage></p>
+            <p className="mt-4 text-[11px] text-ink-muted"><UIMessage>
               An independent college project by Shivam Parmar.
-            </p>
+            </UIMessage></p>
           </div>
-          <nav aria-label="Footer" className="footer-links">
+          <UIElement as="nav" aria-label="Footer" className="footer-links">
             {[
               ["/about", "About the hub"],
               ["/noticeboard", "Feed"],
@@ -51,7 +51,7 @@ export default function AppShell({ children }) {
                 <Text>{label}</Text>
               </Link>
             ))}
-          </nav>
+          </UIElement>
         </div>
       </footer>
     </SafetyProvider>

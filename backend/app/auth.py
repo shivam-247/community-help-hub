@@ -62,6 +62,9 @@ def get_current_user(token: str = Depends(oauth2_scheme), session: Session = Dep
         mfa = session.get(UserMFA, user_id)
         if user is None or (mfa and mfa.enabled and payload.get("mfa_version") != mfa.version):
             raise error
+        from .safety import restriction
+        if restriction(session, user.id) != "active":
+            raise HTTPException(403, "This account is restricted. Contact support with your moderation case reference.")
         return user
     except (jwt.PyJWTError, ValueError, TypeError, KeyError):
         raise error

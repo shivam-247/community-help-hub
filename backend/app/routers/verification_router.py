@@ -84,6 +84,14 @@ def review_verification(
     v.reviewer_comment = data.reviewer_comment
     v.reviewed_at = datetime.now(timezone.utc)
     applicant.verification_status = v.status
+    from ..product_models import TrustRecord
+    from ..safety import audit
+    trust = session.get(TrustRecord, applicant.id) or TrustRecord(user_id=applicant.id)
+    trust.address_verified = bool(data.approve)
+    if not data.approve:
+        trust.phone_verified = False
+    session.add(trust)
+    audit(session, admin, applicant.id, "verification_approved" if data.approve else "verification_rejected", data.reviewer_comment or "Society reference reviewed")
     session.add(v)
     session.add(applicant)
     from ..product import notify

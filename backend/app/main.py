@@ -1,6 +1,8 @@
 import os
 import asyncio
 from contextlib import suppress
+from . import safety
+from .routers.safety_router import router as safety_router
 from .product import email_worker
 from .routers.product_router import router as product_router
 from .demo import seed_demo
@@ -68,3 +70,5 @@ async def validation_error(request, exc):
         {"loc": list(error["loc"]), "msg": error["msg"], "type": error["type"]}
         for error in exc.errors()
     ]})
+
+app.include_router(safety_router)

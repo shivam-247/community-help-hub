@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, Query
 from ..pagination import PageParams, paginate
 from fastapi.responses import StreamingResponse
 from pydantic import Field, field_validator
-from sqlalchemy import update
+from sqlalchemy import update, delete
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 from .. import database
@@ -22,6 +22,7 @@ from ..product_models import *
 from pydantic import Field
 from ..product import PLANS, active_plan, usage, notify
 from ..invoice_receipts import smtp_available
+from ..safety import ExchangeClosure, exchange_closed, ensure_chat_open, audit
 
 router = APIRouter(tags=["product"])
 
@@ -170,13 +171,19 @@ def profile(data: ProfileIn, user: User = Depends(get_current_user), session: Se
     from .auth_router import get_or_create_locality, me
     loc = get_or_create_locality(session, data.locality.strip())
     trust = session.get(TrustRecord, user.id)
+    area_changed = user.locality_id != loc.id
     if trust:
         if user.contact_phone != data.contact_phone:
             trust.phone_verified = False
-        if user.locality_id != loc.id:
+        if area_changed:
             trust.address_verified = False
-            user.verification_status = VerificationStatus.unverified
         session.add(trust)
+    if area_changed:
+        user.verification_status = VerificationStatus.unverified
+        for evidence in session.exec(select(Verification).where(Verification.user_id == user.id, Verification.status.in_([VerificationStatus.pending, VerificationStatus.verified]))).all():
+            evidence.status = VerificationStatus.rejected
+            evidence.reviewer_comment = "Area changed. Submit a new society reference for this neighbourhood."
+            session.add(evidence)
     user.name = data.name.strip()
     user.locality_id = loc.id
     user.contact_phone = data.contact_phone
@@ -191,6 +198,8 @@ def trust_status(user: User = Depends(get_current_user), session: Session = Depe
     return {"email": bool(trust and trust.email_verified), "phone": bool(trust and trust.phone_verified),
             "community": bool(trust and trust.address_verified), "status": user.verification_status,
             "email_delivery_available": smtp_available(),
+            "email_saved": user.email, "phone_saved": bool(user.contact_phone),
+            "community_saved": bool(user.locality_id), "staff_access": is_admin_or_super(user),
             "phone_method": "Administrator review of your society reference; no SMS service is configured."}
 
 def code_digest(user_id, code):
@@ -238,6 +247,17 @@ def complete(request_id: int, user: User = Depends(get_current_user), session: S
     post = session.get(Post, rr.post_id) if rr else None
     if not post or user.id not in (post.owner_id, rr.requester_id) or rr.status != RequestStatus.accepted:
         raise HTTPException(403, "Only the two participants of an accepted exchange can confirm completion.")
+    from .messages_router import _check_participant
+    _check_participant(session, rr, user)
+    # Serialize message writes and completion claims on SQLite before checking closure.
+    session.execute(update(Post).where(Post.id == post.id).values(status=Post.status))
+    session.expire_all()
+    if exchange_closed(session, rr):
+        session.exec(delete(Message).where(Message.response_request_id == rr.id))
+        if not session.get(ExchangeClosure, rr.id):
+            session.add(ExchangeClosure(request_id=rr.id, post_id=post.id))
+        session.commit()
+        return {"completed": True, "confirmed": True, "chat_closed": True}
     try:
         with session.begin_nested():
             if not session.get(CompletionConfirmation, (post.id, user.id)):
@@ -260,11 +280,25 @@ def complete(request_id: int, user: User = Depends(get_current_user), session: S
                 pass
         post.status = PostStatus.resolved
         session.add(post)
+        session.add(ExchangeClosure(request_id=rr.id, post_id=post.id))
+        session.exec(delete(Message).where(Message.response_request_id == rr.id))
     else:
         notify(session, rr.requester_id if user.id == post.owner_id else post.owner_id,
                "Please confirm your exchange", f"{user.name} marked “{post.title}” as completed. Confirm in your conversation when the exchange is done.", f"/messages/{rr.id}")
     session.commit()
-    return {"completed": done, "confirmed": True}
+    return {"completed": done, "confirmed": True, "chat_closed": done}
+
+@router.get("/requests/{request_id}/state")
+def exchange_state(request_id: int, user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    from .messages_router import _check_participant
+    rr = session.get(ResponseRequest, request_id)
+    if not rr:
+        raise HTTPException(404, "Conversation not found.")
+    _check_participant(session, rr, user)
+    post = session.get(Post, rr.post_id)
+    return {"closed": exchange_closed(session, rr), "post_id": post.id,
+            "confirmed": bool(session.get(CompletionConfirmation, (post.id, user.id))),
+            "peer_id": rr.requester_id if user.id == post.owner_id else post.owner_id}
 
 @router.get("/requests/{request_id}/events")
 def message_events(request_id: int, request: Request, after: int = 0,
@@ -274,8 +308,7 @@ def message_events(request_id: int, request: Request, after: int = 0,
     if not rr:
         raise HTTPException(404, "Conversation not found.")
     _check_participant(session, rr, user)
-    if rr.status != RequestStatus.accepted:
-        raise HTTPException(403, "Chat opens after acceptance.")
+    ensure_chat_open(session, rr)
     async def stream():
         try:
             resume = int(request.headers.get("last-event-id", "0"))
@@ -291,6 +324,9 @@ def message_events(request_id: int, request: Request, after: int = 0,
                     if not conversation or conversation.status != RequestStatus.accepted:
                         return
                     _check_participant(fresh, conversation, current)
+                    if exchange_closed(fresh, conversation):
+                        yield 'event: exchange_closed\ndata: {"closed": true}\n\n'
+                        return
                 except HTTPException:
                     return
                 rows = fresh.exec(select(Message).where(Message.response_request_id == request_id, Message.id > last).order_by(Message.id).limit(100)).all()
@@ -385,6 +421,7 @@ def review_trust(user_id: int, data: TrustReviewIn, user: User = Depends(get_cur
     trust = session.get(TrustRecord, user_id) or TrustRecord(user_id=user_id)
     trust.phone_verified = data.phone_verified
     trust.address_verified = data.address_verified
+    audit(session, user, user_id, "trust_review", data.note)
     session.add(trust)
     session.add(Verification(user_id=user_id, proof_type="Trust review", proof_value=data.note, status=VerificationStatus.verified, reviewer_id=user.id, reviewed_at=datetime.now(timezone.utc)))
     notify(session, user_id, "Trust steps updated", "A community administrator has reviewed your society reference.", "/settings?tab=trust")

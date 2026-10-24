@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import RecoveryPanel from "./RecoveryPanel";
 import { useAuth } from "../lib/auth-context";
 import { usePathname } from "next/navigation";
@@ -31,8 +33,8 @@ export default function RouteGuard({ children }) {
   return allowed ? (
     children
   ) : (
-    <div role="status" className="py-16 text-center text-sm text-ink-muted">
+    <div role="status" className="py-16 text-center text-sm text-ink-muted"><UIMessage>
       Checking your access…
-    </div>
+    </UIMessage></div>
   );
 }

@@ -1,9 +1,12 @@
 "use client";
+import { Text as UIMessage } from "../../../lib/i18n";
+
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../../../lib/api";
 import { useAuth } from "../../../lib/auth-context";
 import Pagination from "../../../components/Pagination";
+import SafetyMenu from "../../../components/SafetyMenu";
 import MemberBadge from "../../../components/MemberBadge";
 import { usePagedResource } from "../../../lib/use-paged-resource";
 import BadgeTier from "../../../components/BadgeTier";
@@ -76,7 +79,7 @@ export default function ProfilePage({ params }) {
       <div className="max-w-md mx-auto py-16 text-center space-y-4">
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-6 text-danger">
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
-          <h3 className="font-bold text-sm">Profile unavailable</h3>
+          <h3 className="font-bold text-sm"><UIMessage>Profile unavailable</UIMessage></h3>
           <p className="text-xs text-danger mt-1">
             {error || "This profile could not be loaded."}
           </p>
@@ -84,15 +87,15 @@ export default function ProfilePage({ params }) {
         <button
           className="min-h-11 px-4 underline"
           onClick={() => setAttempt((v) => v + 1)}
-        >
+        ><UIMessage>
           Retry profile
-        </button>
+        </UIMessage></button>
         <Link
           href="/noticeboard"
           className="text-xs font-semibold text-brand hover:text-brand"
-        >
-          &larr; Return to Community Noticeboard
-        </Link>
+        ><UIMessage>
+          ← Return to Community Noticeboard
+        </UIMessage></Link>
       </div>
     );
   }
@@ -114,10 +117,11 @@ export default function ProfilePage({ params }) {
       <Link
         href="/noticeboard"
         className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
-      >
-        &larr; Back to all posts
-      </Link>
+      ><UIMessage>
+        ← Back to all posts
+      </UIMessage></Link>
 
+      {auth?.user && Number(id) !== auth.user.id && <div className="flex justify-end"><SafetyMenu ownerId={Number(id)} /></div>}
       {/* Hero Profile Card */}
       <div className="profile-hero bg-surface border border-line rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
@@ -136,21 +140,21 @@ export default function ProfilePage({ params }) {
                 </h1>
                 <MemberBadge plan={profile.plan} />
                 {profile.is_demo && (
-                  <span className="text-sm border border-line rounded-md px-2 py-1">
+                  <span className="text-sm border border-line rounded-md px-2 py-1"><UIMessage>
                     Fictional sample profile
-                  </span>
+                  </UIMessage></span>
                 )}
                 {isSuperAdmin && (
-                  <span className="inline-flex items-center gap-1 bg-brand-solid text-on-brand px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs">
+                  <span className="inline-flex items-center gap-1 bg-brand-solid text-on-brand px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider select-none shadow-xs"><UIMessage>
                     Super Admin
-                  </span>
+                  </UIMessage></span>
                 )}
                 {profile.verification_status === "verified" &&
                   !isSuperAdmin && (
                     <span className="inline-flex items-center gap-1 bg-success-soft text-success border border-success-soft px-2.5 py-0.5 rounded-full text-xs font-semibold select-none">
-                      <ShieldCheckIcon className="w-3.5 h-3.5 text-success" />
+                      <ShieldCheckIcon className="w-3.5 h-3.5 text-success" /><UIMessage>
                       Verified Neighbor
-                    </span>
+                    </UIMessage></span>
                   )}
               </div>
 
@@ -161,8 +165,8 @@ export default function ProfilePage({ params }) {
                 </span>
                 <span>·</span>
                 <span className="inline-flex items-center gap-1">
-                  <CalendarIcon className="w-3.5 h-3.5 text-ink-muted" />
-                  Joined {new Date(profile.created_at).toLocaleDateString()}
+                  <CalendarIcon className="w-3.5 h-3.5 text-ink-muted" /><UIMessage>
+                  Joined </UIMessage>{new Date(profile.created_at).toLocaleDateString()}
                 </span>
               </div>
             </div>
@@ -175,7 +179,7 @@ export default function ProfilePage({ params }) {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold bg-surface-strong hover:bg-surface-strong text-on-brand rounded-xl shadow-xs transition-all select-none"
             >
               <SettingsIcon className="w-4 h-4" />
-              <span>Settings &amp; Privacy</span>
+              <span><UIMessage>Settings & Privacy</UIMessage></span>
             </Link>
           )}
         </div>
@@ -183,9 +187,9 @@ export default function ProfilePage({ params }) {
         {/* Reputation & Trust Stats Bar — Clean and star-free */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 border-t border-line select-none">
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider"><UIMessage>
               Badge Rank
-            </span>
+            </UIMessage></span>
             <span className="font-bold text-brand text-sm mt-0.5 block">
               {isSuperAdmin ? (
                 "Super Admin"
@@ -196,27 +200,27 @@ export default function ProfilePage({ params }) {
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider"><UIMessage>
               Exchanges Rated
-            </span>
+            </UIMessage></span>
             <span className="font-bold text-ink text-sm mt-0.5 block">
-              {profile.rating_count} Completed
-            </span>
+              {profile.rating_count}<UIMessage> Completed
+            </UIMessage></span>
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider"><UIMessage>
               Community Credits
-            </span>
+            </UIMessage></span>
             <span className="font-bold text-ink text-sm mt-0.5 block">
-              {profile.credits} pts
-            </span>
+              {profile.credits}<UIMessage> pts
+            </UIMessage></span>
           </div>
 
           <div className="bg-surface-muted rounded-xl p-3 text-center border border-line">
-            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider">
+            <span className="text-[11px] font-medium text-ink-muted block uppercase tracking-wider"><UIMessage>
               Posts on this page
-            </span>
+            </UIMessage></span>
             <span className="font-bold text-ink text-sm mt-0.5 block">
               {postList.items.length}
             </span>
@@ -226,19 +230,19 @@ export default function ProfilePage({ params }) {
         {/* Badge Progression Meter */}
         <div className="bg-brand-soft/50 border border-line rounded-xl p-4 space-y-2 select-none">
           <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-brand">
-              Reputation Level:{" "}
+            <span className="font-semibold text-brand"><UIMessage>
+              Reputation Level:</UIMessage>{" "}
               <strong className="text-brand">{profile.badge}</strong>
             </span>
             {nextTier ? (
               <span className="text-brand font-medium">
-                {profile.credits} / {nextTier.min} credits to reach{" "}
+                {profile.credits} / {nextTier.min}<UIMessage> credits to reach</UIMessage>{" "}
                 <strong>{nextTier.name}</strong>
               </span>
             ) : (
-              <span className="text-success font-bold">
+              <span className="text-success font-bold"><UIMessage>
                 Champion tier achieved
-              </span>
+              </UIMessage></span>
             )}
           </div>
 
@@ -262,7 +266,7 @@ export default function ProfilePage({ params }) {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>Community Notices</span>
+          <span><UIMessage>Community Notices</UIMessage></span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               activeTab === "posts"
@@ -283,7 +287,7 @@ export default function ProfilePage({ params }) {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>Neighbor Testimonials</span>
+          <span><UIMessage>Neighbor Testimonials</UIMessage></span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               activeTab === "reviews"
@@ -301,9 +305,9 @@ export default function ProfilePage({ params }) {
         (postList.loading || postList.error ? null : postList.items.length ===
           0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
-            <p className="text-xs text-ink-muted">
+            <p className="text-xs text-ink-muted"><UIMessage>
               No community notices posted yet by this neighbor.
-            </p>
+            </UIMessage></p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -351,13 +355,13 @@ export default function ProfilePage({ params }) {
             .length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
-            <h3 className="font-bold text-ink text-sm mb-1">
+            <h3 className="font-bold text-ink text-sm mb-1"><UIMessage>
               No testimonials yet
-            </h3>
-            <p className="text-xs text-ink-muted max-w-sm mx-auto">
+            </UIMessage></h3>
+            <p className="text-xs text-ink-muted max-w-sm mx-auto"><UIMessage>
               Testimonials are submitted after completing a mutual aid exchange
               or item giveaway.
-            </p>
+            </UIMessage></p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -377,9 +381,9 @@ export default function ProfilePage({ params }) {
                   </div>
 
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold bg-success-soft text-success px-2.5 py-0.5 rounded-full border border-success-soft/80">
-                    <CheckIcon className="w-3 h-3 text-success" />
+                    <CheckIcon className="w-3 h-3 text-success" /><UIMessage>
                     Verified Exchange
-                  </span>
+                  </UIMessage></span>
                 </div>
 
                 {rev.comment && (
@@ -405,12 +409,12 @@ export default function ProfilePage({ params }) {
           </div>
         ))}
 
-      {list.loading && <p role="status">Loading {activeTab}…</p>}
+      {list.loading && <p role="status"><UIMessage>Loading </UIMessage>{activeTab}…</p>}
       {list.error && (
         <div role="alert">
           <p>{list.error}</p>
-          <button className="min-h-11 underline" onClick={list.reload}>
-            Retry loading {activeTab}
+          <button className="min-h-11 underline" onClick={list.reload}><UIMessage>
+            Retry loading </UIMessage>{activeTab}
           </button>
         </div>
       )}

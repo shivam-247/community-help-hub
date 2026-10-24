@@ -57,6 +57,9 @@ def login(data: LoginIn, session: Session = Depends(get_session)):
     valid_password = verify_password(data.password, user.hashed_password if user else DUMMY_HASH)
     if not user or not valid_password or data.password == "pass1234":
         raise HTTPException(status_code=401, detail="Incorrect email or password.")
+    from ..safety import restriction
+    if restriction(session, user.id) != "active":
+        raise HTTPException(401, "Incorrect email or password, or this account is unavailable.")
     mfa = session.get(UserMFA, user.id)
     if mfa and mfa.enabled and not verify_totp(session, mfa, data.totp_code):
         raise HTTPException(status_code=401, detail="Incorrect credentials or authenticator code.")

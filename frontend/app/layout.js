@@ -1,3 +1,4 @@
+import { Text as UIMessage } from "../lib/i18n";
 import localFont from "next/font/local";
 const neighbourFont = localFont({
   src: [
@@ -48,10 +49,10 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-screen flex flex-col antialiased app-body">
-        <a className="skip-link" href="#main-content">
-          Skip to content
-        </a>
         <LanguageProvider>
+        <a className="skip-link" href="#main-content"><UIMessage>
+          Skip to content
+        </UIMessage></a>
           <AuthProvider>
             <ToastProvider>
               <AppShell>{children}</AppShell>

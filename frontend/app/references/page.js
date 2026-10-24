@@ -1,3 +1,4 @@
+import { Text as UIMessage } from "../../lib/i18n";
 import PageHeader from "../../components/PageHeader";
 import { references } from "../../lib/references";
 export const metadata = {
@@ -14,12 +15,12 @@ export default function References() {
         description="Sources for the platform’s implementation, security and accessibility, formatted as numbered references."
       />
       <section className="rounded-xl border border-line bg-surface p-5 space-y-3">
-        <h2 className="text-lg font-semibold">Research paper references</h2>
-        <p className="text-sm text-ink-muted leading-relaxed">
+        <h2 className="text-lg font-semibold"><UIMessage>Research paper references</UIMessage></h2>
+        <p className="text-sm text-ink-muted leading-relaxed"><UIMessage>
           The academic paper’s bibliography has not been supplied with this
           demo. The technical sources below are not presented as its cited
           research papers.
-        </p>
+        </UIMessage></p>
       </section>
       <ol className="space-y-5">
         {references.map((r, i) => (

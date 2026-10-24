@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../../../lib/i18n";
+
 import { use, useEffect, useState } from "react";
 import SafetyMenu, { useSafety } from "../../../components/SafetyMenu";
 import PostImage from "../../../components/PostImage";
@@ -48,6 +50,11 @@ export default function PostDetailPage({ params }) {
   const [busy, setBusy] = useState(false);
 
   // Rating state
+  const [ratingEligibility, setRatingEligibility] = useState(null);
+  useEffect(() => {
+    setRatingEligibility(null);
+    if (auth?.user) api(`/posts/${id}/rating-eligibility`, { auth: true }).then(setRatingEligibility).catch(() => {});
+  }, [id, auth?.user?.id, post?.status]);
   const [ratingStars, setRatingStars] = useState(0);
   const [ratingHover, setRatingHover] = useState(0);
   const [ratingTags, setRatingTags] = useState([]);
@@ -230,9 +237,9 @@ export default function PostDetailPage({ params }) {
       <Link
         href="/noticeboard"
         className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted hover:text-ink transition-colors"
-      >
-        &larr; Back to all posts
-      </Link>
+      ><UIMessage>
+        ← Back to all posts
+      </UIMessage></Link>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Main Content */}
@@ -279,10 +286,10 @@ export default function PostDetailPage({ params }) {
               onSubmit={saveEdit}
               className="rounded-xl border border-line bg-brand-soft p-4 space-y-4"
             >
-              <h2 className="font-bold">Edit your post</h2>
-              <label className="block text-sm">
+              <h2 className="font-bold"><UIMessage>Edit your post</UIMessage></h2>
+              <label className="block text-sm"><UIMessage>
                 Title
-                <input
+                </UIMessage><input
                   required
                   maxLength={200}
                   value={draft.title}
@@ -292,9 +299,9 @@ export default function PostDetailPage({ params }) {
                   className="mt-1 w-full rounded-lg border p-2"
                 />
               </label>
-              <label className="block text-sm">
+              <label className="block text-sm"><UIMessage>
                 Description
-                <textarea
+                </UIMessage><textarea
                   required
                   maxLength={10000}
                   rows={5}
@@ -305,9 +312,9 @@ export default function PostDetailPage({ params }) {
                   className="mt-1 w-full rounded-lg border p-2"
                 />
               </label>
-              <label className="block text-sm">
+              <label className="block text-sm"><UIMessage>
                 Priority
-                <select
+                </UIMessage><select
                   value={draft.priority}
                   onChange={(e) =>
                     setDraft({ ...draft, priority: e.target.value })
@@ -315,13 +322,13 @@ export default function PostDetailPage({ params }) {
                   className="mt-1 w-full rounded-lg border p-2"
                 >
                   {["Low", "Medium", "High"].map((value) => (
-                    <option key={value}>{value}</option>
+                    <option value={value} key={value}>{value}</option>
                   ))}
                 </select>
               </label>
-              <label className="block text-sm">
+              <label className="block text-sm"><UIMessage>
                 Deadline (your local time)
-                <input
+                </UIMessage><input
                   type="datetime-local"
                   value={draft.deadline}
                   onChange={(e) =>
@@ -335,16 +342,16 @@ export default function PostDetailPage({ params }) {
                   disabled={busy}
                   className="rounded-lg bg-brand-solid text-on-brand px-4 py-2 disabled:opacity-50"
                 >
-                  {busy ? "Saving…" : "Save changes"}
+                  <UIMessage>{busy ? "Saving…" : "Save changes"}</UIMessage>
                 </button>
                 <button
                   type="button"
                   disabled={busy}
                   onClick={() => setEditing(false)}
                   className="rounded-lg border px-4 py-2"
-                >
+                ><UIMessage>
                   Cancel
-                </button>
+                </UIMessage></button>
               </div>
             </form>
           )}
@@ -370,13 +377,13 @@ export default function PostDetailPage({ params }) {
               <MapPinIcon className="w-4 h-4 text-ink-muted" />
               {post.locality}
             </span>
-            <span className="inline-flex items-center gap-1.5 bg-surface-muted border border-line/80 px-3 py-1.5 rounded-xl font-medium">
-              Priority: <strong className="text-ink">{post.priority}</strong>
+            <span className="inline-flex items-center gap-1.5 bg-surface-muted border border-line/80 px-3 py-1.5 rounded-xl font-medium"><UIMessage>
+              Priority: </UIMessage><strong className="text-ink">{post.priority}</strong>
             </span>
             {post.deadline && (
               <span className="inline-flex items-center gap-1.5 bg-surface-muted border border-line/80 px-3 py-1.5 rounded-xl font-medium">
-                <ClockIcon className="w-4 h-4 text-ink-muted" />
-                Deadline: {new Date(post.deadline).toLocaleDateString()}
+                <ClockIcon className="w-4 h-4 text-ink-muted" /><UIMessage>
+                Deadline: </UIMessage>{new Date(post.deadline).toLocaleDateString()}
               </span>
             )}
           </div>
@@ -388,13 +395,13 @@ export default function PostDetailPage({ params }) {
                 <div className="bg-danger-soft border border-danger-soft/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-danger">
                   <AlertTriangleIcon className="w-4 h-4 text-danger shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold">
-                      Auto-flagged as potential spam (score {post.spam_score}):
+                    <span className="font-semibold"><UIMessage>
+                      Auto-flagged as potential spam (score </UIMessage>{post.spam_score}):
                     </span>
-                    <span className="ml-1">
+                    <span className="ml-1"><UIMessage>
                       Please verify all details carefully before communicating
                       or transacting.
-                    </span>
+                    </UIMessage></span>
                   </div>
                 </div>
               )}
@@ -402,13 +409,13 @@ export default function PostDetailPage({ params }) {
                 <div className="bg-warning-soft border border-warning-soft/80 rounded-xl p-3.5 flex items-start gap-2.5 text-xs text-warning">
                   <InfoIcon className="size-4 shrink-0" />
                   <div>
-                    <span className="font-semibold">
+                    <span className="font-semibold"><UIMessage>
                       Similar post detected:
-                    </span>
-                    <span className="ml-1">
-                      This request matches {post.duplicates.length} other open
+                    </UIMessage></span>
+                    <span className="ml-1"><UIMessage>
+                      This request matches </UIMessage>{post.duplicates.length}<UIMessage> other open
                       post(s) nearby.
-                    </span>
+                    </UIMessage></span>
                   </div>
                 </div>
               )}
@@ -416,17 +423,16 @@ export default function PostDetailPage({ params }) {
           )}
 
           {/* Rating Section — visible when post is Resolved */}
-          {post.status === "Resolved" && user && !ratingDone && (
+          {post.status === "Resolved" && user && ratingEligibility?.can_rate && !ratingDone && (
             <div className="border-t border-line pt-6">
               <div className="bg-warning-soft border border-warning-soft/60 rounded-xl p-5 space-y-4">
                 <div>
-                  <h3 className="font-bold text-ink text-sm">
-                    Rate this Exchange
+                  <h3 className="font-bold text-ink text-sm"><UIMessage>
+                    Review </UIMessage>{ratingEligibility?.target_name || "your neighbour"}
                   </h3>
-                  <p className="text-xs text-ink-muted mt-0.5">
-                    This post is resolved. Share your experience with the
-                    community.
-                  </p>
+                  <p className="text-xs text-ink-muted mt-0.5"><UIMessage>
+                    Review the other person in this exchange. You cannot review yourself.
+                  </UIMessage></p>
                 </div>
 
                 <form onSubmit={submitRating} className="space-y-4">
@@ -435,9 +441,9 @@ export default function PostDetailPage({ params }) {
                     <p
                       id="rating-label"
                       className="text-xs font-semibold text-ink-soft block mb-2"
-                    >
+                    ><UIMessage>
                       Your rating
-                    </p>
+                    </UIMessage></p>
                     <div className="flex items-center gap-1.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -478,9 +484,9 @@ export default function PostDetailPage({ params }) {
 
                   {/* Tag pills */}
                   <div>
-                    <p className="text-xs font-semibold text-ink-soft block mb-2">
+                    <p className="text-xs font-semibold text-ink-soft block mb-2"><UIMessage>
                       Quick tags (optional)
-                    </p>
+                    </UIMessage></p>
                     <div className="flex flex-wrap gap-2">
                       {RATING_TAGS.map((tag) => (
                         <button
@@ -494,7 +500,7 @@ export default function PostDetailPage({ params }) {
                               : "bg-surface text-ink-soft border-line hover:border-line"
                           }`}
                         >
-                          {ratingTags.includes(tag) ? "✓ " : ""}
+                          <UIMessage>{ratingTags.includes(tag) ? "✓ " : ""}</UIMessage>
                           {tag}
                         </button>
                       ))}
@@ -506,10 +512,10 @@ export default function PostDetailPage({ params }) {
                     <label
                       htmlFor="exchange-review"
                       className="text-xs font-semibold text-ink-soft block mb-1.5"
-                    >
+                    ><UIMessage>
                       Exchange review (optional, public)
-                    </label>
-                    <textarea
+                    </UIMessage></label>
+                    <UIElement as="textarea"
                       id="exchange-review"
                       maxLength={2000}
                       rows={3}
@@ -532,7 +538,7 @@ export default function PostDetailPage({ params }) {
                     className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand transition-all shadow-xs disabled:opacity-60"
                   >
                     <StarIcon className="w-4 h-4" />
-                    {ratingBusy ? "Submitting..." : "Publish exchange review"}
+                    <UIMessage>{ratingBusy ? "Submitting..." : "Publish exchange review"}</UIMessage>
                   </button>
                 </form>
               </div>
@@ -544,14 +550,14 @@ export default function PostDetailPage({ params }) {
             <div className="border-t border-line pt-5">
               <div className="bg-success-soft border border-success-soft rounded-xl p-4 text-center">
                 <CheckIcon className="w-6 h-6 text-success mx-auto mb-2" />
-                <p className="font-bold text-success text-sm">
+                <p className="font-bold text-success text-sm"><UIMessage>
                   Rating Submitted!
-                </p>
-                <p className="text-xs text-success mt-0.5">
+                </UIMessage></p>
+                <p className="text-xs text-success mt-0.5"><UIMessage>
                   Thank you for helping build community trust. Your review has
                   been saved. Exchange credits are awarded after both
                   participants confirm completion.
-                </p>
+                </UIMessage></p>
               </div>
             </div>
           )}
@@ -565,12 +571,12 @@ export default function PostDetailPage({ params }) {
             className="block bg-surface border border-line/90 hover:border-line rounded-xl p-5 shadow-xs transition-all hover:-translate-y-0.5 group"
           >
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider">
+              <p className="text-xs font-semibold text-ink-muted uppercase tracking-wider"><UIMessage>
                 Posted By
-              </p>
-              <span className="text-[11px] font-semibold text-brand group-hover:underline">
-                View Profile &rarr;
-              </span>
+              </UIMessage></p>
+              <span className="text-[11px] font-semibold text-brand group-hover:underline"><UIMessage>
+                View Profile →
+              </UIMessage></span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -600,12 +606,12 @@ export default function PostDetailPage({ params }) {
             {isOwner ? (
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-bold text-ink text-sm mb-1">
+                  <h4 className="font-bold text-ink text-sm mb-1"><UIMessage>
                     Manage Post Status
-                  </h4>
-                  <p className="text-xs text-ink-muted">
+                  </UIMessage></h4>
+                  <p className="text-xs text-ink-muted"><UIMessage>
                     Update status as your help request progresses.
-                  </p>
+                  </UIMessage></p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-1.5 bg-surface-muted p-1 rounded-xl">
@@ -630,7 +636,7 @@ export default function PostDetailPage({ params }) {
                     href="/inbox"
                     className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-semibold bg-surface-strong hover:bg-surface-strong text-on-brand transition-colors"
                   >
-                    <span>View Responses in Inbox</span>
+                    <span><UIMessage>View Responses in Inbox</UIMessage></span>
                     <span>&rarr;</span>
                   </Link>
                   {/* Admin delete */}
@@ -639,9 +645,9 @@ export default function PostDetailPage({ params }) {
                       disabled={busy}
                       onClick={startEdit}
                       className="w-full rounded-xl border border-line text-brand py-2 text-xs font-semibold"
-                    >
+                    ><UIMessage>
                       Edit Post
-                    </button>
+                    </UIMessage></button>
                   )}
                   {isOwner && (
                     <button
@@ -649,75 +655,75 @@ export default function PostDetailPage({ params }) {
                       disabled={busy}
                       className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-danger bg-danger-soft hover:bg-danger-soft border border-danger-soft transition-colors"
                     >
-                      <TrashIcon className="w-3.5 h-3.5" />
+                      <TrashIcon className="w-3.5 h-3.5" /><UIMessage>
                       Delete Post
-                    </button>
+                    </UIMessage></button>
                   )}
                 </div>
               </div>
             ) : !user ? (
               <div className="text-center py-4 space-y-3">
-                <h4 className="font-bold text-ink text-sm">Want to help?</h4>
-                <p className="text-xs text-ink-muted">
-                  Sign in to contact {post.owner_name} and offer assistance.
-                </p>
+                <h4 className="font-bold text-ink text-sm"><UIMessage>Want to help?</UIMessage></h4>
+                <p className="text-xs text-ink-muted"><UIMessage>
+                  Sign in to contact </UIMessage>{post.owner_name}<UIMessage> and offer assistance.
+                </UIMessage></p>
                 <Link
                   href={`/login?next=${encodeURIComponent(`/post/${id}`)}`}
                   className="w-full inline-flex items-center justify-center py-2.5 px-4 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs"
-                >
+                ><UIMessage>
                   Log in to Respond
-                </Link>
+                </UIMessage></Link>
               </div>
             ) : sent ? (
               <div className="bg-success-soft border border-success-soft rounded-xl p-4 text-center space-y-2">
                 <div className="w-8 h-8 bg-success-soft text-success rounded-full flex items-center justify-center mx-auto">
                   <CheckIcon className="w-4 h-4" />
                 </div>
-                <h4 className="font-bold text-success text-sm">
+                <h4 className="font-bold text-success text-sm"><UIMessage>
                   Response Sent!
-                </h4>
+                </UIMessage></h4>
                 <p className="text-xs text-success">
-                  {post.owner_name} has received your offer. You can track this
+                  {post.owner_name}<UIMessage> has received your offer. You can track this
                   in your Inbox.
-                </p>
+                </UIMessage></p>
                 <Link
                   href="/inbox"
                   className="inline-block mt-2 text-xs font-semibold text-success underline"
-                >
+                ><UIMessage>
                   Go to Inbox
-                </Link>
+                </UIMessage></Link>
               </div>
             ) : (
               <form onSubmit={respond} aria-busy={busy} className="space-y-3">
                 {needsVerification && (
-                  <p className="rounded-lg bg-warning-soft text-warning p-3 text-sm">
-                    Community verification is required before responding.{" "}
-                    <Link className="underline" href="/settings?tab=trust">
+                  <p className="rounded-lg bg-warning-soft text-warning p-3 text-sm"><UIMessage>
+                    Community verification is required before responding.</UIMessage>{" "}
+                    <Link className="underline" href="/settings?tab=trust"><UIMessage>
                       Open Trust & Verification
-                    </Link>
+                    </UIMessage></Link><UIMessage>
                     . Your message will stay here until you leave this page.
-                  </p>
+                  </UIMessage></p>
                 )}
                 <div>
                   <h4 className="font-bold text-ink text-sm mb-1">
-                    {post.is_demo ? "Sample notice" : "Offer help / respond"}
+                    <UIMessage>{post.is_demo ? "Sample notice" : "Offer help / respond"}</UIMessage>
                   </h4>
                   {post.is_demo && (
-                    <p className="text-sm text-warning mb-3">
+                    <p className="text-sm text-warning mb-3"><UIMessage>
                       This sample shows how a notice looks. Create your own post
                       to arrange a real exchange.
-                    </p>
+                    </UIMessage></p>
                   )}
-                  <p className="text-xs text-ink-muted mb-2">
+                  <p className="text-xs text-ink-muted mb-2"><UIMessage>
                     Send a brief note introducing yourself.
-                  </p>
+                  </UIMessage></p>
                   <label
                     htmlFor="exchange-response"
                     className="text-sm font-medium block mb-2"
-                  >
+                  ><UIMessage>
                     Message to the post author
-                  </label>
-                  <textarea
+                  </UIMessage></label>
+                  <UIElement as="textarea"
                     id="exchange-response"
                     disabled={busy}
                     maxLength={2000}
@@ -739,9 +745,9 @@ export default function PostDetailPage({ params }) {
                       <Link
                         href="/settings"
                         className="text-brand underline font-semibold block mt-1"
-                      >
-                        Go to Settings &rarr; Submit Verification Proof
-                      </Link>
+                      ><UIMessage>
+                        Go to Settings → Submit Verification Proof
+                      </UIMessage></Link>
                     )}
                   </div>
                 )}
@@ -762,9 +768,9 @@ export default function PostDetailPage({ params }) {
             {/* Moderator Controls for Admin/Super Admin viewing someone else's post */}
             {isAdminOrSuper && !isOwner && (
               <div className="border-t border-line pt-4 mt-2 space-y-2">
-                <h4 className="text-xs font-bold text-ink-muted uppercase tracking-wide">
+                <h4 className="text-xs font-bold text-ink-muted uppercase tracking-wide"><UIMessage>
                   Moderator Controls
-                </h4>
+                </UIMessage></h4>
                 <div className="grid grid-cols-3 gap-1.5 bg-surface-muted p-1 rounded-xl">
                   {STATUSES.map((s) => (
                     <button
@@ -786,9 +792,9 @@ export default function PostDetailPage({ params }) {
                   disabled={busy}
                   className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-xs font-semibold text-danger bg-danger-soft hover:bg-danger-soft border border-danger-soft transition-colors"
                 >
-                  <TrashIcon className="w-3.5 h-3.5" />
+                  <TrashIcon className="w-3.5 h-3.5" /><UIMessage>
                   Delete Post (Admin)
-                </button>
+                </UIMessage></button>
               </div>
             )}
           </div>

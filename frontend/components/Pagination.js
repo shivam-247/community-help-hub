@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import { Button } from "./ui";
 export default function Pagination({
   page,
@@ -18,20 +20,20 @@ export default function Pagination({
         variant="outline"
         disabled={loading || page <= 1}
         onClick={() => onPage(page - 1)}
-      >
+      ><UIMessage>
         Previous page
-      </Button>
-      <p role="status" className="text-sm text-ink-muted">
-        Page {page}
+      </UIMessage></Button>
+      <p role="status" className="text-sm text-ink-muted"><UIMessage>
+        Page </UIMessage>{page}
         {typeof total === "number" ? ` · ${total} ${label}` : ""}
       </p>
       <Button
         variant="outline"
         disabled={loading || !hasMore}
         onClick={() => onPage(page + 1)}
-      >
+      ><UIMessage>
         Next page
-      </Button>
+      </UIMessage></Button>
     </nav>
   );
 }

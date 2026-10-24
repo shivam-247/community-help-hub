@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../../lib/i18n";
+
 import { useEffect, useState } from "react";
 import { useLanguage, Text } from "../../lib/i18n";
 import { useRouter } from "next/navigation";
@@ -155,45 +157,45 @@ export default function CreatePostPage() {
             community ? `/noticeboard?community=${community}` : "/noticeboard"
           }
         >
-          <ArrowLeft className="size-4" />
+          <ArrowLeft className="size-4" /><UIMessage>
           Back to the board
-        </Link>
+        </UIMessage></Link>
       </Button>
-      <ol aria-label="Notice publishing steps" className="compose-steps">
+      <UIElement as="ol" aria-label="Notice publishing steps" className="compose-steps">
         <li aria-current="step">
-          <span>1</span>Write your notice
-        </li>
+          <span>1</span><UIMessage>Write your notice
+        </UIMessage></li>
         <li>
-          <span>2</span>Preview
-        </li>
+          <span>2</span><UIMessage>Preview
+        </UIMessage></li>
         <li>
-          <span>3</span>Publish
-        </li>
-      </ol>
+          <span>3</span><UIMessage>Publish
+        </UIMessage></li>
+      </UIElement>
       <Card>
         <CardHeader>
           <h1 className="text-2xl sm:text-3xl font-semibold">
             <Text>Create a neighbourhood notice</Text>
           </h1>
           <CardDescription>
-            {community
+            <UIMessage>{community
               ? "Share with members of your private society board."
-              : "Ask clearly, keep it local, and leave money out of the exchange."}{" "}
+              : "Ask clearly, keep it local, and leave money out of the exchange."}</UIMessage>{" "}<UIMessage>
             Hindi and Gujarati are welcome.
-          </CardDescription>
+          </UIMessage></CardDescription>
           {billing && (
             <p className="text-xs text-ink-muted">
-              {billing.used} posts used this month
-              {billing.limit == null
+              {billing.used}<UIMessage> posts used this month
+              </UIMessage>{billing.limit == null
                 ? " · Unlimited allowance"
                 : ` · ${billing.limit} allowed`}{" "}
               ·{" "}
               <Link
                 className="text-brand underline"
                 href="/settings?tab=billing"
-              >
+              ><UIMessage>
                 Manage plan
-              </Link>
+              </UIMessage></Link>
             </p>
           )}
         </CardHeader>
@@ -206,10 +208,10 @@ export default function CreatePostPage() {
             aria-busy={publishing}
             className="space-y-5"
           >
-            <h2 className="compose-section-title">1. What are you sharing?</h2>
+            <h2 className="compose-section-title"><UIMessage>1. What are you sharing?</UIMessage></h2>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="create-type">I want to</Label>
+                <Label htmlFor="create-type"><UIMessage>I want to</UIMessage></Label>
                 <Select
                   id="create-type"
                   className="filter-control"
@@ -228,7 +230,7 @@ export default function CreatePostPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="create-category">Category</Label>
+                <Label htmlFor="create-category"><UIMessage>Category</UIMessage></Label>
                 <Select
                   id="create-category"
                   className="filter-control"
@@ -252,7 +254,7 @@ export default function CreatePostPage() {
               ["locality", "Area / society", "e.g. Satellite, Ahmedabad"],
             ].map(([key, label, placeholder]) => (
               <div key={key}>
-                <Label htmlFor={`create-${key}`}>{label}</Label>
+                <Label htmlFor={`create-${key}`}><UIMessage>{label}</UIMessage></Label>
                 <Input
                   id={`create-${key}`}
                   placeholder={placeholder}
@@ -264,7 +266,7 @@ export default function CreatePostPage() {
               </div>
             ))}
             <div>
-              <Label htmlFor="create-description">Details</Label>
+              <Label htmlFor="create-description"><UIMessage>Details</UIMessage></Label>
               <Textarea
                 id="create-description"
                 rows={5}
@@ -276,13 +278,13 @@ export default function CreatePostPage() {
                 aria-invalid={!!errors.description}
               />
               <p id="description-help" className="text-sm text-ink-muted mt-2">
-                {watch("description").length.toLocaleString("en-IN")} / 9,800
+                {watch("description").length.toLocaleString("en-IN")}<UIMessage> / 9,800
                 characters. Say what you need, where and when.
-              </p>
+              </UIMessage></p>
               <FieldError id="error-description" error={errors.description} />
             </div>
             <div className="border-t border-line pt-5 space-y-4">
-              <h2 className="compose-section-title">2. Where and when?</h2>
+              <h2 className="compose-section-title"><UIMessage>2. Where and when?</UIMessage></h2>
               <Field
                 id="create-landmark"
                 label="Landmark (optional)"
@@ -291,17 +293,17 @@ export default function CreatePostPage() {
                 onChange={(e) => setLandmark(e.target.value)}
                 hint="e.g. Near Shiv Mandir, Gota. Use a public landmark, never a flat number or full home address. It will appear in your notice."
               />
-              <p className="text-sm text-ink-muted">
-                Your phone is optional and stays in your account.{" "}
-                <Link className="underline" href="/settings">
+              <p className="text-sm text-ink-muted"><UIMessage>
+                Your phone is optional and stays in your account.</UIMessage>{" "}
+                <Link className="underline" href="/settings"><UIMessage>
                   Manage your +91 contact number and sharing choices
-                </Link>
+                </UIMessage></Link>
                 .
               </p>
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="create-priority">Urgency</Label>
+                <Label htmlFor="create-priority"><UIMessage>Urgency</UIMessage></Label>
                 <Select
                   id="create-priority"
                   className="filter-control"
@@ -315,7 +317,7 @@ export default function CreatePostPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="create-deadline">Needed by (optional)</Label>
+                <Label htmlFor="create-deadline"><UIMessage>Needed by (optional)</UIMessage></Label>
                 <Input
                   id="create-deadline"
                   type="datetime-local"
@@ -325,9 +327,9 @@ export default function CreatePostPage() {
             </div>
             <div>
               <Label htmlFor="create-photo" className="flex gap-2 items-center">
-                <ImagePlus className="size-4" />
+                <ImagePlus className="size-4" /><UIMessage>
                 Photo (optional)
-              </Label>
+              </UIMessage></Label>
               <Input
                 id="create-photo"
                 type="file"
@@ -352,21 +354,21 @@ export default function CreatePostPage() {
                   }
                 }}
               />
-              <p className="text-xs text-ink-muted mt-2">
+              <p className="text-xs text-ink-muted mt-2"><UIMessage>
                 Up to 5 MB. Avoid faces, documents, and personal details without
                 permission.
-              </p>
+              </UIMessage></p>
             </div>
-            <p className="text-sm text-ink-muted">
+            <p className="text-sm text-ink-muted"><UIMessage>
               Publishing shares your notice and profile details with visitors,
               or members of the selected society board. Photos must be yours or
               licensed for this use; get permission for identifiable people.
               Public-notice photos are public; society-notice photos are limited
               to members and authorised reviewers. Do not post a full home
-              address or identity documents.{" "}
-              <Link className="underline" href="/privacy">
+              address or identity documents.</UIMessage>{" "}
+              <Link className="underline" href="/privacy"><UIMessage>
                 Read the privacy notice
-              </Link>
+              </UIMessage></Link>
               .
             </p>
             <ErrorMessage message={error} />
@@ -378,19 +380,19 @@ export default function CreatePostPage() {
                 billing.limit != null &&
                 billing.used >= billing.limit
               }
-            >
+            ><UIMessage>
               Preview notice
-            </Button>
+            </UIMessage></Button>
             {billing &&
               billing.limit != null &&
               billing.used >= billing.limit && (
-                <p className="text-sm text-warning">
-                  Your monthly allowance is used.{" "}
-                  <Link href="/pricing" className="underline">
+                <p className="text-sm text-warning"><UIMessage>
+                  Your monthly allowance is used.</UIMessage>{" "}
+                  <Link href="/pricing" className="underline"><UIMessage>
                     Compare plans
-                  </Link>{" "}
+                  </UIMessage></Link>{" "}<UIMessage>
                   or wait for next month.
-                </p>
+                </UIMessage></p>
               )}
           </form>
           <Sheet
@@ -407,10 +409,10 @@ export default function CreatePostPage() {
               <SheetTitle>
                 <Text>Preview your notice</Text>
               </SheetTitle>
-              <SheetDescription>
+              <SheetDescription><UIMessage>
                 Check the public details before publishing. You can go back and
                 edit.
-              </SheetDescription>
+              </UIMessage></SheetDescription>
               {preview && (
                 <div className="mt-6 space-y-4">
                   <p className="text-sm text-brand">
@@ -428,23 +430,23 @@ export default function CreatePostPage() {
                     {t("Urgency")}: {t(preview.priority)}
                   </p>
                   {file && (
-                    <p className="text-sm break-anywhere">Photo: {file.name}</p>
+                    <p className="text-sm break-anywhere"><UIMessage>Photo: </UIMessage>{file.name}</p>
                   )}
                   <ErrorMessage message={error} />
                   <div className="flex flex-wrap gap-3">
                     <Button
                       loading={publishing}
                       onClick={() => submit(preview)}
-                    >
+                    ><UIMessage>
                       Publish notice
-                    </Button>
+                    </UIMessage></Button>
                     <Button
                       variant="outline"
                       disabled={publishing}
                       onClick={() => setPreview(null)}
-                    >
+                    ><UIMessage>
                       Edit notice
-                    </Button>
+                    </UIMessage></Button>
                   </div>
                 </div>
               )}

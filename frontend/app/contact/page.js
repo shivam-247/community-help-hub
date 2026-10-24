@@ -1,3 +1,4 @@
+import { Text as UIMessage } from "../../lib/i18n";
 import PageHeader from "../../components/PageHeader";
 import { Mail } from "lucide-react";
 import { operator } from "../../lib/legal";
@@ -9,20 +10,20 @@ export default function Contact() {
         eyebrow="A real person, on the other side"
         title="Contact and operator details"
       />
-      <p>
-        Community Help Hub is a college mutual-aid demonstration maintained by{" "}
-        {operator.name}. No incorporated company, registration number, tax
+      <p><UIMessage>
+        Community Help Hub is a college mutual-aid demonstration maintained by</UIMessage>{" "}
+        {operator.name}<UIMessage>. No incorporated company, registration number, tax
         registration or government affiliation is claimed.
-      </p>
+      </UIMessage></p>
       <dl className="surface-card space-y-5 p-6 sm:p-8">
         <div>
-          <dt className="eyebrow mb-2">Project maintainer</dt>
+          <dt className="eyebrow mb-2"><UIMessage>Project maintainer</UIMessage></dt>
           <dd className="text-xl font-semibold">{operator.name}</dd>
         </div>
         <div>
-          <dt className="font-semibold">
+          <dt className="font-semibold"><UIMessage>
             Support, privacy, complaints and copyright reports
-          </dt>
+          </UIMessage></dt>
           <dd>
             <a
               className="text-brand underline min-h-11 inline-flex items-center gap-2"
@@ -34,27 +35,27 @@ export default function Contact() {
           </dd>
         </div>
         <div>
-          <dt className="font-semibold">Website</dt>
+          <dt className="font-semibold"><UIMessage>Website</UIMessage></dt>
           <dd>community-help-hub.vercel.app</dd>
         </div>
         <div>
-          <dt className="font-semibold">Payment availability</dt>
-          <dd>Test checkout only. No real money is collected.</dd>
+          <dt className="font-semibold"><UIMessage>Payment availability</UIMessage></dt>
+          <dd><UIMessage>Test checkout only. No real money is collected.</UIMessage></dd>
         </div>
       </dl>
-      <h2 className="text-xl font-semibold">Send only what we need</h2>
-      <p>
+      <h2 className="text-xl font-semibold"><UIMessage>Send only what we need</UIMessage></h2>
+      <p><UIMessage>
         For a complaint, include the page or post URL and a short description.
         For privacy requests, write from your account email. For copyright
         reports, identify the work, the allegedly infringing URL and your
         authority to make the request. Never send passwords, OTPs, government-ID
         copies or unnecessary personal information.
-      </p>
-      <p className="text-ink-muted">
+      </UIMessage></p>
+      <p className="text-ink-muted"><UIMessage>
         This is a college demonstration with mock checkout. Do not send money or
         identity documents. Any future commercial launch needs its own reviewed
         operator disclosures and payment terms.
-      </p>
+      </UIMessage></p>
     </article>
   );
 }

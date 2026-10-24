@@ -6,6 +6,8 @@ from .models import ResponseRequest, Message, Rating, RatingClaim, Report, User
 
 def delete_post_records(session, post):
     rated_ids = session.exec(select(Rating.rated_user_id).where(Rating.post_id == post.id)).all()
+    from .safety import ExchangeClosure
+    session.exec(delete(ExchangeClosure).where(ExchangeClosure.post_id == post.id))
     request_ids = select(ResponseRequest.id).where(ResponseRequest.post_id == post.id)
     session.exec(delete(Message).where(Message.response_request_id.in_(request_ids)))
     session.exec(delete(ResponseRequest).where(ResponseRequest.post_id == post.id))

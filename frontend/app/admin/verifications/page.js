@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../../../lib/i18n";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Pagination from "../../../components/Pagination";
@@ -42,14 +44,14 @@ export default function AdminVerificationsPage() {
     if (auth?.user) load();
   }, [auth?.user, page]);
 
-  if (auth?.loading) return <p role="status">Loading verification reviews…</p>;
+  if (auth?.loading) return <p role="status"><UIMessage>Loading verification reviews…</UIMessage></p>;
 
   if (!auth?.user) {
     return (
       <div className="max-w-md mx-auto py-16 text-center">
-        <p className="text-ink-muted text-sm">
+        <p className="text-ink-muted text-sm"><UIMessage>
           Please log in as an administrator.
-        </p>
+        </UIMessage></p>
       </div>
     );
   }
@@ -59,12 +61,12 @@ export default function AdminVerificationsPage() {
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-danger-soft border border-danger-soft rounded-xl p-6">
           <AlertTriangleIcon className="w-8 h-8 text-danger mx-auto mb-2" />
-          <h3 className="font-bold text-danger text-sm mb-1">
+          <h3 className="font-bold text-danger text-sm mb-1"><UIMessage>
             Restricted Access
-          </h3>
-          <p className="text-xs text-danger">
+          </UIMessage></h3>
+          <p className="text-xs text-danger"><UIMessage>
             This management dashboard is restricted to verified administrators.
-          </p>
+          </UIMessage></p>
         </div>
       </div>
     );
@@ -92,23 +94,23 @@ export default function AdminVerificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
+            <h1 className="text-2xl font-bold tracking-tight text-ink"><UIMessage>
               Admin Review Queue
-            </h1>
-            <span className="bg-brand-soft text-brand border border-line text-xs font-semibold px-2.5 py-0.5 rounded-full">
+            </UIMessage></h1>
+            <span className="bg-brand-soft text-brand border border-line text-xs font-semibold px-2.5 py-0.5 rounded-full"><UIMessage>
               Admin Portal
-            </span>
+            </UIMessage></span>
           </div>
-          <p className="text-xs sm:text-sm text-ink-muted">
+          <p className="text-xs sm:text-sm text-ink-muted"><UIMessage>
             Review identity and skill proofs submitted by community members.
-          </p>
+          </UIMessage></p>
         </div>
         <button
           onClick={load}
           className="text-xs font-semibold text-ink-soft hover:text-ink bg-surface border border-line px-3 py-1.5 rounded-xl shadow-xs transition-colors"
-        >
+        ><UIMessage>
           Refresh
-        </button>
+        </UIMessage></button>
       </div>
 
       {error && (
@@ -131,10 +133,10 @@ export default function AdminVerificationsPage() {
           <div className="w-12 h-12 rounded-xl bg-success-soft text-success flex items-center justify-center mx-auto text-xl mb-3">
             <ShieldCheckIcon className="w-6 h-6" />
           </div>
-          <h3 className="font-bold text-ink text-sm mb-1">All caught up!</h3>
-          <p className="text-xs text-ink-muted max-w-sm mx-auto">
+          <h3 className="font-bold text-ink text-sm mb-1"><UIMessage>All caught up!</UIMessage></h3>
+          <p className="text-xs text-ink-muted max-w-sm mx-auto"><UIMessage>
             No verification requests are currently pending review in the queue.
-          </p>
+          </UIMessage></p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -146,8 +148,8 @@ export default function AdminVerificationsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-ink text-sm">{v.user_name}</h4>
-                  <span className="text-xs text-ink-muted font-medium">
-                    Type: {v.proof_type}
+                  <span className="text-xs text-ink-muted font-medium"><UIMessage>
+                    Type: </UIMessage>{v.proof_type}
                   </span>
                 </div>
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-warning-soft text-warning border border-warning-soft">
@@ -161,14 +163,14 @@ export default function AdminVerificationsPage() {
               </div>
 
               {v.note && (
-                <p className="text-xs text-ink-muted italic">
-                  Note from applicant: &ldquo;{v.note}&rdquo;
+                <p className="text-xs text-ink-muted italic"><UIMessage>
+                  Note from applicant: “</UIMessage>{v.note}&rdquo;
                 </p>
               )}
 
               {/* Comment and actions */}
               <div className="pt-2 border-t border-line flex flex-col sm:flex-row items-center gap-3">
-                <input
+                <UIElement as="input"
                   aria-label={`Reviewer feedback for ${v.user_name}`}
                   placeholder="Reviewer feedback or notes (optional)..."
                   value={comments[v.id] || ""}
@@ -184,7 +186,7 @@ export default function AdminVerificationsPage() {
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-4 py-1.5 text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand rounded-xl shadow-xs transition-colors disabled:opacity-60"
                   >
                     <CheckIcon className="w-3.5 h-3.5" />
-                    <span>Approve</span>
+                    <span><UIMessage>Approve</UIMessage></span>
                   </button>
                   <button
                     disabled={busyId === v.id}
@@ -192,7 +194,7 @@ export default function AdminVerificationsPage() {
                     className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-3.5 py-1.5 text-xs font-semibold text-ink-soft hover:text-ink border border-line rounded-xl hover:bg-surface-muted transition-colors disabled:opacity-60"
                   >
                     <XIcon className="w-3.5 h-3.5" />
-                    <span>Reject</span>
+                    <span><UIMessage>Reject</UIMessage></span>
                   </button>
                 </div>
               </div>

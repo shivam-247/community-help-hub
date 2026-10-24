@@ -28,11 +28,19 @@ def get_admin_stats(admin: User = Depends(require_admin), session: Session = Dep
 
 @router.get("/users")
 def list_all_users(response: Response, paging: PageParams = Depends(), admin: User = Depends(require_admin), session: Session = Depends(get_session)):
+    from ..product import active_plan
+    from ..product_models import TrustRecord
+    from ..safety import restriction
     users = paginate(session, select(User).order_by(User.id), paging, response)
     result = []
     for u in users:
         loc = session.get(Locality, u.locality_id) if u.locality_id else None
         result.append({
+            "plan": active_plan(session, u.id),
+            "account_state": restriction(session, u.id),
+            "contact_phone": u.contact_phone,
+            "phone_verified": bool(session.get(TrustRecord, u.id) and session.get(TrustRecord, u.id).phone_verified),
+            "address_verified": bool(session.get(TrustRecord, u.id) and session.get(TrustRecord, u.id).address_verified),
             "id": u.id,
             "name": u.name,
             "email": u.email,
@@ -69,6 +77,10 @@ def update_user_role(
     if target.id == super_admin.id and data.role != Role.super_admin.value:
         raise HTTPException(status_code=400, detail="Cannot demote your own Super Admin account.")
 
+    from ..safety import audit, restriction
+    if restriction(session, target.id) != "active":
+        raise HTTPException(409, "Restore this account before changing its role.")
+    audit(session, super_admin, target.id, "role_changed", f"{target.role.value} to {data.role}")
     target.role = Role(data.role)
     session.add(target)
     session.commit()

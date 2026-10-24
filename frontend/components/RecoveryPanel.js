@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import Link from "next/link";
 import { Button } from "./ui";
 export default function RecoveryPanel({
@@ -16,15 +18,15 @@ export default function RecoveryPanel({
       <h1 className="text-2xl font-semibold">{title}</h1>
       <p className="text-sm text-ink-muted">{message}</p>
       {reference && (
-        <p className="text-xs text-ink-muted">Support reference: {reference}</p>
+        <p className="text-xs text-ink-muted"><UIMessage>Support reference: </UIMessage>{reference}</p>
       )}
       <div className="flex flex-wrap gap-3">
         {onRetry && <Button onClick={onRetry}>{retryLabel}</Button>}
         <Button variant="outline" asChild>
-          <Link href="/noticeboard">Back to noticeboard</Link>
+          <Link href="/noticeboard"><UIMessage>Back to noticeboard</UIMessage></Link>
         </Button>
         <Button variant="ghost" asChild>
-          <Link href="/contact">Contact support</Link>
+          <Link href="/contact"><UIMessage>Contact support</UIMessage></Link>
         </Button>
       </div>
     </section>

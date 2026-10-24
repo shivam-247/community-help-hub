@@ -1252,7 +1252,8 @@ label[for="profile-photo"]:has(+ input:focus-visible) {
 }
 /* A narrow desktop window keeps header navigation; the dock is for touch layouts. */
 @media (max-width: 1023px) and (hover: none) and (pointer: coarse) {
-  :root {
+  :root,
+  html[data-theme] {
     --toast-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
   }
   .mobile-dock {
@@ -1388,4 +1389,20 @@ label[for="profile-photo"]:has(+ input:focus-visible) {
   .compact-feed .page-heading {
     padding-bottom: 0;
   }
+}
+
+.feed-search-fields { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 12px; align-items: end; }
+.feed-filter-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid hsl(var(--line)); padding-top: 16px; }
+@media (min-width: 640px) { .feed-search-fields { grid-template-columns: minmax(0, 1.6fr) minmax(150px, 1fr); align-items: end; } }
+
+@media (max-width: 639px) {
+  .feed-filter-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; padding-top: 12px; }
+  .feed-filter-toolbar > div, .feed-filter-toolbar > div > div { min-width: 0; width: 100%; }
+  .feed-filter-toolbar select { min-width: 0; width: 100%; }
+  .feed-search-fields .filter-label { font-size: 11px; }
+}
+
+@media (max-width: 639px) {
+  .feed-mobile-sticky { padding-block: 4px; }
+  .feed-controls > .feed-filter-toolbar { margin-block-start: 8px; padding-top: 8px; }
 }

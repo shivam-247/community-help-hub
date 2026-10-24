@@ -28,6 +28,8 @@ def init_db():
         if index is None:
             index = Index(name, *columns)
         index.create(engine, checkfirst=True)
+    from .safety import purge_completed_chats
+    purge_completed_chats(engine)
 
 
 def get_session():

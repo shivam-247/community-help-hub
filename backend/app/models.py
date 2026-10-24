@@ -181,12 +181,12 @@ class Verification(SQLModel, table=True):
     """
     A submitted proof of identity/skill for a user, reviewed by an admin.
     This is deliberately separate from login auth: passing email/password
-    only proves you control an inbox, not that you're trustworthy to help.
+    proves possession of account credentials, not identity or trustworthiness.
     """
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
-    proof_type: str  # e.g. "Government ID", "Certificate", "Reference"
-    proof_value: str  # ID number / certificate description / reference contact — free text for MVP
+    proof_type: str  # The public submission schema accepts society references only.
+    proof_value: str  # Consent-based society reference; never request government-ID numbers.
     note: Optional[str] = Field(default=None)  # applicant's own note to the reviewer
     status: VerificationStatus = Field(default=VerificationStatus.pending)
     reviewer_id: Optional[int] = Field(default=None, foreign_key="user.id")

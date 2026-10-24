@@ -45,7 +45,8 @@ class UserProfileOut(BaseModel):
 @router.get("/{user_id}", response_model=UserProfileOut)
 def get_user_profile(user_id: int, session: Session = Depends(get_session)):
     target_user = session.get(User, user_id)
-    if not target_user:
+    from ..safety import restriction
+    if not target_user or restriction(session, user_id) != "active":
         raise HTTPException(status_code=404, detail="User not found.")
 
     loc = session.get(Locality, target_user.locality_id) if target_user.locality_id else None

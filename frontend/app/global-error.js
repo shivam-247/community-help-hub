@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 export default function GlobalError({ reset }) {
   return (
     <html lang="en">
@@ -12,11 +14,11 @@ export default function GlobalError({ reset }) {
         }}
       >
         <main style={{ maxWidth: 560, margin: "10vh auto" }}>
-          <h1>Community Help Hub could not load</h1>
-          <p>
+          <h1><UIMessage>Community Help Hub could not load</UIMessage></h1>
+          <p><UIMessage>
             Please retry. If the problem continues, contact the project
             maintainer.
-          </p>
+          </UIMessage></p>
           <button
             onClick={reset}
             style={{
@@ -27,12 +29,12 @@ export default function GlobalError({ reset }) {
               border: 0,
               borderRadius: 8,
             }}
-          >
+          ><UIMessage>
             Try loading again
-          </button>
+          </UIMessage></button>
           <p>
-            <a href="/">Return to the home page</a> ·{" "}
-            <a href="mailto:parmarshivam247@gmail.com">Email support</a>
+            <a href="/"><UIMessage>Return to the home page</UIMessage></a> ·{" "}
+            <a href="mailto:parmarshivam247@gmail.com"><UIMessage>Email support</UIMessage></a>
           </p>
         </main>
       </body>

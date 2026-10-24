@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../../lib/i18n";
+
 import PageHeader from "../../components/PageHeader";
 import { useEffect, useState } from "react";
 import Pagination from "../../components/Pagination";
@@ -56,7 +58,7 @@ export default function InboxPage() {
     if (auth?.user) load();
   }, [auth?.user, tab, page]);
 
-  if (auth?.loading) return <p role="status">Loading your inbox…</p>;
+  if (auth?.loading) return <p role="status"><UIMessage>Loading your inbox…</UIMessage></p>;
   if (error && !loading)
     return <RecoveryPanel message={error} onRetry={load} />;
 
@@ -65,18 +67,18 @@ export default function InboxPage() {
       <div className="max-w-md mx-auto py-16 text-center">
         <div className="bg-surface border border-line/90 rounded-xl p-8 shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-brand-soft text-brand flex items-center justify-center mx-auto text-xl mb-3"></div>
-          <h2 className="font-bold text-ink text-lg mb-1">
+          <h2 className="font-bold text-ink text-lg mb-1"><UIMessage>
             Log in to view your inbox
-          </h2>
-          <p className="text-xs text-ink-muted mb-5">
+          </UIMessage></h2>
+          <p className="text-xs text-ink-muted mb-5"><UIMessage>
             Manage conversations and responses to community posts.
-          </p>
+          </UIMessage></p>
           <Link
             href="/login"
             className="inline-flex items-center justify-center py-2.5 px-5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand shadow-xs transition-colors"
-          >
+          ><UIMessage>
             Go to Login
-          </Link>
+          </UIMessage></Link>
         </div>
       </div>
     );
@@ -130,7 +132,7 @@ export default function InboxPage() {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>My requests</span>
+          <span><UIMessage>My requests</UIMessage></span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               tab === "incoming"
@@ -142,8 +144,8 @@ export default function InboxPage() {
           </span>
           {pendingIncomingCount > 0 && (
             <span className="bg-danger-soft text-danger text-[10px] font-bold px-1.5 py-0.5 rounded-full ">
-              {pendingIncomingCount} new
-            </span>
+              {pendingIncomingCount}<UIMessage> new
+            </UIMessage></span>
           )}
         </button>
 
@@ -159,7 +161,7 @@ export default function InboxPage() {
               : "bg-surface border border-line text-ink-soft hover:text-ink"
           }`}
         >
-          <span>My responses</span>
+          <span><UIMessage>My responses</UIMessage></span>
           <span
             className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
               tab === "sent"
@@ -179,9 +181,9 @@ export default function InboxPage() {
         </div>
       )}
 
-      <p className="text-sm text-ink-muted">
+      <p className="text-sm text-ink-muted"><UIMessage>
         Counts show the conversations on this page.
-      </p>
+      </UIMessage></p>
       {/* Content Area with Skeletons */}
       {loading ? (
         <div className="space-y-4">
@@ -193,13 +195,13 @@ export default function InboxPage() {
         incoming.length === 0 ? (
           <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
             <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
-            <h3 className="font-bold text-ink text-sm mb-1">
+            <h3 className="font-bold text-ink text-sm mb-1"><UIMessage>
               No incoming responses yet
-            </h3>
-            <p className="text-xs text-ink-muted max-w-sm mx-auto">
+            </UIMessage></h3>
+            <p className="text-xs text-ink-muted max-w-sm mx-auto"><UIMessage>
               When a neighbor offers to help on one of your posts, their message
               and credentials will appear right here.
-            </p>
+            </UIMessage></p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -214,9 +216,9 @@ export default function InboxPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block mb-1">
+                      <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block mb-1"><UIMessage>
                         Response to post
-                      </span>
+                      </UIMessage></span>
                       <Link
                         href={`/post/${r.post_id}`}
                         className="font-bold text-ink text-sm hover:text-brand transition-colors"
@@ -264,6 +266,7 @@ export default function InboxPage() {
                     {r.message}
                   </div>
 
+                  {r.chat_closed && <p className="text-sm text-success"><UIMessage>Conversation closed</UIMessage></p>}
                   {/* Action row */}
                   <div className="flex items-center justify-between pt-1">
                     {r.status === "Pending" && (
@@ -274,7 +277,7 @@ export default function InboxPage() {
                           className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-solid hover:brightness-110 text-on-brand transition-colors shadow-xs"
                         >
                           <CheckIcon className="w-3.5 h-3.5" />
-                          <span>Accept Offer</span>
+                          <span><UIMessage>Accept Offer</UIMessage></span>
                         </button>
                         <button
                           disabled={busyId === r.id}
@@ -282,19 +285,19 @@ export default function InboxPage() {
                           className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-semibold text-ink-soft hover:text-ink hover:bg-surface-muted border border-line transition-colors"
                         >
                           <XIcon className="w-3.5 h-3.5" />
-                          <span>Decline</span>
+                          <span><UIMessage>Decline</UIMessage></span>
                         </button>
                       </div>
                     )}
 
-                    {r.status === "Accepted" && (
+                    {r.status === "Accepted" && !r.chat_closed && (
                       <div className="flex items-center gap-3">
                         <Link
                           href={`/messages/${r.id}`}
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs"
                         >
                           <MessageSquareIcon className="w-3.5 h-3.5" />
-                          <span>Open Chat</span>
+                          <span><UIMessage>Open Chat</UIMessage></span>
                         </Link>
                         {r.requester_contact && (
                           <span className="inline-flex items-center gap-1 text-xs text-ink-soft bg-surface-muted px-2.5 py-1 rounded-lg">
@@ -313,17 +316,17 @@ export default function InboxPage() {
       ) : sent.length === 0 ? (
         <div className="bg-surface border border-line/90 rounded-xl p-10 text-center shadow-xs">
           <div className="w-12 h-12 rounded-xl bg-surface-muted text-ink-muted flex items-center justify-center mx-auto text-xl mb-3"></div>
-          <h3 className="font-bold text-ink text-sm mb-1">No offers sent</h3>
-          <p className="text-xs text-ink-muted max-w-sm mx-auto mb-4">
+          <h3 className="font-bold text-ink text-sm mb-1"><UIMessage>No offers sent</UIMessage></h3>
+          <p className="text-xs text-ink-muted max-w-sm mx-auto mb-4"><UIMessage>
             Browse the public feed to find neighbors in your area looking for
             help, tools, or skills.
-          </p>
+          </UIMessage></p>
           <Link
             href="/noticeboard"
             className="inline-flex items-center justify-center py-2 px-4 rounded-xl text-xs font-semibold bg-brand-solid text-on-brand"
-          >
+          ><UIMessage>
             Browse Noticeboard
-          </Link>
+          </UIMessage></Link>
         </div>
       ) : (
         <div className="space-y-4">
@@ -334,9 +337,9 @@ export default function InboxPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block mb-1">
+                  <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block mb-1"><UIMessage>
                     Your offer on
-                  </span>
+                  </UIMessage></span>
                   <Link
                     href={`/post/${r.post_id}`}
                     className="font-bold text-ink text-sm hover:text-brand transition-colors"
@@ -358,8 +361,8 @@ export default function InboxPage() {
                 </span>
               </div>
 
-              <p className="text-xs text-ink-muted">
-                To post owner:{" "}
+              <p className="text-xs text-ink-muted"><UIMessage>
+                To post owner:</UIMessage>{" "}
                 <strong className="text-ink">{r.owner_name}</strong>
               </p>
 
@@ -367,26 +370,27 @@ export default function InboxPage() {
                 {r.message}
               </div>
 
+              {r.chat_closed && <p className="text-sm text-success"><UIMessage>Conversation closed</UIMessage></p>}
               <div className="pt-1">
                 {r.status === "Pending" && (
-                  <p className="text-xs text-warning font-medium">
-                    Waiting for {r.owner_name} to review and accept your offer.
-                  </p>
+                  <p className="text-xs text-warning font-medium"><UIMessage>
+                    Waiting for </UIMessage>{r.owner_name}<UIMessage> to review and accept your offer.
+                  </UIMessage></p>
                 )}
                 {r.status === "Rejected" && (
-                  <p className="text-xs text-ink-muted">
+                  <p className="text-xs text-ink-muted"><UIMessage>
                     This offer was not accepted. Thank you for offering your
                     help!
-                  </p>
+                  </UIMessage></p>
                 )}
-                {r.status === "Accepted" && (
+                {r.status === "Accepted" && !r.chat_closed && (
                   <div className="flex items-center gap-3">
                     <Link
                       href={`/messages/${r.id}`}
                       className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-brand-solid hover:bg-brand-solid text-on-brand transition-colors shadow-xs"
                     >
                       <MessageSquareIcon className="w-3.5 h-3.5" />
-                      <span>Open Chat</span>
+                      <span><UIMessage>Open Chat</UIMessage></span>
                     </Link>
                     {r.owner_contact && (
                       <span className="inline-flex items-center gap-1 text-xs text-ink-soft bg-surface-muted px-2.5 py-1 rounded-lg">

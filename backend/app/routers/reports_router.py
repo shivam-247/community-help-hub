@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from ..database import get_session
 from ..models import Report, Post, User
@@ -17,7 +17,17 @@ def report_post(
     post = session.get(Post, post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
+    from .posts_router import get_post
+    get_post(post_id, session=session, user=user)
+    if post.owner_id == user.id:
+        raise HTTPException(400, "You cannot report yourself.")
+    from ..safety import UserReport
+    case = session.exec(select(UserReport).where(UserReport.reporter_id == user.id, UserReport.target_id == post.owner_id, UserReport.status == "Open")).first()
+    if not case:
+        case = UserReport(reporter_id=user.id, target_id=post.owner_id, post_id=post_id, reason=data.reason)
+        session.add(case)
+        session.flush()
     report = Report(post_id=post_id, reporter_id=user.id, reason=data.reason)
     session.add(report)
     session.commit()
-    return {"ok": True}
+    return {"ok": True, "case_id": f"USR-{case.id:06d}"}

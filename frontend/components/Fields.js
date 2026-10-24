@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import { forwardRef } from "react";
 import { Label, Input, cn } from "./ui";
 import { Text } from "../lib/i18n";
@@ -32,7 +34,7 @@ export function Field({
     undefined;
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      <Label htmlFor={id}><UIMessage>{label}</UIMessage></Label>
       <Component
         id={id}
         aria-invalid={!!error}

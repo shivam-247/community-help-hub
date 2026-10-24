@@ -1,5 +1,8 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
 
+
+import { useLanguage } from "../lib/i18n";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "../lib/api";
@@ -48,6 +51,7 @@ const CATEGORIES = [
 
 // Live, bounded public queries keep counts consistent with the noticeboard.
 export default function LandingPage() {
+  const { t } = useLanguage();
   const [board, setBoard] = useState(null);
   const [counts, setCounts] = useState({});
   const [loading, setLoading] = useState(true);
@@ -108,67 +112,67 @@ export default function LandingPage() {
     <div className="home-layout meadow-enter">
       <section aria-labelledby="meadow-heading" className="home-hero">
         <div className="hero-copy">
-          <p className="eyebrow mb-5">A little closer to home</p>
-          <h1 id="meadow-heading" className="hero-title display-title">
+          <p className="eyebrow mb-5"><UIMessage>A little closer to home</UIMessage></p>
+          <h1 id="meadow-heading" className="hero-title display-title"><UIMessage>
             A little help.
-            <br />A <em>brighter</em> neighbourhood.
-          </h1>
-          <p className="mt-6 max-w-md text-sm leading-7 text-ink-soft sm:text-base">
+            </UIMessage><br />A <em><UIMessage>brighter</UIMessage></em><UIMessage> neighbourhood.
+          </UIMessage></h1>
+          <p className="mt-6 max-w-md text-sm leading-7 text-ink-soft sm:text-base"><UIMessage>
             A spare tool. A lift to the clinic. An hour of your time. Find a
             helping hand, or be one, right where you live.
-          </p>
+          </UIMessage></p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/create-post?type=Need%20help"
               className="meadow-primary"
-            >
-              Ask for help{" "}
+            ><UIMessage>
+              Ask for help</UIMessage>{" "}
               <ArrowUpRight aria-hidden="true" className="size-4" />
             </Link>
             <Link
               href="/create-post?type=Offer%20help"
               className="meadow-secondary"
-            >
-              Offer help <HandHeart aria-hidden="true" className="size-4" />
+            ><UIMessage>
+              Offer help </UIMessage><HandHeart aria-hidden="true" className="size-4" />
             </Link>
           </div>
           <p className="hero-caption mt-5">
-            <HeartHandshake aria-hidden="true" />
+            <HeartHandshake aria-hidden="true" /><UIMessage>
             No buying or selling. Just being neighbours.
-          </p>
+          </UIMessage></p>
           <Link
             href="/noticeboard"
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand"
-          >
-            Explore the noticeboard{" "}
+          ><UIMessage>
+            Explore the noticeboard</UIMessage>{" "}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         </div>
         <div className="hero-visual">
           <span className="hero-visual-label">
-            <MapPin aria-hidden="true" className="size-3.5" />
+            <MapPin aria-hidden="true" className="size-3.5" /><UIMessage>
             Every society has a helping hand.
-          </span>
+          </UIMessage></span>
           <NeighbourhoodScene />
-          <div
+          <UIElement as="div"
             className="hero-board"
             aria-label="A look at the noticeboard"
             aria-busy={loading}
           >
             <div className="flex items-center justify-between gap-2 mb-1">
-              <p className="text-xs font-semibold">On the noticeboard</p>
-              <span className="text-[10px] text-ink-muted">
+              <p className="text-xs font-semibold"><UIMessage>On the noticeboard</UIMessage></p>
+              <span className="text-[10px] text-ink-muted"><UIMessage>
                 Local connections
-              </span>
+              </UIMessage></span>
             </div>
             {loading ? (
-              <div className="py-5 text-sm text-ink-muted" role="status">
+              <div className="py-5 text-sm text-ink-muted" role="status"><UIMessage>
                 Finding nearby notices…
-              </div>
+              </UIMessage></div>
             ) : error ? (
-              <p className="py-4 text-xs text-ink-muted">
+              <p className="py-4 text-xs text-ink-muted"><UIMessage>
                 The board is taking a moment. You can retry below.
-              </p>
+              </UIMessage></p>
             ) : board?.items.length ? (
               board.items.slice(0, 2).map((post) => {
                 const item =
@@ -190,7 +194,7 @@ export default function LandingPage() {
                       </strong>
                       <span className="mt-1 block truncate text-[11px] text-ink-muted">
                         {post.locality}
-                        {post.is_demo ? " · Sample notice" : ""}
+                        <UIMessage>{post.is_demo ? " · Sample notice" : ""}</UIMessage>
                       </span>
                     </span>
                     <ArrowUpRight
@@ -201,15 +205,15 @@ export default function LandingPage() {
                 );
               })
             ) : (
-              <p className="py-4 text-xs text-ink-muted">
+              <p className="py-4 text-xs text-ink-muted"><UIMessage>
                 Your neighbourhood starts with the first notice.
-              </p>
+              </UIMessage></p>
             )}
-          </div>
+          </UIElement>
         </div>
       </section>
 
-      <section aria-label="Public noticeboard activity" className="-mt-4">
+      <UIElement as="section" aria-label="Public noticeboard activity" className="-mt-4">
         <ul className="activity-strip" aria-busy={loading || countLoading}>
           {stats.map(({ value, label }) => (
             <li key={label}>
@@ -217,34 +221,34 @@ export default function LandingPage() {
                 {value ?? (loading || countLoading ? "…" : "—")}
               </strong>
               <p className="mt-2 text-[11px] leading-5 text-ink-muted sm:text-sm">
-                {label}
+                <UIMessage>{label}</UIMessage>
               </p>
             </li>
           ))}
         </ul>
-        <p className="mt-3 text-center text-[10px] text-ink-muted sm:text-xs">
+        <p className="mt-3 text-center text-[10px] text-ink-muted sm:text-xs"><UIMessage>
           Public board totals. Sample notices are clearly labelled.
-        </p>
+        </UIMessage></p>
         {countError && (
-          <p role="status" className="mt-2 text-center text-xs text-ink-muted">
-            Some counts are unavailable.{" "}
+          <p role="status" className="mt-2 text-center text-xs text-ink-muted"><UIMessage>
+            Some counts are unavailable.</UIMessage>{" "}
             <button
               className="min-h-11 px-2 underline"
               type="button"
               onClick={() => setAttempt((v) => v + 1)}
-            >
+            ><UIMessage>
               Retry counts
-            </button>
+            </UIMessage></button>
           </p>
         )}
-      </section>
+      </UIElement>
 
       <section aria-labelledby="ways-heading">
         <div className="mb-6">
-          <p className="eyebrow mb-3">Small things. Real difference.</p>
-          <h2 id="ways-heading" className="section-title">
+          <p className="eyebrow mb-3"><UIMessage>Small things. Real difference.</UIMessage></p>
+          <h2 id="ways-heading" className="section-title"><UIMessage>
             What can we do for each other?
-          </h2>
+          </UIMessage></h2>
         </div>
         <ul className="grid gap-4 sm:grid-cols-3">
           {CATEGORIES.map(
@@ -270,16 +274,16 @@ export default function LandingPage() {
                     <ArrowUpRight aria-hidden="true" className="size-5" />
                   </div>
                   <p className="mt-7 text-[10px] uppercase font-semibold tracking-widest">
-                    {label}
+                    <UIMessage>{label}</UIMessage>
                   </p>
-                  <h3 className="mt-2 text-xl font-semibold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6">{description}</p>
+                  <h3 className="mt-2 text-xl font-semibold"><UIMessage>{title}</UIMessage></h3>
+                  <p className="mt-2 text-sm leading-6"><UIMessage>{description}</UIMessage></p>
                   <p className="mt-5 text-xs font-semibold">
                     {countLoading
-                      ? "Loading notices…"
+                      ? t("Loading notices…")
                       : counts[category] == null
-                        ? "Explore the board"
-                        : `${counts[category]} ${counts[category] === 1 ? "notice" : "notices"} on the board`}
+                        ? t("Explore the board")
+                        : t("{count} notices on the board", { count: counts[category] })}
                   </p>
                 </Link>
               </li>
@@ -291,18 +295,18 @@ export default function LandingPage() {
       <section aria-labelledby="nearby-heading" aria-busy={loading}>
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
-            <p className="eyebrow mb-3">
+            <p className="eyebrow mb-3"><UIMessage>
               Across the street. Around the corner.
-            </p>
-            <h2 id="nearby-heading" className="section-title">
+            </UIMessage></p>
+            <h2 id="nearby-heading" className="section-title"><UIMessage>
               Your neighbourhood, right here.
-            </h2>
+            </UIMessage></h2>
           </div>
           <Link
             href="/noticeboard"
             className="inline-flex items-center gap-2 text-sm font-semibold text-brand"
-          >
-            View all notices{" "}
+          ><UIMessage>
+            View all notices</UIMessage>{" "}
             <ArrowRight aria-hidden="true" className="size-4" />
           </Link>
         </div>
@@ -315,15 +319,15 @@ export default function LandingPage() {
             <label
               htmlFor="landing-area"
               className="block text-xs font-semibold mb-2"
-            >
+            ><UIMessage>
               What’s happening in your area?
-            </label>
+            </UIMessage></label>
             <div className="relative">
               <MapPin
                 aria-hidden="true"
                 className="absolute left-3 top-3.5 size-4 text-ink-muted"
               />
-              <input
+              <UIElement as="input"
                 id="landing-area"
                 name="locality"
                 type="search"
@@ -336,26 +340,26 @@ export default function LandingPage() {
           <button
             type="submit"
             className="meadow-primary mt-3 w-full sm:mt-0 sm:w-auto"
-          >
-            Find posts <ArrowRight aria-hidden="true" className="size-4" />
+          ><UIMessage>
+            Find posts </UIMessage><ArrowRight aria-hidden="true" className="size-4" />
           </button>
         </form>
         {error ? (
           <div role="alert" className="surface-card p-6 space-y-3">
-            <h3 className="text-xl font-semibold">
+            <h3 className="text-xl font-semibold"><UIMessage>
               The board is taking a moment.
-            </h3>
+            </UIMessage></h3>
             <p className="text-sm text-ink-muted">{error}</p>
             <button
               type="button"
               onClick={() => setAttempt((v) => v + 1)}
               className="meadow-primary"
-            >
+            ><UIMessage>
               Try again
-            </button>
+            </UIMessage></button>
           </div>
         ) : loading ? (
-          <div
+          <UIElement as="div"
             className="grid gap-4 md:grid-cols-3"
             role="status"
             aria-label="Loading nearby notices"
@@ -363,7 +367,7 @@ export default function LandingPage() {
             {[0, 1, 2].map((id) => (
               <PostCardSkeleton key={id} />
             ))}
-          </div>
+          </UIElement>
         ) : board?.items.length ? (
           <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {board.items.map((post) => (
@@ -374,15 +378,15 @@ export default function LandingPage() {
           </ul>
         ) : (
           <div className="surface-card p-8 text-center">
-            <h3 className="text-2xl font-semibold">
+            <h3 className="text-2xl font-semibold"><UIMessage>
               Your neighbourhood starts with you.
-            </h3>
-            <p className="mt-3 text-sm text-ink-muted">
+            </UIMessage></h3>
+            <p className="mt-3 text-sm text-ink-muted"><UIMessage>
               Ask for a hand, share an item, or offer a skill.
-            </p>
-            <Link href="/create-post" className="meadow-primary mt-5">
+            </UIMessage></p>
+            <Link href="/create-post" className="meadow-primary mt-5"><UIMessage>
               Create the first post
-            </Link>
+            </UIMessage></Link>
           </div>
         )}
       </section>
@@ -392,14 +396,14 @@ export default function LandingPage() {
         className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:gap-14"
       >
         <div>
-          <p className="eyebrow mb-3">A notice. A conversation. A thank-you.</p>
-          <h2 id="how-heading" className="section-title max-w-sm">
+          <p className="eyebrow mb-3"><UIMessage>A notice. A conversation. A thank-you.</UIMessage></p>
+          <h2 id="how-heading" className="section-title max-w-sm"><UIMessage>
             Good things start with a simple hello.
-          </h2>
-          <p className="mt-4 max-w-sm text-sm leading-7 text-ink-muted">
+          </UIMessage></h2>
+          <p className="mt-4 max-w-sm text-sm leading-7 text-ink-muted"><UIMessage>
             No perfect introductions needed. Tell your neighbours what would
             help, and take it from there.
-          </p>
+          </UIMessage></p>
         </div>
         <ol className="grid gap-6 sm:grid-cols-3 lg:grid-cols-1">
           {[
@@ -419,7 +423,7 @@ export default function LandingPage() {
             <li key={title} className="how-step">
               <span className="step-number">0{i + 1}</span>
               <div>
-                <h3 className="text-sm font-semibold">{title}</h3>
+                <h3 className="text-sm font-semibold"><UIMessage>{title}</UIMessage></h3>
                 <p className="mt-2 text-sm leading-6 text-ink-muted">
                   {description}
                 </p>
@@ -431,19 +435,19 @@ export default function LandingPage() {
 
       <section aria-labelledby="care-heading" className="kindness-banner">
         <div>
-          <p className="eyebrow mb-3">Kindness, with a little care.</p>
-          <h2 id="care-heading" className="section-title">
+          <p className="eyebrow mb-3"><UIMessage>Kindness, with a little care.</UIMessage></p>
+          <h2 id="care-heading" className="section-title"><UIMessage>
             A safe exchange starts with you.
-          </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-soft">
+          </UIMessage></h2>
+          <p className="mt-4 max-w-2xl text-sm leading-7 text-ink-soft"><UIMessage>
             Meet at the society gate or a shared space. Check profiles, keep
             private details out of posts, and report anything that feels wrong.
-          </p>
+          </UIMessage></p>
         </div>
         <Link href="/about" className="meadow-secondary">
-          <ShieldCheck aria-hidden="true" className="size-4" />
+          <ShieldCheck aria-hidden="true" className="size-4" /><UIMessage>
           Read our safety tips
-        </Link>
+        </UIMessage></Link>
       </section>
 
       <section
@@ -451,15 +455,15 @@ export default function LandingPage() {
         className="grid gap-6 lg:grid-cols-[.8fr_1.2fr] lg:gap-14"
       >
         <div>
-          <p className="eyebrow mb-3">Before you say hello</p>
-          <h2 id="faq-heading" className="section-title">
+          <p className="eyebrow mb-3"><UIMessage>Before you say hello</UIMessage></p>
+          <h2 id="faq-heading" className="section-title"><UIMessage>
             A few things to know.
-          </h2>
+          </UIMessage></h2>
           <Link
             href="/contact"
             className="mt-4 inline-flex items-center gap-2 text-sm text-brand font-semibold"
-          >
-            Still have a question?{" "}
+          ><UIMessage>
+            Still have a question?</UIMessage>{" "}
             <MessageCircle aria-hidden="true" className="size-4" />
           </Link>
         </div>
@@ -500,18 +504,18 @@ export default function LandingPage() {
         aria-labelledby="start-heading"
       >
         <div>
-          <h2 id="start-heading" className="text-xl font-semibold">
+          <h2 id="start-heading" className="text-xl font-semibold"><UIMessage>
             A neighbourhood is better when we show up.
-          </h2>
-          <p className="mt-2 text-sm text-ink-muted">
+          </UIMessage></h2>
+          <p className="mt-2 text-sm text-ink-muted"><UIMessage>
             Start small. There’s always something you can share.
-          </p>
+          </UIMessage></p>
         </div>
         <Link
           href="/create-post?type=Offer%20help"
           className="meadow-primary shrink-0"
-        >
-          Offer a little kindness{" "}
+        ><UIMessage>
+          Offer a little kindness</UIMessage>{" "}
           <ArrowUpRight aria-hidden="true" className="size-4" />
         </Link>
       </section>

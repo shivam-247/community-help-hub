@@ -12,6 +12,8 @@ def feed_statement(session, user, community_id=None, locality=None, category=Non
     if verified_only and (not user or active_plan(session, user.id) == 'free'):
         raise HTTPException(403, 'Verified-member filters are included with Plus and Society plans.')
     stmt = select(Post).join(Locality, Locality.id == Post.locality_id).where(Post.spam_flag == False)
+    from .safety import AccountRestriction
+    stmt = stmt.where(~select(AccountRestriction.user_id).where(AccountRestriction.user_id == Post.owner_id, AccountRestriction.state != "active").exists())
     if community_id is not None:
         if not user or not session.get(Community, community_id) or not session.get(CommunityMember, (community_id, user.id)):
             raise HTTPException(404, 'Board not found.')

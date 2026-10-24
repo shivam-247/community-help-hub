@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
+
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import {
@@ -73,32 +75,32 @@ export default function InvoiceReceipt({ invoiceId }) {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" aria-label={`View test invoice ${invoiceId}`}>
+        <Button variant="outline" aria-label={`View test invoice ${invoiceId}`}><UIMessage>
           View invoice
-        </Button>
+        </UIMessage></Button>
       </SheetTrigger>
       <SheetContent className="sm:max-w-xl overflow-y-auto">
-        <SheetTitle>Test invoice {data?.number || `#${invoiceId}`}</SheetTitle>
-        <SheetDescription>
+        <SheetTitle><UIMessage>Test invoice </UIMessage>{data?.number || `#${invoiceId}`}</SheetTitle>
+        <SheetDescription><UIMessage>
           Practice checkout receipt. No money was charged. This is not a tax
           invoice or proof of payment.
-        </SheetDescription>
+        </UIMessage></SheetDescription>
         <div className="mt-6 space-y-5">
-          {loading && <p role="status">Loading your invoice…</p>}
+          {loading && <p role="status"><UIMessage>Loading your invoice…</UIMessage></p>}
           {error && (
             <div role="alert" className="text-danger space-y-3">
               <p>{error}</p>
               <Button
                 variant="outline"
                 onClick={() => setRefresh((n) => n + 1)}
-              >
+              ><UIMessage>
                 Retry invoice
-              </Button>
+              </UIMessage></Button>
             </div>
           )}
           {data && (
             <>
-              <Badge variant="outline">Test checkout · INR 0 charged</Badge>
+              <Badge variant="outline"><UIMessage>Test checkout · INR 0 charged</UIMessage></Badge>
               <dl className="divide-y divide-line">
                 {data.fields?.map((field) => (
                   <div
@@ -112,13 +114,13 @@ export default function InvoiceReceipt({ invoiceId }) {
                   </div>
                 ))}
               </dl>
-              <section
+              <UIElement as="section"
                 className="rounded-lg border border-line p-4 space-y-3"
                 aria-label="Invoice email status"
               >
-                <h3 className="font-semibold">Email status</h3>
+                <h3 className="font-semibold"><UIMessage>Email status</UIMessage></h3>
                 {data.recipient && (
-                  <p className="text-sm break-all">To: {data.recipient}</p>
+                  <p className="text-sm break-all"><UIMessage>To: </UIMessage>{data.recipient}</p>
                 )}
                 <p role="status" className="text-sm text-ink-muted">
                   {deliveryCopy[data.email_status] ||
@@ -128,29 +130,29 @@ export default function InvoiceReceipt({ invoiceId }) {
                   variant="outline"
                   disabled={loading || sending}
                   onClick={() => setRefresh((n) => n + 1)}
-                >
+                ><UIMessage>
                   Refresh email status
-                </Button>
+                </UIMessage></Button>
                 {data.email_status === "awaiting_verification" && (
                   <Button asChild variant="outline">
                     <Link
                       href="/settings?tab=trust"
                       onClick={() => setOpen(false)}
-                    >
+                    ><UIMessage>
                       Verify my email
-                    </Link>
+                    </UIMessage></Link>
                   </Button>
                 )}
-              </section>
+              </UIElement>
               <div className="flex flex-wrap gap-3">
                 {!data.legacy && (
                   <Button asChild variant="outline">
                     <a
                       download
                       href={`/api/backend/billing/invoices/${invoiceId}/document`}
-                    >
+                    ><UIMessage>
                       Download invoice (HTML)
-                    </a>
+                    </UIMessage></a>
                   </Button>
                 )}
                 {(data.legacy ||
@@ -164,11 +166,11 @@ export default function InvoiceReceipt({ invoiceId }) {
                   </Button>
                 )}
               </div>
-              <p className="text-xs text-ink-muted">
+              <p className="text-xs text-ink-muted"><UIMessage>
                 Open the downloaded HTML file in your browser to print or save
                 it as a PDF. Plan dates on this receipt describe this purchase;
                 later plan changes may replace your current access.
-              </p>
+              </UIMessage></p>
             </>
           )}
         </div>

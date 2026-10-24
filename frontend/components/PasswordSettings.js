@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage } from "../lib/i18n";
+
 import { useState } from "react";
 import PasswordInput from "./PasswordInput";
 import { Button, Input, Label } from "./ui";
@@ -44,11 +46,11 @@ export default function PasswordSettings() {
   return (
     <section className="bg-surface border border-line rounded-xl p-6 space-y-4">
       <div>
-        <h2 className="font-semibold text-sm">Change password</h2>
-        <p className="text-xs text-ink-muted mt-1">
+        <h2 className="font-semibold text-sm"><UIMessage>Change password</UIMessage></h2>
+        <p className="text-xs text-ink-muted mt-1"><UIMessage>
           Use at least 12 characters. Changing your password signs out other
           sessions.
-        </p>
+        </UIMessage></p>
       </div>
       <form onSubmit={submit} aria-busy={busy} className="space-y-4">
         {[
@@ -91,7 +93,7 @@ export default function PasswordSettings() {
           </div>
         ))}
         <div className="space-y-2">
-          <Label htmlFor="password-code">Authenticator code, if enabled</Label>
+          <Label htmlFor="password-code"><UIMessage>Authenticator code, if enabled</UIMessage></Label>
           <Input
             id="password-code"
             disabled={busy}
@@ -114,9 +116,9 @@ export default function PasswordSettings() {
             {message}
           </p>
         )}
-        <Button type="submit" loading={busy} disabled={busy}>
+        <Button type="submit" loading={busy} disabled={busy}><UIMessage>
           Update password
-        </Button>
+        </UIMessage></Button>
       </form>
     </section>
   );

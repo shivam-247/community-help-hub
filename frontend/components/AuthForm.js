@@ -1,4 +1,6 @@
 "use client";
+import { Text as UIMessage, LocalizedElement as UIElement } from "../lib/i18n";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -111,18 +113,18 @@ export default function AuthForm({ signup = false }) {
   }
   return (
     <div className="auth-layout meadow-enter">
-      <aside className="auth-story" aria-label="Your neighbourhood starts here">
-        <p className="eyebrow mb-5">Neighbours make the difference</p>
-        <h2 className="display-title">
+      <UIElement as="aside" className="auth-story" aria-label="Your neighbourhood starts here">
+        <p className="eyebrow mb-5"><UIMessage>Neighbours make the difference</UIMessage></p>
+        <h2 className="display-title"><UIMessage>
           A familiar face.
-          <br />A helping hand.
-          <br />
-          <em className="text-brand">A place to belong.</em>
+          </UIMessage><br /><UIMessage>A helping hand.
+          </UIMessage><br />
+          <em className="text-brand"><UIMessage>A place to belong.</UIMessage></em>
         </h2>
-        <p className="mt-5 max-w-sm text-sm leading-7 text-ink-muted">
+        <p className="mt-5 max-w-sm text-sm leading-7 text-ink-muted"><UIMessage>
           Good neighbourhoods grow from everyday kindness. Find yours in a
           shared skill, a borrowed tool, or a simple hello.
-        </p>
+        </UIMessage></p>
         <NeighbourhoodScene />
         <ul className="grid grid-cols-3 gap-3 mt-5 text-xs leading-5 text-ink-muted">
           {[
@@ -132,28 +134,28 @@ export default function AuthForm({ signup = false }) {
           ].map(([Icon, label]) => (
             <li key={label}>
               <Icon aria-hidden="true" className="mb-2 size-5 text-brand" />
-              {label}
+              <UIMessage>{label}</UIMessage>
             </li>
           ))}
         </ul>
-      </aside>
+      </UIElement>
       <div>
         <Card className="auth-card">
           <CardHeader className="p-0! mb-6">
             <div className="auth-mobile-intro">
               <HandHeart aria-hidden="true" className="size-4 text-brand" />
-              <p className="eyebrow">Your neighbourhood starts here</p>
+              <p className="eyebrow"><UIMessage>Your neighbourhood starts here</UIMessage></p>
             </div>
             <span className="tone-icon tone-skill mb-5">
               <KeyRound aria-hidden="true" className="size-5" />
             </span>
             <h1 id="auth-heading" className="font-semibold">
-              {signup ? "Join your neighbourhood" : "Welcome back"}
+              <UIMessage>{signup ? "Join your neighbourhood" : "Welcome back"}</UIMessage>
             </h1>
             <CardDescription>
-              {signup
+              <UIMessage>{signup
                 ? "Start free. A few details help neighbours recognise you."
-                : "Sign in to follow your requests and conversations."}
+                : "Sign in to follow your requests and conversations."}</UIMessage>
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0! space-y-5">
@@ -162,11 +164,11 @@ export default function AuthForm({ signup = false }) {
               <div role="status" className="auth-success">
                 <CheckCircle2 aria-hidden="true" className="size-6 mb-3" />
                 <p className="font-semibold">
-                  {signup
+                  <UIMessage>{signup
                     ? "You’re part of the neighbourhood."
-                    : "You’re signed in."}
+                    : "You’re signed in."}</UIMessage>
                 </p>
-                <p className="mt-2 text-sm">Opening your page…</p>
+                <p className="mt-2 text-sm"><UIMessage>Opening your page…</UIMessage></p>
               </div>
             ) : (
               <form
@@ -188,7 +190,7 @@ export default function AuthForm({ signup = false }) {
                     : [["email", "Email address", "you@example.com"]]
                   ).map(([key, label, placeholder]) => (
                     <div key={key}>
-                      <Label htmlFor={`auth-${key}`}>{label}</Label>
+                      <Label htmlFor={`auth-${key}`}><UIMessage>{label}</UIMessage></Label>
                       <Input
                         id={`auth-${key}`}
                         type={key === "email" ? "email" : "text"}
@@ -210,8 +212,8 @@ export default function AuthForm({ signup = false }) {
                     </div>
                   ))}
                   <div>
-                    <Label htmlFor="auth-password">
-                      Password{signup ? " · at least 12 characters" : ""}
+                    <Label htmlFor="auth-password"><UIMessage>
+                      Password</UIMessage><UIMessage>{signup ? " · at least 12 characters" : ""}</UIMessage>
                     </Label>
                     <div className="relative">
                       <Input
@@ -248,18 +250,18 @@ export default function AuthForm({ signup = false }) {
                     <details className="auth-code-details">
                       <summary>
                         <span className="flex items-center gap-2">
-                          <ShieldCheck aria-hidden="true" className="size-4" />I
+                          <ShieldCheck aria-hidden="true" className="size-4" /><UIMessage>I
                           use an authenticator
-                        </span>
+                        </UIMessage></span>
                         <ChevronDown aria-hidden="true" className="size-4" />
                       </summary>
-                      <p className="text-xs leading-5 text-ink-muted mb-3">
+                      <p className="text-xs leading-5 text-ink-muted mb-3"><UIMessage>
                         If you enabled two-step verification, enter the current
                         code from your authenticator app.
-                      </p>
-                      <Label htmlFor="auth-code" className="mt-3">
+                      </UIMessage></p>
+                      <Label htmlFor="auth-code" className="mt-3"><UIMessage>
                         6-digit code
-                      </Label>
+                      </UIMessage></Label>
                       <Input
                         id="auth-code"
                         aria-invalid={!!errors.totp_code}
@@ -280,41 +282,41 @@ export default function AuthForm({ signup = false }) {
                   )}
                   {signup && (
                     <fieldset className="auth-consent space-y-3" aria-labelledby="signup-consent-heading">
-                      <p id="signup-consent-heading" className="font-semibold text-sm">
+                      <p id="signup-consent-heading" className="font-semibold text-sm"><UIMessage>
                         Before creating your account
-                      </p>
-                      <p className="text-sm text-ink-muted">
+                      </UIMessage></p>
+                      <p className="text-sm text-ink-muted"><UIMessage>
                         We use your display name, email, password and area to
                         run your account and nearby exchanges. Name and area
                         appear on your profile. Phone and photo are optional;
                         email alerts start off. Use an area, not your full home
-                        address.{" "}
-                        <Link className="underline" href="/privacy">
+                        address.</UIMessage>{" "}
+                        <Link className="underline" href="/privacy"><UIMessage>
                           Privacy notice and withdrawal options
-                        </Link>
+                        </UIMessage></Link>
                         .
                       </p>
                       {[
                         [
                           "privacy_consent",
-                          <>
+                          <><UIMessage>
                             I consent to use of my information for these account
                             and exchange purposes.
-                          </>,
+                          </UIMessage></>,
                         ],
                         [
                           "terms_accepted",
-                          <>
-                            I agree to the{" "}
-                            <Link className="underline" href="/terms">
+                          <><UIMessage>
+                            I agree to the</UIMessage>{" "}
+                            <Link className="underline" href="/terms"><UIMessage>
                               Terms and conditions
-                            </Link>
+                            </UIMessage></Link>
                             .
                           </>,
                         ],
                         [
                           "adult_confirmed",
-                          <>I confirm I am at least 18 years old.</>,
+                          <><UIMessage>I confirm I am at least 18 years old.</UIMessage></>,
                         ],
                       ].map(([key, label]) => (
                         <div key={key}>
@@ -331,7 +333,7 @@ export default function AuthForm({ signup = false }) {
                                 errors[key] ? `error-${key}` : undefined
                               }
                             />
-                            <span>{label}</span>
+                            <span><UIMessage>{label}</UIMessage></span>
                           </label>
                           {errors[key] && (
                             <p
@@ -351,27 +353,27 @@ export default function AuthForm({ signup = false }) {
                     type="submit"
                     className="auth-submit"
                   >
-                    {signup ? "Create account" : "Sign in"}
+                    <UIMessage>{signup ? "Create account" : "Sign in"}</UIMessage>
                     <ArrowRight aria-hidden="true" className="size-4" />
                   </Button>
                 </fieldset>
               </form>
             )}
             <p className="text-sm text-ink-muted border-t border-line pt-5">
-              {signup ? "Already a neighbour? " : "New here? "}
+              <UIMessage>{signup ? "Already a neighbour? " : "New here? "}</UIMessage>
               <Link
                 className="inline-flex items-center min-h-11 text-brand font-semibold underline underline-offset-4"
                 href={`${signup ? "/login" : "/signup"}${returnQuery}`}
               >
-                {signup ? "Sign in" : "Create an account"}
+                <UIMessage>{signup ? "Sign in" : "Create an account"}</UIMessage>
               </Link>
             </p>
           </CardContent>
         </Card>
         <p className="auth-meta">
-          <ShieldCheck aria-hidden="true" className="size-3.5" />
+          <ShieldCheck aria-hidden="true" className="size-3.5" /><UIMessage>
           Your password and codes stay private.
-        </p>
+        </UIMessage></p>
       </div>
     </div>
   );

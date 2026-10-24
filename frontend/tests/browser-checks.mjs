@@ -501,7 +501,7 @@ try {
               .boundingBox();
             assert.ok(
               title.y + title.height < dock.y,
-              "First notice title should appear above the mobile dock without scrolling",
+              `First notice title (${title.y + title.height}) should appear above dock (${dock.y}) without scrolling`,
             );
           }
         }
@@ -729,7 +729,7 @@ try {
   await page.goto(base + `/post/${postId}`);
   await page
     .getByRole("button", {
-      name: "Post and conversation safety options",
+      name: "Safety options",
       exact: true,
     })
     .click();

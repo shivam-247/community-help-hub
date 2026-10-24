@@ -9,6 +9,7 @@ from ..schemas import MessageIn, MessageOut
 from ..auth import get_current_user
 
 from ..product import notify
+from ..safety import ensure_chat_open, restriction
 
 router = APIRouter(prefix="/requests", tags=["messages"])
 
@@ -17,6 +18,8 @@ def _check_participant(session: Session, rr: ResponseRequest, user: User):
     post = session.get(Post, rr.post_id)
     if not post:
         raise HTTPException(status_code=404, detail="Post not found.")
+    if restriction(session, rr.requester_id) != "active" or restriction(session, post.owner_id) != "active":
+        raise HTTPException(403, "This conversation is unavailable because an account is restricted.")
     if user.id not in (rr.requester_id, post.owner_id):
         raise HTTPException(status_code=403, detail="You are not part of this conversation.")
 
@@ -29,8 +32,7 @@ def get_messages(
     if not rr:
         raise HTTPException(status_code=404, detail="Request not found.")
     _check_participant(session, rr, user)
-    if rr.status != RequestStatus.accepted:
-        raise HTTPException(403,"Chat opens after acceptance.")
+    ensure_chat_open(session, rr)
     # Latest window first at the SQL boundary, chronological order in the response.
     statement=select(Message).where(Message.response_request_id == request_id)
     if before_id is not None:
@@ -56,8 +58,11 @@ def send_message(
     if not rr:
         raise HTTPException(status_code=404, detail="Request not found.")
     _check_participant(session, rr, user)
-    if rr.status != RequestStatus.accepted:
-        raise HTTPException(status_code=400, detail="Messaging opens only after the request is accepted.")
+    ensure_chat_open(session, rr)
+    from sqlalchemy import update
+    session.execute(update(Post).where(Post.id == rr.post_id).values(status=Post.status))
+    session.expire_all()
+    ensure_chat_open(session, rr)
     msg = Message(response_request_id=request_id, sender_id=user.id, text=data.text)
     session.add(msg)
     post = session.get(Post, rr.post_id)
