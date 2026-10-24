@@ -61,8 +61,13 @@ def notify(session, user_id, title, body, href):
         session.add(EmailOutbox(user_id=user_id, subject=title, body=body + "\n" + os.getenv("APP_ORIGIN", "http://localhost:3000") + href))
 
 def send_email(recipient, subject, body, html_body=None):
+    from .email_delivery import provider, email_available, sender, send_resend
+    if not email_available():
+        raise OSError("Email delivery is not configured.")
+    if provider() == "resend":
+        return send_resend(recipient, subject, body, html_body)
     message = EmailMessage()
-    message["From"] = os.environ["SMTP_FROM"]
+    message["From"] = sender()
     message["To"] = recipient
     message["Subject"] = subject
     message.set_content(body)
@@ -104,7 +109,10 @@ def drain_outbox(engine):
                     row.status = "sent"
                 else:
                     row.status = "failed"
-            except (OSError, smtplib.SMTPException):
+            except (OSError, smtplib.SMTPException) as exc:
+                from .observability import logger
+                logger.warning("email_delivery_failed", extra={
+                    "status": getattr(exc, "status_code", None), "error_type": type(exc).__name__})
                 if row.attempts >= 5:
                     row.status = "failed"
             session.add(row)

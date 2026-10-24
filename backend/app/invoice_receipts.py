@@ -17,12 +17,9 @@ def date_label(value):
 
 
 def smtp_available():
-    try:
-        valid_port = 1 <= int(os.getenv("SMTP_PORT", "587")) <= 65535
-    except ValueError:
-        valid_port = False
-    return bool(valid_port and os.getenv("SMTP_HOST") and os.getenv("SMTP_FROM")
-                and (not os.getenv("SMTP_USER") or os.getenv("SMTP_PASSWORD")))
+    # Preserve the existing callers while supporting HTTPS providers as well as SMTP.
+    from .email_delivery import email_available
+    return email_available()
 
 
 def ensure_receipt(session, invoice, user):
