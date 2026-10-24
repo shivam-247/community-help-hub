@@ -193,3 +193,14 @@ test("preserves pagination headers for collection navigation", async () => {
   assert.equal(response.headers.get("x-has-more"), "true");
   assert.equal(response.headers.get("x-request-id"), "a".repeat(32));
 });
+
+test("successful password recovery clears the current session cookie", async () => {
+  const response = await proxyRequest(
+    request({ method: "POST", body: JSON.stringify({ email: "user@example.com", code: "12345678", new_password: "new-password-123" }) }),
+    ["auth", "reset-password"], MockResponse, async () => Response.json({ ok: true }),
+  );
+  assert.equal(response.status, 200);
+  assert.equal(response.cookieWrites.length, 1);
+  assert.equal(response.cookieWrites[0][1], "");
+  assert.equal(response.cookieWrites[0][2].maxAge, 0);
+});

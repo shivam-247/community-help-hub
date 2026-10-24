@@ -18,6 +18,7 @@ from .bootstrap import provision_admin
 from .security import SecurityMiddleware
 from .observability import ObservabilityMiddleware
 from .mfa import router as mfa_router
+from .password_recovery import router as recovery_router
 from .routers import (auth_router, posts_router, responses_router, messages_router,
     ratings_router, verification_router, users_router, admin_router, reports_router)
 
@@ -72,3 +73,4 @@ async def validation_error(request, exc):
     ]})
 
 app.include_router(safety_router)
+app.include_router(recovery_router)

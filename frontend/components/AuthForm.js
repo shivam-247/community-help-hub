@@ -252,6 +252,7 @@ export default function AuthForm({ signup = false }) {
                       </Button>
                     </div>
                     <FieldError id="error-password" error={errors.password} />
+                    {!signup && <Link href="/forgot-password" className="inline-flex items-center min-h-11 text-sm text-brand underline"><UIMessage>Forgot password?</UIMessage></Link>}
                   </div>
                   {!signup && (
                     <details className="auth-code-details">

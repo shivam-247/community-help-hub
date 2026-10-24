@@ -23,7 +23,7 @@ def cipher():
         raise HTTPException(status_code=503, detail="Authenticator setup is not configured by the operator.")
 
 
-def verify_totp(session, record, code):
+def verify_totp(session, record, code, *, commit=True):
     if not code:
         return False
     try:
@@ -36,7 +36,10 @@ def verify_totp(session, record, code):
         if step > record.last_step and hmac.compare_digest(totp.at(step * 30), code):
             result = session.exec(update(UserMFA).where(UserMFA.user_id == record.user_id,
                 UserMFA.last_step < step, UserMFA.version == record.version).values(last_step=step))
-            session.commit()
+            if commit:
+                session.commit()
+            else:
+                session.flush()
             return result.rowcount == 1
     return False
 

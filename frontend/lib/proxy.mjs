@@ -193,7 +193,7 @@ export async function proxyRequest(
     if (newToken)
       response.cookies.set(COOKIE, newToken, { ...options, maxAge: 3600 });
     if (
-      path.join("/") === "auth/logout" &&
+      ["auth/logout", "auth/reset-password"].includes(path.join("/")) &&
       (upstream.ok || upstream.status === 401)
     )
       response.cookies.set(COOKIE, "", { ...options, maxAge: 0 });

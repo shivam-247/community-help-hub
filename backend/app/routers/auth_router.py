@@ -84,6 +84,8 @@ def change_password(data: PasswordChangeIn, user: User = Depends(get_current_use
     if data.current_password == data.new_password:
         raise HTTPException(status_code=400, detail="Choose a different password.")
     user.hashed_password = hash_password(data.new_password)
+    from ..password_recovery import cancel_recovery
+    cancel_recovery(session, user.id)
     version = UserAuthVersion(user_id=user.id, version=secrets.token_urlsafe(24))
     session.add(user)
     session.merge(version)

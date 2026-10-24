@@ -144,6 +144,8 @@ def delete_account(user_id: int, data: DeleteAccountIn, admin: User = Depends(re
     session.exec(delete(TrustRecord).where(TrustRecord.user_id == user_id))
     session.exec(delete(UserMFA).where(UserMFA.user_id == user_id))
     session.exec(delete(EmailChallenge).where(EmailChallenge.user_id == user_id))
+    from ..password_recovery import PasswordResetChallenge
+    session.exec(delete(PasswordResetChallenge).where(PasswordResetChallenge.user_id == user_id))
     for row in session.exec(select(EmailOutbox).where(EmailOutbox.user_id == user_id)).all():
         row.body, row.subject, row.status = "Removed", "Removed", "cancelled"
         session.add(row)
